@@ -21,6 +21,9 @@ alter table public."referralRewards" enable row level security;
 alter table public."referralWithdrawals" enable row level security;
 alter table public."notifications" enable row level security;
 alter table public."deposits" enable row level security;
+alter table public."depositInstructions" enable row level security;
+alter table public."kycApplications" enable row level security;
+alter table public."investorWithdrawals" enable row level security;
 alter table public."traders" enable row level security;
 alter table public."plans" enable row level security;
 
@@ -35,6 +38,9 @@ create policy referral_reward_participant_read on public."referralRewards" for s
 create policy referral_withdrawal_owner_access on public."referralWithdrawals" for all using ("investorId" = auth.uid()::text or public.is_admin()) with check ("investorId" = auth.uid()::text or public.is_admin());
 create policy notifications_owner_read on public."notifications" for select using ("userId" = auth.uid()::text or public.is_admin());
 create policy deposits_owner_read on public."deposits" for select using ("investorId" = auth.uid()::text or public.is_admin());
+create policy deposit_instructions_authenticated_read on public."depositInstructions" for select using (auth.uid() is not null and active = 1 or public.is_admin());
+create policy kyc_owner_access on public."kycApplications" for all using ("investorId" = auth.uid()::text or public.is_admin()) with check ("investorId" = auth.uid()::text or public.is_admin());
+create policy investor_withdrawal_owner_access on public."investorWithdrawals" for all using ("investorId" = auth.uid()::text or public.is_admin()) with check ("investorId" = auth.uid()::text or public.is_admin());
 create policy traders_authenticated_read on public."traders" for select using (auth.uid() is not null);
 create policy plans_authenticated_read on public."plans" for select using (auth.uid() is not null and active = 1);
 
@@ -44,3 +50,4 @@ create policy media_owner_read on storage.objects for select using (bucket_id = 
 create policy media_owner_insert on storage.objects for insert with check (bucket_id = 'quantovest-media' and (storage.foldername(name))[2] = auth.uid()::text);
 create policy media_owner_update on storage.objects for update using (bucket_id = 'quantovest-media' and (storage.foldername(name))[2] = auth.uid()::text);
 create policy media_owner_delete on storage.objects for delete using (bucket_id = 'quantovest-media' and (storage.foldername(name))[2] = auth.uid()::text);
+create policy media_admin_read on storage.objects for select using (bucket_id = 'quantovest-media' and public.is_admin());

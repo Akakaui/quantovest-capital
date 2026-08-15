@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { getCurrentIdentity } from "@/lib/supabase/identity";
+import { isUploadPurpose } from "@/lib/uploadRules";
 
 const MAX_BYTES = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
   const file = form.get("file");
   const purpose = form.get("purpose");
   if (!(file instanceof File) || !ALLOWED_TYPES.has(file.type) || file.size > MAX_BYTES) return NextResponse.json({ error: "Use a JPG, PNG, or WebP image up to 5 MB." }, { status: 400 });
-  if (purpose !== "avatar" && purpose !== "trader") return NextResponse.json({ error: "Invalid upload purpose." }, { status: 400 });
+  if (!isUploadPurpose(purpose)) return NextResponse.json({ error: "Invalid upload purpose." }, { status: 400 });
   const extension = file.type.split("/")[1].replace("jpeg", "jpg");
   const path = `${purpose}/${actor.id}/${crypto.randomUUID()}.${extension}`;
   const storage = createClient(url, serviceKey).storage.from(process.env.SUPABASE_MEDIA_BUCKET ?? "quantovest-media");

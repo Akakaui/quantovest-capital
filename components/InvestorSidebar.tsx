@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { useQuantovestStore } from '@/lib/store';
+import NotificationCenter from '@/components/NotificationCenter';
 
 interface InvestorSidebarProps {
   onOpenDeposit?: () => void;
@@ -35,6 +36,7 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
             <div className="w-9 h-9 rounded-xl bg-[#151D20] border border-[#2C393C] flex items-center justify-center text-[#4ADE80]"><Icon icon="solar:chart-square-bold" className="w-5 h-5" /></div>
             <div><span className="text-[#F4F7F3] text-base tracking-tight">QUANTOVEST</span><span className="text-[9px] tracking-widest text-[#4ADE80] uppercase font-mono block -mt-1">INVESTOR PORTAL</span></div>
           </Link>
+          <NotificationCenter />
         </div>
         <div className="m-4 p-4 bg-[#151D20] border border-[#263437] rounded-xl flex items-center gap-3">
           <img src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full object-cover border border-[#4ADE80]/40" />
@@ -57,6 +59,7 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
           <Link href="/" className="flex items-center gap-2 text-[#8D9994] hover:text-[#F4F7F3] text-xs pt-2 border-t border-[#202A2D]"><Icon icon="solar:logout-3-bold" className="w-4 h-4" />Back to Public Website</Link>
         </div>
       </aside>
+      <div className="fixed right-4 top-4 z-50 md:hidden"><NotificationCenter /></div>
       <div className="investor-mobile-nav md:hidden fixed bottom-0 left-0 right-0 bg-[#0D1214]/95 backdrop-blur border-t border-[#202A2D] z-40 px-2 py-2 flex items-center justify-around text-[#F4F7F3] pb-[max(8px,env(safe-area-inset-bottom))]">
         {navLinks.map((link) => { const isActive = pathname === link.href; return <Link key={link.href} href={link.href} className={`flex flex-col items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-medium ${isActive ? 'text-[#4ADE80]' : 'text-[#74817B]'}`}><Icon icon={link.icon} className="w-5 h-5" /><span>{link.label === 'Portfolio Managers' ? 'Managers' : link.label.split(' ')[0]}</span></Link>; })}
       </div>

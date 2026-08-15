@@ -1,194 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import InvestorSidebar from '@/components/InvestorSidebar';
-import { useQuantovestStore, DepositRequest } from '@/lib/store';
 import { Icon } from '@iconify/react';
 
+type Instruction = { id: number; method: string; label: string; details: string; qrPath: string | null };
+type Deposit = { id: string; amountCents: number; method: string; status: string; proofPath: string | null };
+
 export default function DepositPage() {
-  const { submitDeposit, traders } = useQuantovestStore();
-  const [method, setMethod] = useState<DepositRequest['method']>('Bitcoin (BTC)');
-  const [amount, setAmount] = useState<number>(500);
-  const [proofUrl, setProofUrl] = useState<string | null>(null);
+  const [instructions, setInstructions] = useState<Instruction[]>([]);
+  const [deposits, setDeposits] = useState<Deposit[]>([]);
+  const [method, setMethod] = useState<'bank' | 'crypto'>('crypto');
+  const [amount, setAmount] = useState(500);
+  const [proof, setProof] = useState<File | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [showWire, setShowWire] = useState(false);
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const walletDetails = {
-    'Bitcoin (BTC)': { title: 'Bitcoin Network', address: 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh', icon: 'cryptocurrency-color:btc' },
-    'Ethereum (ETH)': { title: 'Ethereum Network', address: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F', icon: 'cryptocurrency-color:eth' },
-    'USDT (TRC20)': { title: 'Tron Network', address: 'TN2Yi7enMk2EfLPAgHoWvGFQTvmQjR9eYH', icon: 'cryptocurrency-color:usdt' },
-    'Bank Wire Transfer': { title: 'Institutional Wire Account', address: 'Quantovest Capital LLC — JP Morgan Chase (Routing: 021000021, Acct: 9482019482)', icon: 'solar:bank-bold' },
-  };
+  async function load() { const [instructionResponse, depositResponse] = await Promise.all([fetch('/api/deposit-instructions', { cache: 'no-store' }), fetch('/api/deposits', { cache: 'no-store' })]); if (instructionResponse.ok) setInstructions(await instructionResponse.json()); if (depositResponse.ok) setDeposits(await depositResponse.json()); setLoading(false); }
+  useEffect(() => { void load(); }, []);
+  const active = instructions.find(item => item.method === method);
+  async function copy() { if (active) { await navigator.clipboard.writeText(active.details); setMessage('Deposit details copied.'); } }
+  async function submit(event: React.FormEvent) { event.preventDefault(); setMessage(''); if (!proof) { setMessage('Upload the payment screenshot before submitting.'); return; } const form = new FormData(); form.append('file', proof); form.append('purpose', 'deposit-proof'); const upload = await fetch('/api/uploads', { method: 'POST', body: form }); const uploadData = await upload.json().catch(() => ({})); if (!upload.ok) { setMessage(uploadData.error ?? 'Proof upload failed.'); return; } const response = await fetch('/api/deposits', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amountCents: Math.round(amount * 100), method, proofPath: uploadData.path }) }); const data = await response.json().catch(() => ({})); if (!response.ok) { setMessage(data.error ?? 'Deposit submission failed.'); return; } setSubmitted(true); await load(); }
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(walletDetails[method as keyof typeof walletDetails].address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    submitDeposit(amount, method, proofUrl || 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80');
-    setSubmitted(true);
-  };
-
-  return (
-    <div className="min-h-screen bg-[#0A0F11] text-[#F3F7F4] flex flex-col md:flex-row font-sans">
-      <InvestorSidebar />
-
-      <main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
-        <div className="border-b border-[#263437] pb-6 space-y-1">
-          <h1 className="text-2xl font-normal text-[#F3F7F4]">Deposit Capital</h1>
-          <p className="text-xs text-[#93A09A]">Fund your investor account to activate managed investment ($500 min).</p>
-        </div>
-
-        {submitted ? (
-          <div className="p-8 bg-[#141C1F] border border-[#263437] rounded-2xl max-w-xl mx-auto text-center space-y-4">
-            <div className="w-14 h-14 rounded-full bg-[#0A0F11] text-[#22C55E] border border-[#263437] flex items-center justify-center mx-auto animate-bounce">
-              <Icon icon="solar:check-read-bold" className="w-8 h-8" />
-            </div>
-            <h3 className="text-xl font-normal text-[#F3F7F4]">Deposit Proof Submitted!</h3>
-            <p className="text-xs text-[#93A09A] max-w-md mx-auto">
-              Your deposit request for <strong>${amount.toLocaleString()}</strong> ({method}) has been sent to the Admin queue for review. Once verified, your balance will update.
-            </p>
-            <button
-              onClick={() => setSubmitted(false)}
-              className="px-6 py-2.5 rounded-full text-xs font-semibold bg-[#22C55E] text-[#F3F7F4] hover:bg-[#16A34A]"
-            >
-              Make Another Deposit
-            </button>
-          </div>
-        ) : (
-          <div className="max-w-2xl bg-[#141C1F] border border-[#263437] rounded-2xl p-6 sm:p-8 space-y-6">
-            {/* Method Tabs */}
-            <div className="space-y-2">
-              <label className="text-xs text-[#93A09A]">1. Select Cryptocurrency</label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {(['Bitcoin (BTC)', 'Ethereum (ETH)', 'USDT (TRC20)'] as const).map(m => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => { setMethod(m); setShowWire(false); }}
-                    className={`py-4 px-3 rounded-xl text-sm font-medium border text-center transition-all flex flex-col items-center gap-2 ${
-                      method === m
-                        ? 'border-[#22C55E] bg-[#22C55E]/10 text-[#F3F7F4] font-semibold'
-                        : 'border-[#263437] bg-[#0A0F11] text-[#93A09A] hover:text-[#F3F7F4]'
-                    }`}
-                  >
-                    <Icon icon={walletDetails[m].icon} className="w-8 h-8" />
-                    <span>{m.split(' ')[0]}</span>
-                    <span className="text-[10px] opacity-70">{m.includes('(') ? m.slice(m.indexOf('(')) : ''}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Wire Transfer Toggle */}
-            <div className="border-t border-[#263437] pt-4">
-              <button 
-                type="button" 
-                onClick={() => {
-                  setShowWire(!showWire);
-                  if (!showWire) {
-                    setMethod('Bank Wire Transfer');
-                  } else {
-                    setMethod('Bitcoin (BTC)');
-                  }
-                }}
-                className="text-xs text-[#93A09A] flex items-center gap-2 hover:text-[#F3F7F4] transition-colors"
-              >
-                <Icon icon={showWire ? "solar:alt-arrow-up-bold" : "solar:alt-arrow-down-bold"} />
-                Show Alternative Methods (Bank Wire Transfer)
-              </button>
-              
-              {showWire && (
-                <div className="mt-3">
-                   <button
-                    type="button"
-                    onClick={() => setMethod('Bank Wire Transfer')}
-                    className={`w-full py-4 px-3 rounded-xl text-sm font-medium border text-center transition-all flex items-center justify-center gap-3 ${
-                      method === 'Bank Wire Transfer'
-                        ? 'border-[#22C55E] bg-[#22C55E]/10 text-[#F3F7F4] font-semibold'
-                        : 'border-[#263437] bg-[#0A0F11] text-[#93A09A] hover:text-[#F3F7F4]'
-                    }`}
-                  >
-                    <Icon icon={walletDetails['Bank Wire Transfer'].icon} className="w-6 h-6" />
-                    Bank Wire Transfer
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Address Box */}
-            <div className="p-4 bg-[#0A0F11] border border-[#263437] rounded-xl space-y-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-[#93A09A] font-mono">{walletDetails[method as keyof typeof walletDetails].title}</span>
-                <button onClick={handleCopy} className="text-[#22C55E] font-mono text-[11px] flex items-center gap-1 hover:underline">
-                  <Icon icon={copied ? 'solar:check-circle-bold' : 'solar:copy-bold'} />
-                  {copied ? 'Copied!' : 'Copy Address'}
-                </button>
-              </div>
-              <p className="font-mono text-xs text-[#F3F7F4] bg-[#0A0F11] p-3 rounded-lg border border-[#263437] break-all select-all">
-                {walletDetails[method as keyof typeof walletDetails].address}
-              </p>
-            </div>
-
-            {/* Deposit Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="text-xs text-[#93A09A] block mb-1.5">2. Enter Deposit Amount ($ USD)</label>
-                <input
-                  type="number"
-                  min="500"
-                  required
-                  value={amount}
-                  onChange={e => setAmount(Number(e.target.value))}
-                  className="w-full bg-[#0A0F11] border border-[#263437] rounded-xl px-4 py-2.5 text-xs text-[#F3F7F4] font-mono placeholder-[#5B616E] focus:outline-none focus:border-[#22C55E]"
-                />
-              </div>
-
-              {/* Assign Portfolio Manager */}
-              <div>
-                <label className="text-xs text-[#93A09A] block mb-1.5">3. Assign Strategy Portfolio Manager</label>
-                <select
-                  className="w-full bg-[#0A0F11] border border-[#263437] rounded-xl px-4 py-2.5 text-xs text-[#F3F7F4] focus:outline-none focus:border-[#22C55E] cursor-pointer"
-                  required
-                >
-                  {traders.map(t => (
-                    <option key={t.id} value={t.id}>
-                      {t.name} ({t.specialty} — Win Rate: {t.winRate}%)
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Payment Proof Upload */}
-              <div>
-                <label className="text-xs text-[#93A09A] block mb-1.5">4. Upload Payment Screenshot Proof</label>
-                <div
-                  onClick={() => setProofUrl('https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80')}
-                  className={`p-4 rounded-xl border border-dashed text-center cursor-pointer transition-all ${
-                    proofUrl ? 'border-[#22C55E] bg-[#22C55E]/10' : 'border-[#263437] bg-[#0A0F11] hover:border-[#22C55E]/50'
-                  }`}
-                >
-                  <Icon icon="solar:upload-track-bold" className="w-6 h-6 mx-auto mb-1 text-[#22C55E]" />
-                  <p className="text-xs text-[#F3F7F4] font-medium">
-                    {proofUrl ? 'Payment Screenshot Attached' : 'Click to Upload Deposit Confirmation Screenshot'}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full py-3.5 rounded-full bg-[#22C55E] text-[#F3F7F4] font-semibold text-xs hover:bg-[#16A34A] transition-colors shadow-lg mt-2"
-              >
-                Confirm Payment Deposited
-              </button>
-            </form>
-          </div>
-        )}
-      </main>
-    </div>
-  );
+  return <div className="min-h-screen bg-[#0A0F11] text-[#F3F7F4] flex flex-col md:flex-row font-sans"><InvestorSidebar /><main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8"><div className="border-b border-[#263437] pb-6 space-y-1"><h1 className="text-2xl font-normal">Deposit Capital</h1><p className="text-xs text-[#93A09A]">Use the current admin-configured instructions, then upload proof for manual verification.</p></div>{message && <div role="alert" className="rounded-xl border border-amber-400/40 bg-amber-400/10 p-4 text-xs text-amber-100">{message}</div>}{submitted ? <div className="max-w-xl rounded-2xl border border-[#263437] bg-[#141C1F] p-8 text-center"><Icon icon="solar:check-read-bold" className="mx-auto h-10 w-10 text-[#22C55E]" /><h2 className="mt-4 text-xl">Deposit proof submitted</h2><p className="mt-2 text-xs text-[#93A09A]">Admin will verify the screenshot. Your plan and balance update only after approval.</p><button onClick={() => setSubmitted(false)} className="mt-5 rounded-full bg-[#22C55E] px-5 py-3 text-xs font-semibold text-[#07110B]">Make another deposit</button></div> : <div className="grid max-w-4xl grid-cols-1 gap-8 lg:grid-cols-2"><section className="rounded-2xl border border-[#263437] bg-[#141C1F] p-6 sm:p-8 space-y-5"><div className="flex gap-2"><button onClick={() => setMethod('crypto')} className={`flex-1 rounded-xl border p-3 text-xs ${method === 'crypto' ? 'border-[#22C55E] bg-[#22C55E]/10' : 'border-[#263437]'}`}>Crypto</button><button onClick={() => setMethod('bank')} className={`flex-1 rounded-xl border p-3 text-xs ${method === 'bank' ? 'border-[#22C55E] bg-[#22C55E]/10' : 'border-[#263437]'}`}>Bank</button></div>{loading ? <div className="h-32 animate-pulse rounded-xl bg-white/5" /> : active ? <div className="rounded-xl border border-[#263437] bg-[#0A0F11] p-4"><div className="flex items-center justify-between"><p className="text-xs text-[#93A09A]">{active.label}</p><button onClick={() => void copy()} className="text-xs text-[#22C55E]">Copy</button></div><p className="mt-3 select-all break-all font-mono text-xs text-white">{active.details}</p>{active.qrPath && <img src={active.qrPath} alt="Deposit QR code" className="mt-4 h-32 w-32 rounded-lg bg-white object-contain" />}</div> : <div className="rounded-xl border border-dashed border-[#263437] p-8 text-center text-xs text-[#93A09A]">Admin has not configured {method} deposit instructions yet.</div>}<form onSubmit={submit} className="space-y-4"><label className="block text-xs text-[#93A09A]">Amount ($)<input required min="500" type="number" value={amount} onChange={event => setAmount(Number(event.target.value))} className="mt-1 w-full rounded-xl border border-[#263437] bg-[#0A0F11] px-4 py-3 text-sm text-white" /></label><label className="block text-xs text-[#93A09A]">Payment screenshot<input required type="file" accept="image/jpeg,image/png,image/webp" onChange={event => setProof(event.target.files?.[0] ?? null)} className="mt-1 w-full text-xs" /></label><button disabled={loading || !active} className="w-full rounded-full bg-[#22C55E] py-3.5 text-xs font-semibold text-[#07110B] disabled:opacity-40">Submit for manual verification</button></form></section><section className="rounded-2xl border border-[#263437] bg-[#141C1F] p-6 sm:p-8"><h2 className="text-base">Deposit history</h2><div className="mt-4 space-y-3">{deposits.map(deposit => <div key={deposit.id} className="flex items-center justify-between rounded-xl border border-[#263437] bg-[#0A0F11] p-4 text-xs"><div><p className="font-mono font-semibold">${(deposit.amountCents / 100).toLocaleString()}</p><p className="text-[10px] text-[#93A09A]">{deposit.method}</p></div><span className="rounded-full bg-amber-500/20 px-2 py-1 text-[10px] text-amber-300">{deposit.status.toUpperCase()}</span></div>)}{!deposits.length && <p className="py-8 text-center text-xs text-[#93A09A]">No deposits submitted yet.</p>}</div></section></div>}</main></div>;
 }

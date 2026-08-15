@@ -8,6 +8,13 @@
       "when": 1786803278059,
       "tag": "0000_long_synch",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786804352902,
+      "tag": "0001_steady_living_lightning",
+      "breakpoints": true
     }
   ]
 }

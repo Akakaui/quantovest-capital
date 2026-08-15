@@ -1,74 +1,18 @@
 'use client';
 
-import React from 'react';
+import { useEffect, useState } from 'react';
 import AdminSidebar from '@/components/AdminSidebar';
-import { useQuantovestStore } from '@/lib/store';
-import { Icon } from '@iconify/react';
+
+type Deposit = { id: string; investorId: string; amountCents: number; method: string; proofPath: string | null; status: string; createdAt: string };
+type Instruction = { id: number; method: string; label: string; details: string; qrPath: string | null; active: number };
 
 export default function AdminDepositsPage() {
-  const { deposits, approveDeposit } = useQuantovestStore();
-
-  return (
-    <div className="min-h-screen bg-[#0D1215] text-[#E8EFEB] flex flex-col md:flex-row font-sans">
-      <AdminSidebar />
-
-      <main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
-        <div className="border-b border-[#2B393F] pb-6 space-y-1">
-          <h1 className="text-2xl font-normal text-[#E8EFEB]">Deposit Approval Queue</h1>
-          <p className="text-xs text-[#93A09A]">Review payment screenshot proofs and approve investor deposit funding.</p>
-        </div>
-
-        <div className="space-y-4">
-          {deposits.map((dep) => (
-            <div key={dep.id} className="p-6 rounded-2xl bg-[#151E23] border border-[#2B393F] flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-[#E8EFEB]">{dep.userName}</span>
-                  <span className="text-[10px] bg-[#0D1215] border border-[#2B393F] text-[#93A09A] px-2 py-0.5 rounded font-mono">
-                    {dep.method}
-                  </span>
-                </div>
-                <p className="text-2xl font-mono font-semibold text-[#22C55E]">${dep.amount.toLocaleString()}</p>
-                <p className="text-[10px] text-[#93A09A] font-mono">{dep.createdAt}</p>
-              </div>
-
-              {/* Screenshot Proof Preview */}
-              <div className="flex items-center gap-4">
-                <div className="text-center">
-                  <p className="text-[10px] text-[#93A09A] mb-1">Payment Proof</p>
-                  <a
-                    href={dep.proofScreenshotUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="w-24 h-16 rounded-xl overflow-hidden border border-[#2B393F] block hover:border-[#22C55E] transition-colors relative group"
-                  >
-                    <img src={dep.proofScreenshotUrl} alt="Deposit Proof" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Icon icon="solar:eye-bold" className="w-5 h-5 text-[#E8EFEB]" />
-                    </div>
-                  </a>
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  {dep.status === 'pending' ? (
-                    <button
-                      onClick={() => approveDeposit(dep.id)}
-                      className="px-6 py-2.5 rounded-full text-xs font-semibold bg-[#22C55E] text-[#E8EFEB] hover:bg-[#16A34A] transition-colors shadow-md flex items-center gap-1.5"
-                    >
-                      <Icon icon="solar:check-circle-bold" className="w-4 h-4" />
-                      Approve Deposit
-                    </button>
-                  ) : (
-                    <span className="px-4 py-1.5 rounded-full bg-[#22C55E]/10 text-[#22C55E] font-mono text-xs font-semibold text-center">
-                      APPROVED & CREDITED
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </main>
-    </div>
-  );
+  const [deposits, setDeposits] = useState<Deposit[]>([]);
+  const [instructions, setInstructions] = useState<Instruction[]>([]);
+  const [message, setMessage] = useState('');
+  async function load() { const [depositResponse, instructionResponse] = await Promise.all([fetch('/api/admin/deposits', { cache: 'no-store' }), fetch('/api/admin/deposit-instructions', { cache: 'no-store' })]); if (depositResponse.ok) setDeposits(await depositResponse.json()); if (instructionResponse.ok) setInstructions(await instructionResponse.json()); }
+  useEffect(() => { void load(); }, []);
+  async function review(depositId: string, action: 'approve' | 'reject') { const response = await fetch('/api/admin/deposits', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ depositId, action }) }); const data = await response.json().catch(() => ({})); setMessage(response.ok ? `Deposit ${action}d and notifications sent.` : data.error ?? 'Review failed.'); await load(); }
+  async function saveInstruction(event: React.FormEvent<HTMLFormElement>, method: 'bank' | 'crypto') { event.preventDefault(); const form = new FormData(event.currentTarget); const response = await fetch('/api/admin/deposit-instructions', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ method, label: form.get('label'), details: form.get('details'), qrPath: form.get('qrPath') }) }); const data = await response.json().catch(() => ({})); setMessage(response.ok ? `${method} deposit instructions saved.` : data.error ?? 'Instruction save failed.'); await load(); }
+  return <div className="min-h-screen bg-[#0D1215] text-[#E8EFEB] flex flex-col md:flex-row font-sans"><AdminSidebar /><main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8"><div className="border-b border-[#2B393F] pb-6"><h1 className="text-2xl font-normal">Deposit Operations</h1><p className="mt-1 text-xs text-[#93A09A]">Configure payment details and verify investor proof before crediting balances.</p></div>{message && <div role="status" className="rounded-xl border border-[#22C55E]/40 bg-[#22C55E]/10 p-4 text-xs text-[#86EFAC]">{message}</div>}<section><h2 className="mb-4 text-base">Payment instructions</h2><div className="grid gap-4 lg:grid-cols-2">{(['bank', 'crypto'] as const).map(method => { const current = instructions.find(item => item.method === method); return <form key={method} onSubmit={event => void saveInstruction(event, method)} className="rounded-2xl border border-[#2B393F] bg-[#151E23] p-5 space-y-3"><h3 className="text-sm font-semibold capitalize">{method} deposit details</h3><input name="label" defaultValue={current?.label ?? ''} placeholder="Label" required className="w-full rounded-xl border border-[#2B393F] bg-[#0D1215] px-3 py-2.5 text-xs text-white" /><textarea name="details" defaultValue={current?.details ?? ''} placeholder={method === 'crypto' ? 'Wallet address and network' : 'Bank name, beneficiary, IBAN, SWIFT'} required rows={4} className="w-full rounded-xl border border-[#2B393F] bg-[#0D1215] px-3 py-2.5 text-xs text-white" /><input name="qrPath" defaultValue={current?.qrPath ?? ''} placeholder="Supabase Storage QR image path (optional)" className="w-full rounded-xl border border-[#2B393F] bg-[#0D1215] px-3 py-2.5 text-xs text-white" /><button className="rounded-full bg-[#F4B860] px-4 py-2.5 text-xs font-semibold text-[#111714]">Save {method} instructions</button></form>; })}</div></section><section><h2 className="mb-4 text-base">Pending proof verification</h2><div className="space-y-4">{deposits.length === 0 ? <div className="rounded-2xl border border-dashed border-[#2B393F] p-10 text-center text-xs text-[#93A09A]">No pending deposit proofs.</div> : deposits.map(deposit => <article key={deposit.id} className="rounded-2xl border border-[#2B393F] bg-[#151E23] p-5"><div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><p className="text-sm font-semibold">Investor {deposit.investorId}</p><p className="mt-1 text-2xl font-mono text-[#22C55E]">${(deposit.amountCents / 100).toLocaleString()}</p><p className="text-[10px] text-[#93A09A]">{deposit.method} · {deposit.status}</p></div><div className="flex items-center gap-3">{deposit.proofPath && <span className="rounded-xl border border-[#2B393F] px-3 py-2 text-xs text-[#A8B6AD]">Proof path: {deposit.proofPath}</span>}<button onClick={() => void review(deposit.id, 'approve')} className="rounded-full bg-[#22C55E] px-4 py-2 text-xs font-semibold text-[#07110B]">Approve</button><button onClick={() => void review(deposit.id, 'reject')} className="rounded-full border border-rose-400/40 px-4 py-2 text-xs text-rose-300">Reject</button></div></div></article>)}</div></section></main></div>;
 }
