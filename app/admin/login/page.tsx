@@ -54,7 +54,7 @@ export default function AdminLoginPage() {
 
           <button
             type="submit"
-            className="w-full py-3 rounded-full bg-[#22C55E] text-[#0A0D0C] font-semibold text-xs hover:bg-[#16A34A] transition-colors shadow-lg mt-2"
+            className="w-full py-3 rounded-full bg-[#22C55E] text-[#E8EFEB] font-semibold text-xs hover:bg-[#16A34A] transition-colors shadow-lg mt-2"
           >
             Access Staff Console
           </button>

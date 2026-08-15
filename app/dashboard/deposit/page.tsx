@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Sidebar from '@/components/Sidebar';
+import InvestorSidebar from '@/components/InvestorSidebar';
 import { useQuantovestStore, DepositRequest } from '@/lib/store';
 import { Icon } from '@iconify/react';
 
@@ -34,36 +34,36 @@ export default function DepositPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F7F7] text-[#0A0D0C] flex flex-col md:flex-row font-sans">
-      <Sidebar />
+    <div className="min-h-screen bg-[#0A0F11] text-[#F3F7F4] flex flex-col md:flex-row font-sans">
+      <InvestorSidebar />
 
       <main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
-        <div className="border-b border-[#DEE1E6] pb-6 space-y-1">
-          <h1 className="text-2xl font-normal text-[#0A0D0C]">Deposit Capital</h1>
-          <p className="text-xs text-[#5B616E]">Fund your investor account to activate managed investment ($500 min).</p>
+        <div className="border-b border-[#263437] pb-6 space-y-1">
+          <h1 className="text-2xl font-normal text-[#F3F7F4]">Deposit Capital</h1>
+          <p className="text-xs text-[#93A09A]">Fund your investor account to activate managed investment ($500 min).</p>
         </div>
 
         {submitted ? (
-          <div className="p-8 bg-white border border-[#DEE1E6] rounded-2xl max-w-xl mx-auto text-center space-y-4">
-            <div className="w-14 h-14 rounded-full bg-[#F7F7F7] text-[#22C55E] border border-[#DEE1E6] flex items-center justify-center mx-auto animate-bounce">
+          <div className="p-8 bg-[#141C1F] border border-[#263437] rounded-2xl max-w-xl mx-auto text-center space-y-4">
+            <div className="w-14 h-14 rounded-full bg-[#0A0F11] text-[#22C55E] border border-[#263437] flex items-center justify-center mx-auto animate-bounce">
               <Icon icon="solar:check-read-bold" className="w-8 h-8" />
             </div>
-            <h3 className="text-xl font-normal text-[#0A0D0C]">Deposit Proof Submitted!</h3>
-            <p className="text-xs text-[#5B616E] max-w-md mx-auto">
+            <h3 className="text-xl font-normal text-[#F3F7F4]">Deposit Proof Submitted!</h3>
+            <p className="text-xs text-[#93A09A] max-w-md mx-auto">
               Your deposit request for <strong>${amount.toLocaleString()}</strong> ({method}) has been sent to the Admin queue for review. Once verified, your balance will update.
             </p>
             <button
               onClick={() => setSubmitted(false)}
-              className="px-6 py-2.5 rounded-full text-xs font-semibold bg-[#22C55E] text-[#0A0D0C] hover:bg-[#16A34A]"
+              className="px-6 py-2.5 rounded-full text-xs font-semibold bg-[#22C55E] text-[#F3F7F4] hover:bg-[#16A34A]"
             >
               Make Another Deposit
             </button>
           </div>
         ) : (
-          <div className="max-w-2xl bg-white border border-[#DEE1E6] rounded-2xl p-6 sm:p-8 space-y-6">
+          <div className="max-w-2xl bg-[#141C1F] border border-[#263437] rounded-2xl p-6 sm:p-8 space-y-6">
             {/* Method Tabs */}
             <div className="space-y-2">
-              <label className="text-xs text-[#5B616E]">1. Select Cryptocurrency</label>
+              <label className="text-xs text-[#93A09A]">1. Select Cryptocurrency</label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {(['Bitcoin (BTC)', 'Ethereum (ETH)', 'USDT (TRC20)'] as const).map(m => (
                   <button
@@ -72,8 +72,8 @@ export default function DepositPage() {
                     onClick={() => { setMethod(m); setShowWire(false); }}
                     className={`py-4 px-3 rounded-xl text-sm font-medium border text-center transition-all flex flex-col items-center gap-2 ${
                       method === m
-                        ? 'border-[#22C55E] bg-[#22C55E]/10 text-[#0A0D0C] font-semibold'
-                        : 'border-[#DEE1E6] bg-[#F7F7F7] text-[#5B616E] hover:text-[#0A0D0C]'
+                        ? 'border-[#22C55E] bg-[#22C55E]/10 text-[#F3F7F4] font-semibold'
+                        : 'border-[#263437] bg-[#0A0F11] text-[#93A09A] hover:text-[#F3F7F4]'
                     }`}
                   >
                     <Icon icon={walletDetails[m].icon} className="w-8 h-8" />
@@ -85,7 +85,7 @@ export default function DepositPage() {
             </div>
 
             {/* Wire Transfer Toggle */}
-            <div className="border-t border-[#DEE1E6] pt-4">
+            <div className="border-t border-[#263437] pt-4">
               <button 
                 type="button" 
                 onClick={() => {
@@ -96,7 +96,7 @@ export default function DepositPage() {
                     setMethod('Bitcoin (BTC)');
                   }
                 }}
-                className="text-xs text-[#5B616E] flex items-center gap-2 hover:text-[#0A0D0C] transition-colors"
+                className="text-xs text-[#93A09A] flex items-center gap-2 hover:text-[#F3F7F4] transition-colors"
               >
                 <Icon icon={showWire ? "solar:alt-arrow-up-bold" : "solar:alt-arrow-down-bold"} />
                 Show Alternative Methods (Bank Wire Transfer)
@@ -109,8 +109,8 @@ export default function DepositPage() {
                     onClick={() => setMethod('Bank Wire Transfer')}
                     className={`w-full py-4 px-3 rounded-xl text-sm font-medium border text-center transition-all flex items-center justify-center gap-3 ${
                       method === 'Bank Wire Transfer'
-                        ? 'border-[#22C55E] bg-[#22C55E]/10 text-[#0A0D0C] font-semibold'
-                        : 'border-[#DEE1E6] bg-[#F7F7F7] text-[#5B616E] hover:text-[#0A0D0C]'
+                        ? 'border-[#22C55E] bg-[#22C55E]/10 text-[#F3F7F4] font-semibold'
+                        : 'border-[#263437] bg-[#0A0F11] text-[#93A09A] hover:text-[#F3F7F4]'
                     }`}
                   >
                     <Icon icon={walletDetails['Bank Wire Transfer'].icon} className="w-6 h-6" />
@@ -121,15 +121,15 @@ export default function DepositPage() {
             </div>
 
             {/* Address Box */}
-            <div className="p-4 bg-[#F7F7F7] border border-[#DEE1E6] rounded-xl space-y-3">
+            <div className="p-4 bg-[#0A0F11] border border-[#263437] rounded-xl space-y-3">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-[#5B616E] font-mono">{walletDetails[method as keyof typeof walletDetails].title}</span>
+                <span className="text-[#93A09A] font-mono">{walletDetails[method as keyof typeof walletDetails].title}</span>
                 <button onClick={handleCopy} className="text-[#22C55E] font-mono text-[11px] flex items-center gap-1 hover:underline">
                   <Icon icon={copied ? 'solar:check-circle-bold' : 'solar:copy-bold'} />
                   {copied ? 'Copied!' : 'Copy Address'}
                 </button>
               </div>
-              <p className="font-mono text-xs text-[#0A0D0C] bg-[#F7F7F7] p-3 rounded-lg border border-[#DEE1E6] break-all select-all">
+              <p className="font-mono text-xs text-[#F3F7F4] bg-[#0A0F11] p-3 rounded-lg border border-[#263437] break-all select-all">
                 {walletDetails[method as keyof typeof walletDetails].address}
               </p>
             </div>
@@ -137,22 +137,22 @@ export default function DepositPage() {
             {/* Deposit Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="text-xs text-[#5B616E] block mb-1.5">2. Enter Deposit Amount ($ USD)</label>
+                <label className="text-xs text-[#93A09A] block mb-1.5">2. Enter Deposit Amount ($ USD)</label>
                 <input
                   type="number"
                   min="500"
                   required
                   value={amount}
                   onChange={e => setAmount(Number(e.target.value))}
-                  className="w-full bg-[#F7F7F7] border border-[#DEE1E6] rounded-xl px-4 py-2.5 text-xs text-[#0A0D0C] font-mono placeholder-[#5B616E] focus:outline-none focus:border-[#22C55E]"
+                  className="w-full bg-[#0A0F11] border border-[#263437] rounded-xl px-4 py-2.5 text-xs text-[#F3F7F4] font-mono placeholder-[#5B616E] focus:outline-none focus:border-[#22C55E]"
                 />
               </div>
 
               {/* Assign Portfolio Manager */}
               <div>
-                <label className="text-xs text-[#5B616E] block mb-1.5">3. Assign Strategy Portfolio Manager</label>
+                <label className="text-xs text-[#93A09A] block mb-1.5">3. Assign Strategy Portfolio Manager</label>
                 <select
-                  className="w-full bg-[#F7F7F7] border border-[#DEE1E6] rounded-xl px-4 py-2.5 text-xs text-[#0A0D0C] focus:outline-none focus:border-[#22C55E] cursor-pointer"
+                  className="w-full bg-[#0A0F11] border border-[#263437] rounded-xl px-4 py-2.5 text-xs text-[#F3F7F4] focus:outline-none focus:border-[#22C55E] cursor-pointer"
                   required
                 >
                   {traders.map(t => (
@@ -165,15 +165,15 @@ export default function DepositPage() {
 
               {/* Payment Proof Upload */}
               <div>
-                <label className="text-xs text-[#5B616E] block mb-1.5">4. Upload Payment Screenshot Proof</label>
+                <label className="text-xs text-[#93A09A] block mb-1.5">4. Upload Payment Screenshot Proof</label>
                 <div
                   onClick={() => setProofUrl('https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80')}
                   className={`p-4 rounded-xl border border-dashed text-center cursor-pointer transition-all ${
-                    proofUrl ? 'border-[#22C55E] bg-[#22C55E]/10' : 'border-[#DEE1E6] bg-[#F7F7F7] hover:border-[#22C55E]/50'
+                    proofUrl ? 'border-[#22C55E] bg-[#22C55E]/10' : 'border-[#263437] bg-[#0A0F11] hover:border-[#22C55E]/50'
                   }`}
                 >
                   <Icon icon="solar:upload-track-bold" className="w-6 h-6 mx-auto mb-1 text-[#22C55E]" />
-                  <p className="text-xs text-[#0A0D0C] font-medium">
+                  <p className="text-xs text-[#F3F7F4] font-medium">
                     {proofUrl ? 'Payment Screenshot Attached' : 'Click to Upload Deposit Confirmation Screenshot'}
                   </p>
                 </div>
@@ -181,7 +181,7 @@ export default function DepositPage() {
 
               <button
                 type="submit"
-                className="w-full py-3.5 rounded-full bg-[#22C55E] text-[#0A0D0C] font-semibold text-xs hover:bg-[#16A34A] transition-colors shadow-lg mt-2"
+                className="w-full py-3.5 rounded-full bg-[#22C55E] text-[#F3F7F4] font-semibold text-xs hover:bg-[#16A34A] transition-colors shadow-lg mt-2"
               >
                 Confirm Payment Deposited
               </button>

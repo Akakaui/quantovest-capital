@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Sidebar from '@/components/Sidebar';
+import AdminSidebar from '@/components/AdminSidebar';
 import { useQuantovestStore, MasterTrader } from '@/lib/store';
 import { Icon } from '@iconify/react';
 
@@ -33,7 +33,7 @@ export default function AdminTradersPage() {
 
   return (
     <div className="min-h-screen bg-[#0A0D0C] text-white flex flex-col md:flex-row font-sans">
-      <Sidebar />
+      <AdminSidebar />
 
       <main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
         <div className="border-b border-[#202722] pb-6 space-y-1">
@@ -126,7 +126,7 @@ export default function AdminTradersPage() {
 
             <button
               type="submit"
-              className="w-full py-3.5 rounded-full bg-[#22C55E] text-[#0A0D0C] font-semibold text-xs hover:bg-[#16A34A] transition-colors shadow-lg mt-2"
+              className="w-full py-3.5 rounded-full bg-[#22C55E] text-[#E8EFEB] font-semibold text-xs hover:bg-[#16A34A] transition-colors shadow-lg mt-2"
             >
               Add Master Trader Profile
             </button>

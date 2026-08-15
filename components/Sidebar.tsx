@@ -40,9 +40,9 @@ export default function Sidebar({ onOpenDeposit, onOpenWithdraw, onOpenCalculato
   return (
     <>
       {/* Desktop & Tablet Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-[#DEE1E6] h-screen sticky top-0 text-[#0A0D0C] z-30 font-sans">
+      <aside className="dashboard-sidebar hidden md:flex flex-col w-64 bg-white border-r border-[#DEE1E6] h-screen sticky top-0 text-[#0A0D0C] z-30 font-sans">
         {/* Brand Header */}
-        <div className="p-6 border-b border-[#DEE1E6] flex items-center justify-between">
+        <div className="dashboard-sidebar-brand p-6 border-b border-[#DEE1E6] flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[#F7F7F7] border border-[#DEE1E6] flex items-center justify-center text-[#22C55E]">
               <Icon icon="solar:chart-square-bold" className="w-5 h-5" />
@@ -57,7 +57,7 @@ export default function Sidebar({ onOpenDeposit, onOpenWithdraw, onOpenCalculato
         </div>
 
         {/* User Info / Role Toggle Pill */}
-        <div className="p-4 mx-4 my-4 bg-[#F7F7F7] border border-[#DEE1E6] rounded-xl flex items-center justify-between">
+        <div className="dashboard-user-card p-4 mx-4 my-4 bg-[#F7F7F7] border border-[#DEE1E6] rounded-xl flex items-center justify-between">
           <div className="flex items-center gap-3 overflow-hidden">
             <img src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full object-cover border border-[#22C55E]/40" />
             <div className="truncate">
@@ -113,7 +113,7 @@ export default function Sidebar({ onOpenDeposit, onOpenWithdraw, onOpenCalculato
         )}
 
         {/* Navigation Items */}
-        <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto">
+        <nav className="dashboard-sidebar-nav flex-1 px-4 space-y-1.5 overflow-y-auto">
           <p className="text-[10px] uppercase font-mono text-[#5B616E] px-2 tracking-wider mb-2">Menu</p>
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
@@ -161,7 +161,7 @@ export default function Sidebar({ onOpenDeposit, onOpenWithdraw, onOpenCalculato
       </aside>
 
       {/* Mobile Bottom Navigation Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#DEE1E6] z-40 px-2 py-2 flex items-center justify-around text-[#0A0D0C]">
+      <div className="dashboard-mobile-nav md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#DEE1E6] z-40 px-2 py-2 flex items-center justify-around text-[#0A0D0C]">
         {navLinks.map((link) => {
           const isActive = pathname === link.href;
           return (

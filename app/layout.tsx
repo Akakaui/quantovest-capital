@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import TawkToWidget from '@/components/TawkToWidget';
 
+
 export const metadata: Metadata = {
   title: 'Quantovest Capital — Institutional Investment & Multi-Asset Management',
   description: 'Access top-tier algorithmic FX, Crypto, and Stock investment strategies starting at $500. Track portfolio growth live.',

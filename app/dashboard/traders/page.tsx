@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import Sidebar from '@/components/Sidebar';
+import InvestorSidebar from '@/components/InvestorSidebar';
 import FundingWarningModal from '@/components/FundingWarningModal';
 import { useQuantovestStore } from '@/lib/store';
 import { Icon } from '@iconify/react';
@@ -22,14 +22,14 @@ export default function TradersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F7F7F7] text-[#0A0D0C] flex flex-col md:flex-row font-sans">
-      <Sidebar />
+    <div className="min-h-screen bg-[#0A0F11] text-[#F3F7F4] flex flex-col md:flex-row font-sans">
+      <InvestorSidebar />
 
       <main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
         {/* Header */}
-        <div className="border-b border-[#DEE1E6] pb-6 space-y-1">
-          <h1 className="text-2xl font-normal text-[#0A0D0C]">Portfolio Strategy Hub</h1>
-          <p className="text-xs text-[#5B616E]">Browse and follow institutional strategy experts across FX, Crypto, and Equities.</p>
+        <div className="border-b border-[#263437] pb-6 space-y-1">
+          <h1 className="text-2xl font-normal text-[#F3F7F4]">Portfolio Strategy Hub</h1>
+          <p className="text-xs text-[#93A09A]">Browse and follow institutional strategy experts across FX, Crypto, and Equities.</p>
         </div>
 
         {/* Toast Notification */}
@@ -45,39 +45,39 @@ export default function TradersPage() {
           {traders.map((trader) => {
             const isCopying = user.copiedTraderId === trader.id;
             return (
-              <div key={trader.id} className="p-6 rounded-2xl bg-white border border-[#DEE1E6] space-y-5 hover:border-[#22C55E]/40 transition-colors">
+              <div key={trader.id} className="p-6 rounded-2xl bg-[#141C1F] border border-[#263437] space-y-5 hover:border-[#22C55E]/40 transition-colors">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <img src={trader.avatar} alt={trader.name} className="w-12 h-12 rounded-full object-cover border border-[#22C55E]/40" />
                     <div>
-                      <h3 className="text-base font-medium text-[#0A0D0C]">{trader.name}</h3>
-                      <span className="text-[10px] bg-[#F7F7F7] text-[#22C55E] border border-[#DEE1E6] px-2 py-0.5 rounded-full font-mono">
+                      <h3 className="text-base font-medium text-[#F3F7F4]">{trader.name}</h3>
+                      <span className="text-[10px] bg-[#0A0F11] text-[#22C55E] border border-[#263437] px-2 py-0.5 rounded-full font-mono">
                         {trader.specialty}
                       </span>
                     </div>
                   </div>
                   {isCopying && (
-                    <span className="px-2.5 py-1 rounded-full bg-[#22C55E] text-[#0A0D0C] font-mono text-[10px] font-bold">
+                    <span className="px-2.5 py-1 rounded-full bg-[#22C55E] text-[#F3F7F4] font-mono text-[10px] font-bold">
                       STRATEGY ACTIVE
                     </span>
                   )}
                 </div>
 
-                <p className="text-xs text-[#5B616E] leading-relaxed">{trader.bio}</p>
+                <p className="text-xs text-[#93A09A] leading-relaxed">{trader.bio}</p>
 
                 {/* Metrics */}
-                <div className="grid grid-cols-3 gap-2 p-3 bg-[#F7F7F7] border border-[#DEE1E6] rounded-xl text-center">
+                <div className="grid grid-cols-3 gap-2 p-3 bg-[#0A0F11] border border-[#263437] rounded-xl text-center">
                   <div>
-                    <p className="text-[10px] text-[#5B616E] font-mono">Win Rate</p>
+                    <p className="text-[10px] text-[#93A09A] font-mono">Win Rate</p>
                     <p className="text-sm font-mono font-semibold text-[#22C55E]">{trader.winRate}%</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-[#5B616E] font-mono">30D Return</p>
+                    <p className="text-[10px] text-[#93A09A] font-mono">30D Return</p>
                     <p className="text-sm font-mono font-semibold text-[#22C55E]">+{trader.thirtyDayReturn}%</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-[#5B616E] font-mono">Risk Level</p>
-                    <p className="text-sm font-mono font-semibold text-[#0A0D0C]">{trader.riskLevel} / 5</p>
+                    <p className="text-[10px] text-[#93A09A] font-mono">Risk Level</p>
+                    <p className="text-sm font-mono font-semibold text-[#F3F7F4]">{trader.riskLevel} / 5</p>
                   </div>
                 </div>
 
@@ -86,8 +86,8 @@ export default function TradersPage() {
                   onClick={() => handleCopy(trader.id)}
                   className={`w-full py-3 rounded-full text-xs font-semibold transition-colors flex items-center justify-center gap-2 ${
                     isCopying
-                      ? 'bg-[#F7F7F7] border border-[#DEE1E6] text-[#0A0D0C] hover:bg-[#202722]'
-                      : 'bg-[#22C55E] text-[#0A0D0C] hover:bg-[#16A34A]'
+                      ? 'bg-[#0A0F11] border border-[#263437] text-[#F3F7F4] hover:bg-[#202722]'
+                      : 'bg-[#22C55E] text-[#F3F7F4] hover:bg-[#16A34A]'
                   }`}
                 >
                   <Icon icon="solar:users-group-rounded-bold" className="w-4 h-4" />

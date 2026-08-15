@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Sidebar from '@/components/Sidebar';
+import InvestorSidebar from '@/components/InvestorSidebar';
 import OnboardingModal from '@/components/OnboardingModal';
 import KycModal from '@/components/KycModal';
 import RoiCalculatorModal from '@/components/RoiCalculatorModal';
@@ -39,21 +39,21 @@ export default function InvestorDashboard() {
   }, [user.onboardingCompleted]);
 
   return (
-    <div className="min-h-screen bg-[#F7F7F7] text-[#0A0D0C] flex flex-col md:flex-row font-sans">
-      <Sidebar
+    <div className="dashboard-shell min-h-screen bg-[#0A0F11] text-[#F3F7F4] flex flex-col md:flex-row font-sans">
+      <InvestorSidebar
         onOpenDeposit={() => {}}
         onOpenWithdraw={() => {}}
         onOpenCalculator={() => setIsCalcOpen(true)}
       />
 
-      <main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
+      <main className="dashboard-main flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
         {/* Top Header Bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#DEE1E6] pb-6">
+        <div className="dashboard-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#263437] pb-6">
           <div className="flex items-center gap-3">
             <img src={user.avatar} alt={user.name} className="w-12 h-12 rounded-full border-2 border-[#22C55E]/40 object-cover shadow-md" />
             <div>
-              <h1 className="text-2xl font-normal text-[#0A0D0C]">Hello, {user.name}</h1>
-              <p className="text-xs text-[#5B616E] flex items-center gap-2">
+              <h1 className="text-2xl font-normal text-[#F3F7F4]">Hello, {user.name}</h1>
+              <p className="text-xs text-[#93A09A] flex items-center gap-2">
                 Plan: <span className="text-[#22C55E] font-semibold font-mono">{user.plan}</span>
                 <span>•</span>
                 KYC:{' '}
@@ -80,7 +80,7 @@ export default function InvestorDashboard() {
             )}
             <button
               onClick={() => setIsCalcOpen(true)}
-              className="px-4 py-2 rounded-full bg-white border border-[#DEE1E6] text-[#22C55E] text-xs font-mono hover:bg-[#F7F7F7] transition-colors flex items-center gap-1.5"
+              className="px-4 py-2 rounded-full bg-[#141C1F] border border-[#263437] text-[#22C55E] text-xs font-mono hover:bg-[#0A0F11] transition-colors flex items-center gap-1.5"
             >
               <Icon icon="solar:calculator-bold" className="w-4 h-4" />
               <span>ROI Calculator</span>
@@ -90,7 +90,7 @@ export default function InvestorDashboard() {
 
         {/* KYC Floating Banner Alert */}
         {user.kycStatus !== 'approved' && (
-          <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="dashboard-kyc-alert p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <Icon icon="solar:shield-warning-bold" className="w-6 h-6 text-amber-400 shrink-0" />
               <p className="text-xs text-amber-200">
@@ -99,7 +99,7 @@ export default function InvestorDashboard() {
             </div>
             <button
               onClick={() => setIsKycOpen(true)}
-              className="px-5 py-2 rounded-full bg-amber-400 text-[#0A0D0C] text-xs font-semibold hover:bg-amber-300 transition-colors whitespace-nowrap"
+              className="px-5 py-2 rounded-full bg-amber-400 text-[#F3F7F4] text-xs font-semibold hover:bg-amber-300 transition-colors whitespace-nowrap"
             >
               Upload Documents Now
             </button>
@@ -107,17 +107,17 @@ export default function InvestorDashboard() {
         )}
 
         {/* Physical Metallic Balance Card */}
-        <div className="relative overflow-hidden p-6 sm:p-8 rounded-2xl bg-white border border-[#DEE1E6] shadow-2xl space-y-6">
+        <div className="dashboard-balance-card relative overflow-hidden p-6 sm:p-8 rounded-2xl bg-[#141C1F] border border-[#263437] shadow-2xl space-y-6">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-xs uppercase font-mono tracking-wider text-[#5B616E]">Total Portfolio Balance</p>
+              <p className="text-xs uppercase font-mono tracking-wider text-[#93A09A]">Total Portfolio Balance</p>
               <div className="flex items-center gap-3 mt-1">
-                <h2 className="text-3xl sm:text-5xl font-mono font-semibold text-[#0A0D0C]">
+                <h2 className="text-3xl sm:text-5xl font-mono font-semibold text-[#F3F7F4]">
                   {isMasked ? '••••••••' : `$${user.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
                 </h2>
                 <button
                   onClick={() => setIsMasked(!isMasked)}
-                  className="p-2 text-[#5B616E] hover:text-[#0A0D0C] transition-colors"
+                  className="p-2 text-[#93A09A] hover:text-[#F3F7F4] transition-colors"
                 >
                   <Icon icon={isMasked ? 'solar:eye-bold' : 'solar:eye-closed-bold'} className="w-5 h-5" />
                 </button>
@@ -133,37 +133,37 @@ export default function InvestorDashboard() {
           </div>
 
           {/* Quick Metrics Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-[#DEE1E6]">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-[#263437]">
             <div>
-              <p className="text-[10px] uppercase font-mono text-[#5B616E]">Total Invested</p>
-              <p className="text-base font-mono font-semibold text-[#0A0D0C]">${user.totalInvested.toLocaleString()}</p>
+              <p className="text-[10px] uppercase font-mono text-[#93A09A]">Total Invested</p>
+              <p className="text-base font-mono font-semibold text-[#F3F7F4]">${user.totalInvested.toLocaleString()}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase font-mono text-[#5B616E]">Total ROI Profit</p>
+              <p className="text-[10px] uppercase font-mono text-[#93A09A]">Total ROI Profit</p>
               <p className="text-base font-mono font-semibold text-[#22C55E]">+${user.totalProfit.toLocaleString()}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase font-mono text-[#5B616E]">Daily ROI</p>
+              <p className="text-[10px] uppercase font-mono text-[#93A09A]">Daily ROI</p>
               <p className={`text-base font-mono font-semibold ${user.dailyRoiPercent >= 0 ? 'text-[#22C55E]' : 'text-[#CF202F]'}`}>
                 {user.dailyRoiPercent >= 0 ? '+' : ''}{user.dailyRoiPercent}%
               </p>
             </div>
             <div>
-              <p className="text-[10px] uppercase font-mono text-[#5B616E]">All-Time Return</p>
+              <p className="text-[10px] uppercase font-mono text-[#93A09A]">All-Time Return</p>
               <p className="text-base font-mono font-semibold text-[#22C55E]">+{user.allTimeRoiPercent}%</p>
             </div>
           </div>
         </div>
 
         {/* Interactive Performance & Calculator Graph */}
-        <div className="p-6 rounded-2xl bg-white border border-[#DEE1E6] space-y-4">
+        <div className="dashboard-chart-card p-6 rounded-2xl bg-[#141C1F] border border-[#263437] space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
-              <h3 className="text-base font-normal text-[#0A0D0C] flex items-center gap-2">
+              <h3 className="text-base font-normal text-[#F3F7F4] flex items-center gap-2">
                 Portfolio Signal Growth Line
                 <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse"></span>
               </h3>
-              <p className="text-xs text-[#5B616E]">Dynamic daily updates driven by trading firm strategy execution</p>
+              <p className="text-xs text-[#93A09A]">Dynamic daily updates driven by trading firm strategy execution</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono text-[#22C55E] bg-[#22C55E]/10 border border-[#22C55E]/30 px-3 py-1 rounded-full">
@@ -194,18 +194,18 @@ export default function InvestorDashboard() {
         </div>
 
         {/* Daily Strategy Activity Log */}
-        <div className="p-6 rounded-2xl bg-white border border-[#DEE1E6] space-y-4">
-          <h3 className="text-base font-normal text-[#0A0D0C]">Daily ROI Strategy Activity Log</h3>
+        <div className="dashboard-activity-card p-6 rounded-2xl bg-[#141C1F] border border-[#263437] space-y-4">
+          <h3 className="text-base font-normal text-[#F3F7F4]">Daily ROI Strategy Activity Log</h3>
           <div className="space-y-3">
             {dailyLogs.map((log) => (
-              <div key={log.id} className="p-4 bg-[#F7F7F7] border border-[#DEE1E6] rounded-xl flex items-center justify-between">
+              <div key={log.id} className="p-4 bg-[#0A0F11] border border-[#263437] rounded-xl flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className={`w-9 h-9 rounded-full flex items-center justify-center ${log.percentage >= 0 ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-[#CF202F]/10 text-[#CF202F]'}`}>
                     <Icon icon={log.percentage >= 0 ? 'solar:graph-up-bold' : 'solar:graph-down-bold'} className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-[#0A0D0C]">{log.marketNote}</p>
-                    <p className="text-[10px] text-[#5B616E] font-mono">{log.date}</p>
+                    <p className="text-xs font-semibold text-[#F3F7F4]">{log.marketNote}</p>
+                    <p className="text-[10px] text-[#93A09A] font-mono">{log.date}</p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -226,9 +226,9 @@ export default function InvestorDashboard() {
 
       {/* Interactive Welcome Tour Overlay */}
       {tourStep !== null && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 text-[#0A0D0C]">
-          <div className="bg-white border border-[#DEE1E6] rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-[#DEE1E6] pb-2">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 text-[#F3F7F4]">
+          <div className="bg-[#141C1F] border border-[#263437] rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between border-b border-[#263437] pb-2">
               <span className="text-[10px] uppercase font-mono text-[#22C55E] font-bold tracking-wider">
                 Step {tourStep + 1} of 4 • User Guide
               </span>
@@ -237,7 +237,7 @@ export default function InvestorDashboard() {
                   setTourStep(null);
                   localStorage.setItem('quantovest_tour_completed', 'true');
                 }}
-                className="text-[#5B616E] hover:text-[#0A0D0C] text-xs font-semibold"
+                className="text-[#93A09A] hover:text-[#F3F7F4] text-xs font-semibold"
               >
                 Skip Tour
               </button>
@@ -245,10 +245,10 @@ export default function InvestorDashboard() {
 
             {tourStep === 0 && (
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-[#0A0D0C]">
+                <h4 className="text-sm font-semibold text-[#F3F7F4]">
                   Welcome to Quantovest Capital
                 </h4>
-                <p className="text-xs text-[#5B616E] leading-relaxed">
+                <p className="text-xs text-[#93A09A] leading-relaxed">
                   Let&apos;s take a quick 30-second tour of your new light-theme managed investment portal.
                 </p>
               </div>
@@ -256,10 +256,10 @@ export default function InvestorDashboard() {
 
             {tourStep === 1 && (
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-[#0A0D0C]">
+                <h4 className="text-sm font-semibold text-[#F3F7F4]">
                   Live Portfolio Balance
                 </h4>
-                <p className="text-xs text-[#5B616E] leading-relaxed">
+                <p className="text-xs text-[#93A09A] leading-relaxed">
                   This card displays your total current capital, absolute ROI profits, and the overall yield of your managed assets.
                 </p>
               </div>
@@ -267,10 +267,10 @@ export default function InvestorDashboard() {
 
             {tourStep === 2 && (
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-[#0A0D0C]">
+                <h4 className="text-sm font-semibold text-[#F3F7F4]">
                   Portfolio Strategy Managers
                 </h4>
-                <p className="text-xs text-[#5B616E] leading-relaxed">
+                <p className="text-xs text-[#93A09A] leading-relaxed">
                   Click on the "Portfolio Managers" tab in the sidebar (or bottom bar on mobile) to select and follow institutional strategy experts.
                 </p>
               </div>
@@ -278,10 +278,10 @@ export default function InvestorDashboard() {
 
             {tourStep === 3 && (
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-[#0A0D0C]">
+                <h4 className="text-sm font-semibold text-[#F3F7F4]">
                   Funding & Payouts
                 </h4>
-                <p className="text-xs text-[#5B616E] leading-relaxed">
+                <p className="text-xs text-[#93A09A] leading-relaxed">
                   Deposit capital via cryptocurrency to start strategy mirroring instantly, or request withdrawals back to your wallet or bank account.
                 </p>
               </div>
@@ -293,8 +293,8 @@ export default function InvestorDashboard() {
                 disabled={tourStep === 0}
                 className={`px-4 py-2 rounded-full text-xs font-semibold border ${
                   tourStep === 0 
-                    ? 'border-[#DEE1E6] text-[#DEE1E6]/50 cursor-not-allowed' 
-                    : 'border-[#DEE1E6] text-[#5B616E] hover:bg-[#F7F7F7]'
+                    ? 'border-[#263437] text-[#DEE1E6]/50 cursor-not-allowed' 
+                    : 'border-[#263437] text-[#93A09A] hover:bg-[#0A0F11]'
                 }`}
               >
                 Back
@@ -308,7 +308,7 @@ export default function InvestorDashboard() {
                     setTourStep(prev => prev !== null ? prev + 1 : null);
                   }
                 }}
-                className="px-5 py-2 rounded-full text-xs font-semibold bg-[#22C55E] text-[#0A0D0C] hover:bg-[#16A34A] transition-colors"
+                className="px-5 py-2 rounded-full text-xs font-semibold bg-[#22C55E] text-[#F3F7F4] hover:bg-[#16A34A] transition-colors"
               >
                 {tourStep === 3 ? 'Get Started' : 'Next'}
               </button>
