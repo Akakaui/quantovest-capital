@@ -23,8 +23,8 @@ export async function POST(request: Request) {
   if (existing[0]) return NextResponse.json({ created: false, reason: "already_rewarded", reward: existing[0] });
   const rewardAmountCents = Math.max(0, Math.floor(deposit[0].amountCents * RATE_BPS / 10_000));
   const created = await db.transaction(async tx => {
-    const inserted = await tx.insert(referralRewards).values({ attributionId: attribution[0].id, referrerId: attribution[0].referrerId, referredInvestorId: body.referredInvestorId!, qualifyingDepositId: body.depositId!, idempotencyKey: key, qualifyingAmountCents: deposit[0].amountCents, rewardAmountCents, status: "available" });
-    const rewardId = Number(inserted[0].insertId);
+    const inserted = await tx.insert(referralRewards).values({ attributionId: attribution[0].id, referrerId: attribution[0].referrerId, referredInvestorId: body.referredInvestorId!, qualifyingDepositId: body.depositId!, idempotencyKey: key, qualifyingAmountCents: deposit[0].amountCents, rewardAmountCents, status: "available" }).returning({ id: referralRewards.id });
+    const rewardId = inserted[0].id;
     await tx.insert(notifications).values({ userId: attribution[0].referrerId, type: "referral_reward_credited", title: "Referral bonus credited", body: `Your referral generated a 10% first-deposit bonus of $${(rewardAmountCents / 100).toFixed(2)}.`, relatedRewardId: rewardId });
     return rewardId;
   });

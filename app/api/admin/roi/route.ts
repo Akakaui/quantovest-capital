@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getCurrentIdentity } from "@/lib/supabase/identity";
 import { getDb } from "@/lib/db";
 import { investorAccounts, plans, portfolioLedger, roiEntries } from "@/db/schema";
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const actor = await getCurrentIdentity();
+  if (!actor?.id || actor.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const db = getDb();
   if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
   const body = await request.json().catch(() => null) as { investorId?: string; percentageBps?: number; marketNote?: string } | null;
@@ -20,8 +19,8 @@ export async function POST(request: Request) {
       const { account: investorAccount, plan } = account[0];
       if (body.percentageBps! < plan.minRoiBps || body.percentageBps! > plan.maxRoiBps) throw new Error(`ROI must be between ${plan.minRoiBps / 100}% and ${plan.maxRoiBps / 100}% for the ${plan.name} plan.`);
       const profitCents = Math.floor(investorAccount.balanceCents * body.percentageBps! / 10_000);
-      const inserted = await tx.insert(roiEntries).values({ investorId: body.investorId!, planId: plan.id, percentageBps: body.percentageBps!, profitCents, marketNote: body.marketNote!.trim(), publishedBy: session.user.id! });
-      const roiId = Number(inserted[0].insertId);
+      const inserted = await tx.insert(roiEntries).values({ investorId: body.investorId!, planId: plan.id, percentageBps: body.percentageBps!, profitCents, marketNote: body.marketNote!.trim(), publishedBy: actor.id }).returning({ id: roiEntries.id });
+      const roiId = inserted[0].id;
       await tx.update(investorAccounts).set({ balanceCents: investorAccount.balanceCents + profitCents }).where(eq(investorAccounts.id, investorAccount.id));
       await tx.insert(portfolioLedger).values({ investorId: body.investorId!, type: "roi", amountCents: profitCents, referenceId: String(roiId), description: body.marketNote!.trim() });
       return { roiId, profitCents, planName: plan.name };

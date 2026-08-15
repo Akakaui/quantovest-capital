@@ -23,8 +23,8 @@ export async function POST() {
   const existing = await db.select().from(referralLinks).where(eq(referralLinks.ownerId, session.user.id)).limit(1);
   if (existing[0]) return NextResponse.json(existing[0]);
   const code = `QV-${randomBytes(5).toString("hex").toUpperCase()}`;
-  const inserted = await db.insert(referralLinks).values({ ownerId: session.user.id, code });
-  return NextResponse.json({ id: Number(inserted[0].insertId), ownerId: session.user.id, code }, { status: 201 });
+  const inserted = await db.insert(referralLinks).values({ ownerId: session.user.id, code }).returning({ id: referralLinks.id });
+  return NextResponse.json({ id: inserted[0].id, ownerId: session.user.id, code }, { status: 201 });
 }
 
 export async function PUT(request: Request) {
@@ -39,6 +39,6 @@ export async function PUT(request: Request) {
   if (!link[0] || link[0].ownerId === session.user.id) return NextResponse.json({ error: "Referral code is unavailable" }, { status: 400 });
   const existing = await db.select().from(referralAttributions).where(eq(referralAttributions.referredInvestorId, session.user.id)).limit(1);
   if (existing[0]) return NextResponse.json(existing[0]);
-  const inserted = await db.insert(referralAttributions).values({ referrerId: link[0].ownerId, referredInvestorId: session.user.id, linkId: link[0].id, status: "active" });
-  return NextResponse.json({ id: Number(inserted[0].insertId), referrerId: link[0].ownerId, referredInvestorId: session.user.id, linkId: link[0].id, status: "active" }, { status: 201 });
+  const inserted = await db.insert(referralAttributions).values({ referrerId: link[0].ownerId, referredInvestorId: session.user.id, linkId: link[0].id, status: "active" }).returning({ id: referralAttributions.id });
+  return NextResponse.json({ id: inserted[0].id, referrerId: link[0].ownerId, referredInvestorId: session.user.id, linkId: link[0].id, status: "active" }, { status: 201 });
 }

@@ -1,120 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import InvestorSidebar from '@/components/InvestorSidebar';
-import { useQuantovestStore, WithdrawalRequest } from '@/lib/store';
 import { Icon } from '@iconify/react';
 
+type Withdrawal = { id: number; amountCents: number; destination: string; destinationType: string; status: string };
+
 export default function WithdrawPage() {
-  const { user, withdrawals, submitWithdrawal } = useQuantovestStore();
-  const [amount, setAmount] = useState<number>(200);
+  const [amount, setAmount] = useState(500);
   const [destination, setDestination] = useState('');
-  const [method, setMethod] = useState<WithdrawalRequest['method']>('Bank Wire');
+  const [destinationType, setDestinationType] = useState<'bank' | 'crypto'>('bank');
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [submitted, setSubmitted] = useState(false);
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (amount > user.balance) return;
-    submitWithdrawal(amount, destination || 'Bank Wire ****9821', method);
-    setSubmitted(true);
-  };
+  async function load() { const response = await fetch('/api/withdrawals', { cache: 'no-store' }); if (response.ok) setWithdrawals(await response.json()); else setMessage('Unable to load withdrawal history.'); setLoading(false); }
+  useEffect(() => { void load(); }, []);
+  async function handleSubmit(event: React.FormEvent) { event.preventDefault(); setSubmitting(true); setMessage(''); const response = await fetch('/api/withdrawals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ amountCents: Math.round(amount * 100), destinationType, destination }) }); const data = await response.json().catch(() => ({})); if (response.ok) { setSubmitted(true); await load(); } else setMessage(data.error ?? 'Withdrawal request failed.'); setSubmitting(false); }
 
-  return (
-    <div className="min-h-screen bg-[#0A0F11] text-[#F3F7F4] flex flex-col md:flex-row font-sans">
-      <InvestorSidebar />
-
-      <main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
-        <div className="border-b border-[#263437] pb-6 space-y-1">
-          <h1 className="text-2xl font-normal text-[#F3F7F4]">Withdraw Capital</h1>
-          <p className="text-xs text-[#93A09A]">Request capital withdrawals directly to your bank account or crypto wallet.</p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Withdrawal Form */}
-          <div className="bg-[#141C1F] border border-[#263437] rounded-2xl p-6 sm:p-8 space-y-6">
-            <div className="p-4 bg-[#0A0F11] border border-[#263437] rounded-xl flex justify-between items-center text-xs">
-              <span className="text-[#93A09A]">Available Balance:</span>
-              <span className="font-mono font-semibold text-[#F3F7F4] text-sm">${user.balance.toLocaleString()}</span>
-            </div>
-
-            {submitted ? (
-              <div className="py-6 text-center space-y-3">
-                <Icon icon="solar:check-circle-bold" className="w-10 h-10 text-[#22C55E] mx-auto" />
-                <h3 className="text-base font-normal text-[#F3F7F4]">Withdrawal Request Submitted</h3>
-                <p className="text-xs text-[#93A09A]">Your request for ${amount} is pending Admin processing.</p>
-                <button
-                  onClick={() => setSubmitted(false)}
-                  className="px-5 py-2 rounded-full text-xs font-semibold bg-[#22C55E] text-[#F3F7F4]"
-                >
-                  New Request
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="text-xs text-[#93A09A] block mb-1">Withdrawal Amount ($)</label>
-                  <input
-                    type="number"
-                    max={user.balance}
-                    required
-                    value={amount}
-                    onChange={e => setAmount(Number(e.target.value))}
-                    className="w-full bg-[#0A0F11] border border-[#263437] rounded-xl px-4 py-2.5 text-xs text-[#F3F7F4] font-mono placeholder-[#5B616E] focus:outline-none focus:border-[#22C55E]"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs text-[#93A09A] block mb-1">Payout Destination Details</label>
-                  <input
-                    type="text"
-                    required
-                    value={destination}
-                    onChange={e => setDestination(e.target.value)}
-                    placeholder="Bank Account IBAN or Crypto Wallet Address"
-                    className="w-full bg-[#0A0F11] border border-[#263437] rounded-xl px-4 py-2.5 text-xs text-[#F3F7F4] font-mono placeholder-[#5B616E] focus:outline-none focus:border-[#22C55E]"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={amount > user.balance}
-                  className={`w-full py-3.5 rounded-full text-xs font-semibold ${
-                    amount <= user.balance
-                      ? 'bg-[#22C55E] text-[#F3F7F4] hover:bg-[#16A34A]'
-                      : 'bg-[#202722] text-[#93A09A] cursor-not-allowed'
-                  } transition-colors shadow-lg mt-2`}
-                >
-                  Submit Withdrawal Request
-                </button>
-              </form>
-            )}
-          </div>
-
-          {/* Withdrawal History Tracker */}
-          <div className="bg-[#141C1F] border border-[#263437] rounded-2xl p-6 sm:p-8 space-y-4">
-            <h3 className="text-base font-normal text-[#F3F7F4]">Withdrawal History & Status Tracker</h3>
-            <div className="space-y-3">
-              {withdrawals.map((w) => (
-                <div key={w.id} className="p-4 bg-[#0A0F11] border border-[#263437] rounded-xl flex items-center justify-between text-xs">
-                  <div>
-                    <p className="font-semibold text-[#F3F7F4] font-mono">${w.amount.toLocaleString()}</p>
-                    <p className="text-[10px] text-[#93A09A] truncate max-w-[180px]">{w.destination}</p>
-                  </div>
-                  <span
-                    className={`px-2.5 py-1 rounded-full font-mono text-[10px] font-semibold ${
-                      w.status === 'approved'
-                        ? 'bg-[#22C55E]/10 text-[#22C55E]'
-                        : 'bg-amber-500/20 text-amber-400'
-                    }`}
-                  >
-                    {w.status.toUpperCase()}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
+  return <div className="min-h-screen bg-[#0A0F11] text-[#F3F7F4] flex flex-col md:flex-row font-sans"><InvestorSidebar /><main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8"><div className="border-b border-[#263437] pb-6 space-y-1"><h1 className="text-2xl font-normal">Withdraw Capital</h1><p className="text-xs text-[#93A09A]">Request capital withdrawals directly to your bank account or crypto wallet.</p></div>{message && <div role="alert" className="rounded-xl border border-rose-400/40 bg-rose-400/10 p-4 text-xs text-rose-200">{message}</div>}<div className="grid grid-cols-1 lg:grid-cols-2 gap-8"><div className="bg-[#141C1F] border border-[#263437] rounded-2xl p-6 sm:p-8 space-y-6">{submitted ? <div className="py-6 text-center space-y-3"><Icon icon="solar:check-circle-bold" className="w-10 h-10 text-[#22C55E] mx-auto" /><h3 className="text-base">Withdrawal Request Submitted</h3><p className="text-xs text-[#93A09A]">Your request for ${amount.toLocaleString()} is pending Admin processing.</p><button onClick={() => setSubmitted(false)} className="px-5 py-2 rounded-full text-xs font-semibold bg-[#22C55E] text-[#07110B]">New Request</button></div> : <form onSubmit={handleSubmit} className="space-y-4"><div className="rounded-xl border border-[#263437] bg-[#0A0F11] p-4 text-xs text-[#93A09A]">All requests are held for admin review. Minimum withdrawal: <strong className="text-white">$500</strong>.</div><label className="text-xs text-[#93A09A] block">Withdrawal Amount ($)<input type="number" min="500" step="0.01" required value={amount} onChange={event => setAmount(Number(event.target.value))} className="mt-1 w-full bg-[#0A0F11] border border-[#263437] rounded-xl px-4 py-2.5 text-xs text-white font-mono" /></label><label className="text-xs text-[#93A09A] block">Payout rail<select value={destinationType} onChange={event => setDestinationType(event.target.value as 'bank' | 'crypto')} className="mt-1 w-full bg-[#0A0F11] border border-[#263437] rounded-xl px-4 py-2.5 text-xs text-white"><option value="bank">Bank</option><option value="crypto">Crypto</option></select></label><label className="text-xs text-[#93A09A] block">Destination details<input required value={destination} onChange={event => setDestination(event.target.value)} placeholder={destinationType === 'bank' ? 'IBAN or account details' : 'Wallet address'} className="mt-1 w-full bg-[#0A0F11] border border-[#263437] rounded-xl px-4 py-2.5 text-xs text-white font-mono" /></label><button type="submit" disabled={submitting} className="w-full py-3.5 rounded-full text-xs font-semibold bg-[#22C55E] text-[#07110B] disabled:opacity-40">{submitting ? 'Submitting…' : 'Submit Withdrawal Request'}</button></form>}</div><div className="bg-[#141C1F] border border-[#263437] rounded-2xl p-6 sm:p-8 space-y-4"><h3 className="text-base">Withdrawal History & Status Tracker</h3>{loading ? <div className="space-y-3"><div className="h-16 rounded-xl bg-white/5 animate-pulse" /><div className="h-16 rounded-xl bg-white/5 animate-pulse" /></div> : withdrawals.length === 0 ? <div className="rounded-xl border border-dashed border-[#263437] p-8 text-center text-xs text-[#93A09A]">No withdrawal requests yet.</div> : <div className="space-y-3">{withdrawals.map(withdrawal => <div key={withdrawal.id} className="p-4 bg-[#0A0F11] border border-[#263437] rounded-xl flex items-center justify-between text-xs"><div><p className="font-semibold font-mono">${(withdrawal.amountCents / 100).toLocaleString()}</p><p className="text-[10px] text-[#93A09A] truncate max-w-[180px]">{withdrawal.destination}</p></div><span className="px-2.5 py-1 rounded-full font-mono text-[10px] font-semibold bg-amber-500/20 text-amber-400">{withdrawal.status.toUpperCase()}</span></div>)}</div>}</div></div></main></div>;
 }

@@ -21,7 +21,6 @@
     "framer-motion": "^11.11.17",
     "gsap": "^3.12.5",
     "lucide-react": "^0.456.0",
-    "mysql2": "^3.23.3",
     "next": "^14.2.18",
     "next-auth": "4.24.11",
     "postgres": "^3.4.9",

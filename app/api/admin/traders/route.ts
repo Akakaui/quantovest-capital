@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getCurrentIdentity } from "@/lib/supabase/identity";
 import { getDb } from "@/lib/db";
 import { traders } from "@/db/schema";
 
@@ -11,8 +10,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const actor = await getCurrentIdentity();
+  if (!actor?.id || actor.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const db = getDb();
   if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
   const body = await request.json().catch(() => null) as { name?: string; specialty?: string; imagePath?: string; imageUrl?: string; winRateBps?: number; thirtyDayReturnBps?: number; riskLevel?: number; bio?: string } | null;

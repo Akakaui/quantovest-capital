@@ -28,8 +28,8 @@ export async function POST(request: Request) {
       if (available < MIN_WITHDRAWAL_CENTS) throw new Error("Referral balance has not reached the $500 minimum.");
       if (body.amountCents !== available) throw new Error("For ledger safety, request the full available referral balance.");
       for (const reward of rewards) await tx.update(referralRewards).set({ status: "held" }).where(and(eq(referralRewards.id, reward.id), eq(referralRewards.status, "available")));
-      const inserted = await tx.insert(referralWithdrawals).values({ investorId: session.user.id, amountCents: body.amountCents, destinationType, destination, destinationDetails, status: "pending" });
-      return Number(inserted[0].insertId);
+      const inserted = await tx.insert(referralWithdrawals).values({ investorId: session.user.id, amountCents: body.amountCents, destinationType, destination, destinationDetails, status: "pending" }).returning({ id: referralWithdrawals.id });
+      return inserted[0].id;
     });
     return NextResponse.json({ withdrawalId: result, status: "pending" }, { status: 201 });
   } catch (error) {
