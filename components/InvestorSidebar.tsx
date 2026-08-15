@@ -17,6 +17,7 @@ const navLinks = [
   { label: 'Portfolio Managers', href: '/dashboard/traders', icon: 'solar:users-group-rounded-bold' },
   { label: 'Deposit', href: '/dashboard/deposit', icon: 'solar:wallet-money-bold' },
   { label: 'Withdraw', href: '/dashboard/withdraw', icon: 'solar:card-send-bold' },
+  { label: 'Referrals', href: '/dashboard/referrals', icon: 'solar:share-bold' },
   { label: 'Identity KYC', href: '/dashboard/kyc', icon: 'solar:shield-check-bold' },
   { label: 'Settings', href: '/dashboard/settings', icon: 'solar:settings-bold' },
 ];
