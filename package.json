@@ -13,6 +13,8 @@
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
     "@iconify/react": "^5.0.0",
+    "@supabase/ssr": "^0.12.4",
+    "@supabase/supabase-js": "^2.112.3",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.2",
@@ -22,6 +24,7 @@
     "mysql2": "^3.23.3",
     "next": "^14.2.18",
     "next-auth": "4.24.11",
+    "postgres": "^3.4.9",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.13.3",

@@ -1,158 +1,41 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AdminSidebar from '@/components/AdminSidebar';
-import { useQuantovestStore, MasterTrader } from '@/lib/store';
-import { Icon } from '@iconify/react';
+
+type Trader = { id: string; name: string; specialty: string; imagePath?: string | null; imageUrl?: string | null; winRateBps: number; thirtyDayReturnBps: number; riskLevel: number; bio?: string | null };
 
 export default function AdminTradersPage() {
-  const { traders, createTrader } = useQuantovestStore();
+  const [traders, setTraders] = useState<Trader[]>([]);
   const [name, setName] = useState('');
-  const [specialty, setSpecialty] = useState<MasterTrader['specialty']>('FX Specialist');
-  const [winRate, setWinRate] = useState(92.5);
-  const [riskLevel, setRiskLevel] = useState<1 | 2 | 3 | 4 | 5>(2);
-  const [thirtyDayReturn, setThirtyDayReturn] = useState(25.0);
+  const [specialty, setSpecialty] = useState('FX Specialist');
+  const [winRate, setWinRate] = useState('92.5');
+  const [returnRate, setReturnRate] = useState('25');
+  const [riskLevel, setRiskLevel] = useState('2');
   const [bio, setBio] = useState('');
+  const [image, setImage] = useState<File | null>(null);
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    createTrader({
-      name,
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-      specialty,
-      winRate,
-      riskLevel,
-      thirtyDayReturn,
-      totalFollowers: 100,
-      bio: bio || 'Institutional strategy execution trader focusing on momentum alpha.',
-      assets: ['EUR/USD', 'BTC/USD']
-    });
-    setName('');
-    setBio('');
-  };
+  async function load() { const response = await fetch('/api/admin/traders', { cache: 'no-store' }); if (response.ok) setTraders(await response.json()); }
+  useEffect(() => { void load(); }, []);
 
-  return (
-    <div className="min-h-screen bg-[#0A0D0C] text-white flex flex-col md:flex-row font-sans">
-      <AdminSidebar />
+  async function submit(event: React.FormEvent) {
+    event.preventDefault(); setSubmitting(true); setMessage('');
+    let imagePath = '';
+    if (image) {
+      const form = new FormData(); form.append('file', image); form.append('purpose', 'trader');
+      const upload = await fetch('/api/uploads', { method: 'POST', body: form });
+      const uploadData = await upload.json().catch(() => ({}));
+      if (!upload.ok) { setMessage(uploadData.error ?? 'Image upload failed.'); setSubmitting(false); return; }
+      imagePath = uploadData.path;
+    }
+    const response = await fetch('/api/admin/traders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, specialty, imagePath, winRateBps: Math.round(Number(winRate) * 100), thirtyDayReturnBps: Math.round(Number(returnRate) * 100), riskLevel: Number(riskLevel), bio }) });
+    const data = await response.json().catch(() => ({}));
+    setMessage(response.ok ? 'Trader profile created.' : data.error ?? 'Trader creation failed.');
+    if (response.ok) { setName(''); setBio(''); setImage(null); await load(); }
+    setSubmitting(false);
+  }
 
-      <main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
-        <div className="border-b border-[#202722] pb-6 space-y-1">
-          <h1 className="text-2xl font-normal text-white">Master Trader Profile Manager</h1>
-          <p className="text-xs text-[#A8ACB3]">Create and manage institutional master trader profiles visible to investors.</p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Create Trader Form */}
-          <form onSubmit={handleSubmit} className="bg-[#12161A] border border-[#202722] rounded-2xl p-6 sm:p-8 space-y-4">
-            <h3 className="text-base font-normal text-white mb-2">Create New Master Trader Profile</h3>
-            
-            <div>
-              <label className="text-xs text-[#A8ACB3] block mb-1">Trader Legal / Display Name</label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="e.g. Victor Krum — FX Strategist"
-                className="w-full bg-[#0A0D0C] border border-[#202722] rounded-xl px-4 py-2.5 text-xs text-white placeholder-[#A8ACB3] focus:outline-none focus:border-[#22C55E]"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-[#A8ACB3] block mb-1">Specialty Focus</label>
-                <select
-                  value={specialty}
-                  onChange={e => setSpecialty(e.target.value as MasterTrader['specialty'])}
-                  className="w-full bg-[#0A0D0C] border border-[#202722] rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-[#22C55E]"
-                >
-                  <option value="FX Specialist">FX Specialist</option>
-                  <option value="Crypto Arbitrage">Crypto Arbitrage</option>
-                  <option value="Equities Momentum">Equities Momentum</option>
-                  <option value="Multi-Asset Macro">Multi-Asset Macro</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="text-xs text-[#A8ACB3] block mb-1">Win Rate (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  required
-                  value={winRate}
-                  onChange={e => setWinRate(Number(e.target.value))}
-                  className="w-full bg-[#0A0D0C] border border-[#202722] rounded-xl px-4 py-2.5 text-xs text-white font-mono placeholder-[#A8ACB3] focus:outline-none focus:border-[#22C55E]"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-[#A8ACB3] block mb-1">30-Day Return (%)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  required
-                  value={thirtyDayReturn}
-                  onChange={e => setThirtyDayReturn(Number(e.target.value))}
-                  className="w-full bg-[#0A0D0C] border border-[#202722] rounded-xl px-4 py-2.5 text-xs text-white font-mono placeholder-[#A8ACB3] focus:outline-none focus:border-[#22C55E]"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-[#A8ACB3] block mb-1">Risk Score (1 to 5)</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="5"
-                  required
-                  value={riskLevel}
-                  onChange={e => setRiskLevel(Number(e.target.value) as any)}
-                  className="w-full bg-[#0A0D0C] border border-[#202722] rounded-xl px-4 py-2.5 text-xs text-white font-mono placeholder-[#A8ACB3] focus:outline-none focus:border-[#22C55E]"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs text-[#A8ACB3] block mb-1">Trader Strategy Bio</label>
-              <textarea
-                rows={2}
-                value={bio}
-                onChange={e => setBio(e.target.value)}
-                placeholder="Institutional background, market pairing focus..."
-                className="w-full bg-[#0A0D0C] border border-[#202722] rounded-xl p-3 text-xs text-white placeholder-[#A8ACB3] focus:outline-none focus:border-[#22C55E]"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3.5 rounded-full bg-[#22C55E] text-[#E8EFEB] font-semibold text-xs hover:bg-[#16A34A] transition-colors shadow-lg mt-2"
-            >
-              Add Master Trader Profile
-            </button>
-          </form>
-
-          {/* Existing Traders List */}
-          <div className="space-y-4">
-            <h3 className="text-base font-normal text-white">Active Master Traders ({traders.length})</h3>
-            {traders.map((trader) => (
-              <div key={trader.id} className="p-4 rounded-xl bg-[#12161A] border border-[#202722] flex items-center justify-between text-xs">
-                <div className="flex items-center gap-3">
-                  <img src={trader.avatar} alt={trader.name} className="w-10 h-10 rounded-full object-cover border border-[#22C55E]/40" />
-                  <div>
-                    <p className="font-semibold text-white">{trader.name}</p>
-                    <p className="text-[10px] text-[#A8ACB3]">{trader.specialty}</p>
-                  </div>
-                </div>
-                <div className="text-right font-mono">
-                  <p className="text-xs text-[#22C55E] font-semibold">+{trader.thirtyDayReturn}% 30D</p>
-                  <p className="text-[10px] text-[#A8ACB3]">{trader.winRate}% Win Rate</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </main>
-    </div>
-  );
+  return <div className="min-h-screen bg-[#0A0D0C] text-white flex flex-col md:flex-row font-sans"><AdminSidebar /><main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8"><div className="border-b border-[#202722] pb-6"><h1 className="text-2xl font-normal">Master Trader Profile Manager</h1><p className="text-xs text-[#A8ACB3] mt-1">Create persistent trader profiles with validated image uploads.</p></div>{message && <div role="status" className="rounded-xl border border-[#22C55E]/50 bg-[#22C55E]/10 p-4 text-xs text-[#86EFAC]">{message}</div>}<div className="grid grid-cols-1 lg:grid-cols-2 gap-8"><form onSubmit={submit} className="bg-[#12161A] border border-[#202722] rounded-2xl p-6 sm:p-8 space-y-4"><label className="text-xs text-[#A8ACB3] block">Trader name<input required value={name} onChange={event => setName(event.target.value)} className="mt-1 w-full bg-[#0A0D0C] border border-[#202722] rounded-xl px-4 py-2.5 text-xs text-white" /></label><label className="text-xs text-[#A8ACB3] block">Profile image<input required type="file" accept="image/jpeg,image/png,image/webp" onChange={event => setImage(event.target.files?.[0] ?? null)} className="mt-1 w-full text-xs text-[#A8ACB3]" /></label><label className="text-xs text-[#A8ACB3] block">Specialty<select value={specialty} onChange={event => setSpecialty(event.target.value)} className="mt-1 w-full bg-[#0A0D0C] border border-[#202722] rounded-xl px-3 py-2.5 text-xs text-white"><option>FX Specialist</option><option>Crypto Arbitrage</option><option>Equities Momentum</option><option>Multi-Asset Macro</option></select></label><div className="grid grid-cols-3 gap-3"><label className="text-xs text-[#A8ACB3]">Win rate<input type="number" step="0.1" value={winRate} onChange={event => setWinRate(event.target.value)} className="mt-1 w-full bg-[#0A0D0C] border border-[#202722] rounded-xl px-3 py-2.5 text-xs text-white" /></label><label className="text-xs text-[#A8ACB3]">30D return<input type="number" step="0.1" value={returnRate} onChange={event => setReturnRate(event.target.value)} className="mt-1 w-full bg-[#0A0D0C] border border-[#202722] rounded-xl px-3 py-2.5 text-xs text-white" /></label><label className="text-xs text-[#A8ACB3]">Risk<input type="number" min="1" max="5" value={riskLevel} onChange={event => setRiskLevel(event.target.value)} className="mt-1 w-full bg-[#0A0D0C] border border-[#202722] rounded-xl px-3 py-2.5 text-xs text-white" /></label></div><label className="text-xs text-[#A8ACB3] block">Strategy bio<textarea rows={3} value={bio} onChange={event => setBio(event.target.value)} className="mt-1 w-full bg-[#0A0D0C] border border-[#202722] rounded-xl p-3 text-xs text-white" /></label><button disabled={submitting} className="w-full py-3.5 rounded-full bg-[#22C55E] text-[#07110B] font-semibold text-xs disabled:opacity-40">{submitting ? 'Saving…' : 'Add Master Trader Profile'}</button></form><section className="space-y-4"><h2 className="text-base">Active Master Traders ({traders.length})</h2>{traders.map(trader => <div key={trader.id} className="p-4 rounded-xl bg-[#12161A] border border-[#202722] flex items-center gap-3"><div className="w-10 h-10 rounded-full bg-[#202722] flex items-center justify-center text-xs">{trader.name.slice(0, 1)}</div><div className="min-w-0"><p className="font-semibold text-white text-xs truncate">{trader.name}</p><p className="text-[10px] text-[#A8ACB3]">{trader.specialty} · {(trader.thirtyDayReturnBps / 100).toFixed(1)}% 30D</p></div></div>)}</section></div></main></div>;
 }

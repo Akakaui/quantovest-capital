@@ -88,6 +88,62 @@ export const referralWithdrawals = mysqlTable("referralWithdrawals", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => ({ investorIndex: index("referral_withdrawals_investor_idx").on(table.investorId) }));
 
+export const plans = mysqlTable("plans", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 32 }).notNull(),
+  minimumDepositCents: int("minimumDepositCents").notNull(),
+  maximumDepositCents: int("maximumDepositCents"),
+  minRoiBps: int("minRoiBps").notNull(),
+  maxRoiBps: int("maxRoiBps").notNull(),
+  active: int("active").default(1).notNull(),
+});
+
+export const investorAccounts = mysqlTable("investorAccounts", {
+  id: varchar("id", { length: 191 }).primaryKey(),
+  investorId: varchar("investorId", { length: 191 }).notNull(),
+  planId: int("planId").notNull(),
+  principalCents: int("principalCents").default(0).notNull(),
+  balanceCents: int("balanceCents").default(0).notNull(),
+  status: mysqlEnum("status", ["active", "suspended", "closed"]).default("active").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({ investorUnique: uniqueIndex("investor_accounts_investor_unique").on(table.investorId) }));
+
+export const traders = mysqlTable("traders", {
+  id: varchar("id", { length: 191 }).primaryKey(),
+  name: varchar("name", { length: 191 }).notNull(),
+  imageUrl: text("imageUrl"),
+  imagePath: varchar("imagePath", { length: 255 }),
+  specialty: varchar("specialty", { length: 100 }).notNull(),
+  winRateBps: int("winRateBps").default(0).notNull(),
+  thirtyDayReturnBps: int("thirtyDayReturnBps").default(0).notNull(),
+  riskLevel: int("riskLevel").default(1).notNull(),
+  bio: text("bio"),
+  active: int("active").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const roiEntries = mysqlTable("roiEntries", {
+  id: int("id").autoincrement().primaryKey(),
+  investorId: varchar("investorId", { length: 191 }).notNull(),
+  planId: int("planId").notNull(),
+  percentageBps: int("percentageBps").notNull(),
+  profitCents: int("profitCents").notNull(),
+  marketNote: text("marketNote").notNull(),
+  publishedBy: varchar("publishedBy", { length: 191 }).notNull(),
+  entryDate: timestamp("entryDate").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => ({ investorDateUnique: uniqueIndex("roi_entries_investor_date_unique").on(table.investorId, table.entryDate), investorIndex: index("roi_entries_investor_idx").on(table.investorId) }));
+
+export const portfolioLedger = mysqlTable("portfolioLedger", {
+  id: int("id").autoincrement().primaryKey(),
+  investorId: varchar("investorId", { length: 191 }).notNull(),
+  type: mysqlEnum("type", ["deposit", "roi", "withdrawal", "referral_reward", "adjustment"]).notNull(),
+  amountCents: int("amountCents").notNull(),
+  referenceId: varchar("referenceId", { length: 191 }),
+  description: text("description"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => ({ investorIndex: index("portfolio_ledger_investor_idx").on(table.investorId), referenceUnique: uniqueIndex("portfolio_ledger_reference_unique").on(table.type, table.referenceId) }));
+
 export const notifications = mysqlTable("notifications", {
   id: int("id").autoincrement().primaryKey(),
   userId: varchar("userId", { length: 191 }).notNull(),
@@ -105,4 +161,4 @@ export type ReferralReward = typeof referralRewards.$inferSelect;
 export type ReferralWithdrawal = typeof referralWithdrawals.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 
-export const schema = { users, accounts, sessions, verificationTokens, deposits, referralLinks, referralAttributions, referralRewards, referralWithdrawals, notifications };
+export const schema = { users, accounts, sessions, verificationTokens, deposits, referralLinks, referralAttributions, referralRewards, referralWithdrawals, plans, investorAccounts, traders, roiEntries, portfolioLedger, notifications };

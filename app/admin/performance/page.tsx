@@ -1,99 +1,40 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import AdminSidebar from '@/components/AdminSidebar';
-import { useQuantovestStore } from '@/lib/store';
-import { Icon } from '@iconify/react';
+
+type Investor = { id: string; name: string | null; email: string | null; planName: string | null; minRoiBps: number | null; maxRoiBps: number | null; balanceCents: number | null };
+type Plan = { id: number; name: string; minRoiBps: number; maxRoiBps: number };
 
 export default function AdminPerformancePage() {
-  const { publishDailyRoi, dailyLogs } = useQuantovestStore();
-  const [percentage, setPercentage] = useState<number>(1.35);
+  const [investors, setInvestors] = useState<Investor[]>([]);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [investorId, setInvestorId] = useState('');
+  const [percentage, setPercentage] = useState('1.00');
   const [note, setNote] = useState('FX EUR/USD intraday rally + Crypto BTC momentum execution');
-  const [published, setPublished] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    publishDailyRoi(percentage, note);
-    setPublished(true);
-    setTimeout(() => setPublished(false), 3000);
-  };
+  useEffect(() => {
+    Promise.all([fetch('/api/admin/investors', { cache: 'no-store' }), fetch('/api/plans', { cache: 'no-store' })]).then(async ([investorResponse, planResponse]) => {
+      if (investorResponse.ok) setInvestors(await investorResponse.json());
+      if (planResponse.ok) setPlans(await planResponse.json());
+      setLoading(false);
+    }).catch(() => { setMessage('Unable to load the persistent investor queue.'); setLoading(false); });
+  }, []);
 
-  return (
-    <div className="min-h-screen bg-[#0D1215] text-[#E8EFEB] flex flex-col md:flex-row font-sans">
-      <AdminSidebar />
+  const selected = investors.find(investor => investor.id === investorId);
+  const range = useMemo(() => selected?.minRoiBps != null && selected.maxRoiBps != null ? { min: selected.minRoiBps / 100, max: selected.maxRoiBps / 100 } : null, [selected]);
 
-      <main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
-        <div className="border-b border-[#2B393F] pb-6 space-y-1">
-          <h1 className="text-2xl font-normal text-[#E8EFEB]">Publish Daily ROI Percentage</h1>
-          <p className="text-xs text-[#93A09A]">Enter today's strategy performance to automatically recalculate investor balances and animate their performance charts.</p>
-        </div>
+  async function publish(event: React.FormEvent) {
+    event.preventDefault();
+    setSubmitting(true);
+    const response = await fetch('/api/admin/roi', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ investorId, percentageBps: Math.round(Number(percentage) * 100), marketNote: note }) });
+    const data = await response.json().catch(() => ({}));
+    setMessage(response.ok ? `ROI published for ${selected?.name ?? 'investor'} and recorded in the portfolio ledger.` : data.error ?? 'ROI publication failed.');
+    setSubmitting(false);
+  }
 
-        {published && (
-          <div className="p-4 bg-[#22C55E]/10 border border-[#22C55E] rounded-xl text-xs text-[#22C55E] flex items-center gap-2 animate-in fade-in duration-200">
-            <Icon icon="solar:check-circle-bold" className="w-5 h-5 shrink-0" />
-            <span>Successfully published {percentage >= 0 ? '+' : ''}{percentage}% ROI update across all active investor dashboards!</span>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Daily ROI Input Form */}
-          <form onSubmit={handleSubmit} className="bg-[#151E23] border border-[#2B393F] rounded-2xl p-6 sm:p-8 space-y-5">
-            <div>
-              <label className="text-xs text-[#93A09A] block mb-1.5">1. Daily Performance Percentage (%)</label>
-              <div className="flex items-center gap-3">
-                <input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={percentage}
-                  onChange={e => setPercentage(Number(e.target.value))}
-                  className="flex-1 bg-[#0D1215] border border-[#2B393F] rounded-xl px-4 py-3 text-lg text-[#E8EFEB] font-mono placeholder-[#5B616E] focus:outline-none focus:border-[#22C55E]"
-                />
-                <span className={`text-base font-mono font-semibold px-3 py-2 rounded-xl ${percentage >= 0 ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-[#CF202F]/10 text-[#CF202F]'}`}>
-                  {percentage >= 0 ? '+' : ''}{percentage}%
-                </span>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs text-[#93A09A] block mb-1.5">2. Market Allocation Note / Strategy Description</label>
-              <textarea
-                required
-                rows={3}
-                value={note}
-                onChange={e => setNote(e.target.value)}
-                placeholder="e.g. FX GBP/JPY momentum scalp + US Equities tech rally"
-                className="w-full bg-[#0D1215] border border-[#2B393F] rounded-xl p-3 text-xs text-[#E8EFEB] placeholder-[#5B616E] focus:outline-none focus:border-[#22C55E]"
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="w-full py-3.5 rounded-full bg-[#22C55E] text-[#E8EFEB] font-semibold text-xs hover:bg-[#16A34A] transition-colors shadow-lg"
-            >
-              Publish Daily ROI & Update Investor Dashboards
-            </button>
-          </form>
-
-          {/* History */}
-          <div className="bg-[#151E23] border border-[#2B393F] rounded-2xl p-6 sm:p-8 space-y-4">
-            <h3 className="text-base font-normal text-[#E8EFEB]">Recent Daily ROI Publications</h3>
-            <div className="space-y-3">
-              {dailyLogs.map((log) => (
-                <div key={log.id} className="p-4 bg-[#0D1215] border border-[#2B393F] rounded-xl flex items-center justify-between text-xs">
-                  <div>
-                    <p className="font-semibold text-[#E8EFEB]">{log.marketNote}</p>
-                    <p className="text-[10px] text-[#93A09A] font-mono">{log.date}</p>
-                  </div>
-                  <span className={`font-mono font-semibold text-sm ${log.percentage >= 0 ? 'text-[#22C55E]' : 'text-[#CF202F]'}`}>
-                    {log.percentage >= 0 ? '+' : ''}{log.percentage}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
+  return <div className="min-h-screen bg-[#0D1215] text-[#E8EFEB] flex flex-col md:flex-row font-sans"><AdminSidebar /><main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8"><div className="border-b border-[#2B393F] pb-6 space-y-1"><h1 className="text-2xl font-normal">Publish Individual Investor ROI</h1><p className="text-xs text-[#93A09A]">Select one investor. The server validates the ROI against that investor&apos;s active plan before changing their persistent balance.</p></div>{message && <div role="status" className="p-4 bg-[#22C55E]/10 border border-[#22C55E]/50 rounded-xl text-xs text-[#86EFAC]">{message}</div>}<form onSubmit={publish} className="max-w-2xl bg-[#151E23] border border-[#2B393F] rounded-2xl p-6 sm:p-8 space-y-5"><label className="block text-xs text-[#93A09A]">Investor<select required value={investorId} onChange={event => setInvestorId(event.target.value)} disabled={loading} className="mt-2 w-full bg-[#0D1215] border border-[#2B393F] rounded-xl px-4 py-3 text-sm text-[#E8EFEB]"><option value="">{loading ? 'Loading investor accounts…' : 'Select investor'}</option>{investors.map(investor => <option key={investor.id} value={investor.id}>{investor.name ?? investor.email ?? investor.id} · {investor.planName ?? 'No plan'}</option>)}</select></label>{selected && <div className="rounded-xl border border-[#2B393F] bg-[#0D1215] p-4 text-xs text-[#A8ACB3]">Active plan: <strong className="text-white">{selected.planName ?? 'Not assigned'}</strong><span className="mx-2">·</span>Balance: <strong className="text-white">${((selected.balanceCents ?? 0) / 100).toLocaleString()}</strong><span className="mx-2">·</span>Allowed range: <strong className="text-[#86EFAC]">{range ? `${range.min.toFixed(2)}% – ${range.max.toFixed(2)}%` : 'Unavailable'}</strong></div>}<label className="block text-xs text-[#93A09A]">ROI percentage<input required type="number" step="0.01" min={range?.min} max={range?.max} value={percentage} onChange={event => setPercentage(event.target.value)} className="mt-2 w-full bg-[#0D1215] border border-[#2B393F] rounded-xl px-4 py-3 text-lg text-[#E8EFEB] font-mono" /></label><label className="block text-xs text-[#93A09A]">Market allocation note<textarea required rows={3} value={note} onChange={event => setNote(event.target.value)} className="mt-2 w-full bg-[#0D1215] border border-[#2B393F] rounded-xl p-3 text-sm text-[#E8EFEB]" /></label><button disabled={submitting || !investorId} className="w-full py-3.5 rounded-full bg-[#22C55E] text-[#07110B] font-semibold text-xs disabled:opacity-40">{submitting ? 'Publishing…' : 'Publish ROI to This Investor'}</button></form><section className="max-w-2xl rounded-2xl border border-[#2B393F] bg-[#151E23] p-6"><h2 className="text-base">Configured plans</h2><div className="mt-4 grid gap-3 sm:grid-cols-3">{plans.map(plan => <div key={plan.id} className="rounded-xl bg-[#0D1215] p-4 text-xs"><p className="font-semibold text-white">{plan.name}</p><p className="mt-1 text-[#86EFAC]">{(plan.minRoiBps / 100).toFixed(2)}% – {(plan.maxRoiBps / 100).toFixed(2)}%</p></div>)}</div></section></main></div>;
 }
