@@ -1,0 +1,135 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --accent-signal: #22C55E;
+  --accent-signal-active: #16A34A;
+  --accent-signal-soft: rgba(34, 197, 94, 0.10);
+  
+  --semantic-up: #22C55E;
+  --semantic-down: #CF202F;
+  
+  --radius-pill: 100px;
+  --radius-xl: 24px;
+  --radius-lg: 16px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  
+  --ease-confident: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Light Theme Defaults */
+  --bg: #FFFFFF;
+  --surface: #F7F7F7;
+  --surface-strong: #EEF0F3;
+  --text-primary: #0A0D0C;
+  --text-muted: #5B616E;
+  --border-hairline: #DEE1E6;
+}
+
+[data-theme="dark"],
+.dark {
+  --bg: #0A0D0C;
+  --surface: #12161A;
+  --surface-strong: #1A1F24;
+  --text-primary: #FFFFFF;
+  --text-muted: #A8ACB3;
+  --border-hairline: #202722;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Typography Weight Rules per design-system.md */
+h1, h2, h3, h4, h5, h6, .font-display {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400 !important; /* Headings sit at weight 400, never bold */
+  letter-spacing: -0.02em;
+}
+
+.font-mono, .number-display {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Signal Line Motion */
+.signal-line-path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: drawSignalLine 1.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes drawSignalLine {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Glassmorphism & Radial Glows */
+.glass-panel {
+  background: rgba(18, 22, 26, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-hairline);
+}
+
+.glass-panel-light {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-hairline);
+}
+
+.radial-glow-accent {
+  background: radial-gradient(circle at 50% 50%, rgba(34, 197, 94, 0.15) 0%, rgba(10, 13, 12, 0) 70%);
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-hairline);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-signal);
+}
+
+/* Marquee Ticker */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 35s linear infinite;
+}
+
+/* 3D Phone Float */
+@keyframes phoneFloat {
+  0%, 100% { transform: perspective(1200px) rotateY(-8deg) rotateX(4deg) translateY(0px); }
+  50% { transform: perspective(1200px) rotateY(-8deg) rotateX(4deg) translateY(-12px); }
+}
+
+.animate-phone-float {
+  animation: phoneFloat 6s ease-in-out infinite;
+}
+
+/* Smooth perspective container */
+.perspective-1200 {
+  perspective: 1200px;
+}
