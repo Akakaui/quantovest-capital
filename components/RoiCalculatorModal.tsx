@@ -3,45 +3,39 @@
 import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
-import { useQuantovestStore } from '@/lib/store';
 
 interface RoiCalculatorModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+const PLAN_TIERS = [
+  { name: 'Starter', min: 500, max: 4999, dailyRoi: 15 },
+  { name: 'Growth', min: 5000, max: 14999, dailyRoi: 25 },
+  { name: 'Elite', min: 15000, max: Infinity, dailyRoi: 35 },
+];
+
+function getPlanForDeposit(amount: number) {
+  return PLAN_TIERS.find(t => amount >= t.min && amount <= t.max) ?? PLAN_TIERS[0];
+}
+
 export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorModalProps) {
-  const { dailyLogs } = useQuantovestStore();
   const [deposit, setDeposit] = useState<number>(5000);
   const [months, setMonths] = useState<number>(6);
 
   if (!isOpen) return null;
 
-  // Calculate customized return based on actual daily log entries
-  const averageDailyPerformance = dailyLogs && dailyLogs.length > 0
-    ? dailyLogs.reduce((acc, log) => acc + log.percentage, 0) / dailyLogs.length
-    : 1.35; // default fallback if no entries
+  const plan = getPlanForDeposit(deposit);
+  const dailyRoi = plan.dailyRoi;
+  const tradingDaysPerMonth = 21;
+  const monthlyRoi = (Math.pow(1 + dailyRoi / 100, tradingDaysPerMonth) - 1) * 100;
 
-  // Approximate 21 trading days per month for compounded ROI
-  const calculatedMonthlyRoi = Number(((Math.pow(1 + averageDailyPerformance / 100, 21) - 1) * 100).toFixed(2));
-
-  // Determine plan tier
-  let planName = 'Starter Plan';
-  if (deposit >= 15000) {
-    planName = 'Elite Plan';
-  } else if (deposit >= 5000) {
-    planName = 'Growth Plan';
-  }
-
-  // Calculate compound projections month-by-month
+  // Compound projections
   const chartData = [];
   let currentVal = deposit;
   for (let i = 0; i <= months; i++) {
-    chartData.push({
-      month: i === 0 ? 'Start' : `Month ${i}`,
-      value: Math.round(currentVal)
-    });
-    currentVal = currentVal * (1 + calculatedMonthlyRoi / 100);
+    chartData.push({ month: i === 0 ? 'Start' : `Month ${i}`, value: Math.round(currentVal) });
+    currentVal = currentVal * (1 + monthlyRoi / 100);
   }
 
   const projectedProfit = Math.round(currentVal - deposit);
@@ -58,7 +52,7 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
             </div>
             <div>
               <h3 className="text-base font-semibold text-white">Investment Return Calculator</h3>
-              <p className="text-xs text-[#A8ACB3]">Compounded projections based on actual daily performance entries</p>
+              <p className="text-xs text-[#A8ACB3]">Compound projections based on fixed daily ROI per plan</p>
             </div>
           </div>
           <button onClick={onClose} className="text-[#A8ACB3] hover:text-white p-1">
@@ -73,22 +67,20 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
               <label className="text-xs font-semibold text-[#A8ACB3] block mb-2">
                 Initial Investment Amount ($ USD)
               </label>
-              <div className="flex gap-2 items-center mb-2">
-                <input
-                  type="number"
-                  min="500"
-                  max="1000000"
-                  value={deposit}
-                  onChange={e => setDeposit(Math.max(0, Number(e.target.value)))}
-                  className="bg-[#1A2528] border border-[#263437] rounded-xl px-4 py-2.5 text-sm font-mono text-white w-full focus:outline-none focus:border-[#22C55E] font-semibold"
-                />
-              </div>
+              <input
+                type="number"
+                min="500"
+                max="1000000"
+                value={deposit}
+                onChange={e => setDeposit(Math.max(500, Number(e.target.value)))}
+                className="bg-[#1A2528] border border-[#263437] rounded-xl px-4 py-2.5 text-sm font-mono text-white w-full focus:outline-none focus:border-[#22C55E] font-semibold mb-2"
+              />
               <input
                 type="range"
                 min="500"
                 max="50000"
                 step="500"
-                value={deposit > 50000 ? 50000 : deposit}
+                value={Math.min(deposit, 50000)}
                 onChange={e => setDeposit(Number(e.target.value))}
                 className="w-full accent-[#22C55E] bg-[#263437] h-2 rounded-lg cursor-pointer"
               />
@@ -121,24 +113,37 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
               </div>
             </div>
 
-            {/* Compound Summary */}
+            {/* Plan Info */}
             <div className="p-4 bg-[#1A2528] border border-[#263437] rounded-xl space-y-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-xs text-[#A8ACB3]">Assigned Plan Tier:</span>
-                <span className="text-xs font-semibold text-[#22C55E]">{planName}</span>
+                <span className="text-xs text-[#A8ACB3]">Assigned Plan:</span>
+                <span className="text-xs font-semibold text-[#22C55E]">{plan.name} Plan</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-[#A8ACB3]">Compounded Monthly ROI:</span>
-                <span className="text-xs font-mono font-semibold text-white flex items-center gap-1.5">
-                  ~{calculatedMonthlyRoi}%
-                  <span className="text-[9px] bg-[#22C55E]/15 text-[#4ADE80] px-1.5 py-0.5 rounded font-sans">
-                    Live Rates
-                  </span>
-                </span>
+                <span className="text-xs text-[#A8ACB3]">Fixed Daily ROI:</span>
+                <span className="text-xs font-mono font-bold text-[#22C55E]">{dailyRoi}%</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[#A8ACB3]">Compounded Monthly:</span>
+                <span className="text-xs font-mono font-semibold text-white">~{monthlyRoi.toFixed(1)}%</span>
               </div>
               <p className="text-[10px] text-[#A8ACB3] border-t border-[#263437] pt-2">
-                Compounded rate derived from actual published performance updates ({averageDailyPerformance.toFixed(2)}% daily average).
+                {plan.name} plan: ${plan.min.toLocaleString()} min deposit, {dailyRoi}% fixed daily return.
               </p>
+            </div>
+
+            {/* All Plans Reference */}
+            <div className="grid grid-cols-3 gap-2">
+              {PLAN_TIERS.map(t => (
+                <div key={t.name} className={`p-2 rounded-lg text-center text-[10px] border ${
+                  t.name === plan.name
+                    ? 'border-[#22C55E]/50 bg-[#22C55E]/10 text-[#22C55E]'
+                    : 'border-[#263437] bg-[#1A2528] text-[#A8ACB3]'
+                }`}>
+                  <p className="font-semibold">{t.name}</p>
+                  <p className="font-mono font-bold text-xs">{t.dailyRoi}%/day</p>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -153,7 +158,7 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
               </div>
               <div className="p-3 bg-[#1A2528] border border-[#263437] rounded-xl">
                 <p className="text-[10px] text-[#A8ACB3] uppercase font-mono">Total Capital</p>
-                <p className="text-base font-mono font-bold text-[#0A0D0C] mt-0.5">
+                <p className="text-base font-mono font-bold text-white mt-0.5">
                   ${totalProjected.toLocaleString()}
                 </p>
               </div>
@@ -161,7 +166,7 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
 
             {/* Projected Curve */}
             <div className="h-44 w-full bg-[#1A2528] border border-[#263437] rounded-xl p-2 relative">
-              <p className="text-[10px] text-[#A8ACB3] font-mono px-2 pt-1">Projected Signal Growth Curve</p>
+              <p className="text-[10px] text-[#A8ACB3] font-mono px-2 pt-1">Projected Growth Curve</p>
               <ResponsiveContainer width="100%" height="80%">
                 <AreaChart data={chartData}>
                   <defs>
@@ -180,13 +185,22 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
                 </AreaChart>
               </ResponsiveContainer>
             </div>
+
+            {/* Daily Breakdown */}
+            <div className="p-3 bg-[#1A2528] border border-[#263437] rounded-xl">
+              <p className="text-[10px] text-[#A8ACB3] uppercase font-mono mb-2">Daily Return</p>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[#A8ACB3]">{dailyRoi}% of ${deposit.toLocaleString()}</span>
+                <span className="text-sm font-mono font-bold text-[#22C55E]">=${(deposit * dailyRoi / 100).toLocaleString()}/day</span>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* Footer */}
         <div className="pt-6 mt-6 border-t border-[#263437] flex items-center justify-between">
           <p className="text-[11px] text-[#A8ACB3] max-w-xs">
-            *Projections compounded automatically based on actual published returns. Past returns do not guarantee future performance.
+            *Projections are estimates based on fixed daily ROI rates. Actual returns may vary. Past performance does not guarantee future results.
           </p>
           <button
             onClick={onClose}
