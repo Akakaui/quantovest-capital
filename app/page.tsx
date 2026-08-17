@@ -6,6 +6,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ThreeDPhoneHero from '@/components/ThreeDPhoneHero';
 import RoiCalculatorModal from '@/components/RoiCalculatorModal';
+import CountUpNumber from '@/components/CountUpNumber';
+import SignalLine from '@/components/SignalLine';
 import { Icon } from '@iconify/react';
 import { motion } from 'framer-motion';
 
@@ -132,18 +134,24 @@ export default function Homepage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div className="p-6 bg-[#12161A] border border-[#202722] rounded-2xl">
               <p className="text-xs uppercase font-mono text-[#A8ACB3] mb-2">Total AUM Managed</p>
-              <h3 className="text-4xl font-mono font-normal text-white">$42,850,000+</h3>
-              <div className="w-24 h-0.5 bg-[#22C55E] mx-auto mt-4 rounded-full"></div>
+              <h3 className="text-4xl font-mono font-normal text-white">
+                <CountUpNumber end={42850000} prefix="$" suffix="+" duration={2400} />
+              </h3>
+              <div className="mt-4 flex justify-center"><SignalLine width={96} delay={200} /></div>
             </div>
             <div className="p-6 bg-[#12161A] border border-[#202722] rounded-2xl">
               <p className="text-xs uppercase font-mono text-[#A8ACB3] mb-2">Strategy Win Rate</p>
-              <h3 className="text-4xl font-mono font-normal text-[#22C55E]">94.2%</h3>
-              <div className="w-24 h-0.5 bg-[#22C55E] mx-auto mt-4 rounded-full"></div>
+              <h3 className="text-4xl font-mono font-normal text-[#22C55E]">
+                <CountUpNumber end={94.2} suffix="%" decimals={1} duration={2000} />
+              </h3>
+              <div className="mt-4 flex justify-center"><SignalLine width={96} delay={400} /></div>
             </div>
             <div className="p-6 bg-[#12161A] border border-[#202722] rounded-2xl">
               <p className="text-xs uppercase font-mono text-[#A8ACB3] mb-2">Active Investors</p>
-              <h3 className="text-4xl font-mono font-normal text-white">14,820+</h3>
-              <div className="w-24 h-0.5 bg-[#22C55E] mx-auto mt-4 rounded-full"></div>
+              <h3 className="text-4xl font-mono font-normal text-white">
+                <CountUpNumber end={14820} prefix="" suffix="+" duration={2200} />
+              </h3>
+              <div className="mt-4 flex justify-center"><SignalLine width={96} delay={600} /></div>
             </div>
           </div>
         </div>

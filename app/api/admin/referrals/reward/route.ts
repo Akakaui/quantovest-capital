@@ -1,15 +1,17 @@
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth-helpers";
+import { notifyUser } from "@/lib/notifications";
 import { getDb } from "@/lib/db";
-import { deposits, notifications, referralAttributions, referralRewards } from "@/db/schema";
+import { deposits, referralAttributions, referralRewards } from "@/db/schema";
+
+export const dynamic = "force-dynamic";
 
 const RATE_BPS = 1_000;
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id || session.user.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const { identity, error } = await requireAdmin();
+  if (error) return error;
   const db = getDb();
   if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
   const body = await request.json().catch(() => null) as { referredInvestorId?: string; depositId?: string } | null;
@@ -24,9 +26,8 @@ export async function POST(request: Request) {
   const rewardAmountCents = Math.max(0, Math.floor(deposit[0].amountCents * RATE_BPS / 10_000));
   const created = await db.transaction(async tx => {
     const inserted = await tx.insert(referralRewards).values({ attributionId: attribution[0].id, referrerId: attribution[0].referrerId, referredInvestorId: body.referredInvestorId!, qualifyingDepositId: body.depositId!, idempotencyKey: key, qualifyingAmountCents: deposit[0].amountCents, rewardAmountCents, status: "available" }).returning({ id: referralRewards.id });
-    const rewardId = inserted[0].id;
-    await tx.insert(notifications).values({ userId: attribution[0].referrerId, type: "referral_reward_credited", title: "Referral bonus credited", body: `Your referral generated a 10% first-deposit bonus of $${(rewardAmountCents / 100).toFixed(2)}.`, relatedRewardId: rewardId });
-    return rewardId;
+    return inserted[0].id;
   });
+  await notifyUser(attribution[0].referrerId, 'referral_reward_credited', 'Referral bonus credited', `Your referral generated a 10% first-deposit bonus of $${(rewardAmountCents / 100).toFixed(2)}.`, created);
   return NextResponse.json({ created: true, rewardId: created, rewardAmountCents }, { status: 201 });
 }

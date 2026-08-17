@@ -1,21 +1,22 @@
 import { NextResponse } from "next/server";
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth-helpers";
 import { getDb } from "@/lib/db";
 import { referralAttributions, referralLinks, referralRewards, referralWithdrawals, users } from "@/db/schema";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { identity, error } = await requireAuth();
+  if (error) return error;
   const db = getDb();
   if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
 
   const [link, attributions, rewards, withdrawals] = await Promise.all([
-    db.select().from(referralLinks).where(eq(referralLinks.ownerId, session.user.id)).orderBy(desc(referralLinks.createdAt)).limit(1),
-    db.select().from(referralAttributions).where(and(eq(referralAttributions.referrerId, session.user.id), eq(referralAttributions.status, "active"))),
-    db.select().from(referralRewards).where(eq(referralRewards.referrerId, session.user.id)).orderBy(desc(referralRewards.createdAt)),
-    db.select().from(referralWithdrawals).where(eq(referralWithdrawals.investorId, session.user.id)).orderBy(desc(referralWithdrawals.createdAt)),
+    db.select().from(referralLinks).where(eq(referralLinks.ownerId, identity.id)).orderBy(desc(referralLinks.createdAt)).limit(1),
+    db.select().from(referralAttributions).where(and(eq(referralAttributions.referrerId, identity.id), eq(referralAttributions.status, "active"))),
+    db.select().from(referralRewards).where(eq(referralRewards.referrerId, identity.id)).orderBy(desc(referralRewards.createdAt)),
+    db.select().from(referralWithdrawals).where(eq(referralWithdrawals.investorId, identity.id)).orderBy(desc(referralWithdrawals.createdAt)),
   ]);
   const withdrawalHold = withdrawals.filter(item => item.status === "pending" || item.status === "approved").reduce((sum, item) => sum + item.amountCents, 0);
   const earned = rewards.filter(item => item.status !== "reversed").reduce((sum, item) => sum + item.rewardAmountCents, 0);

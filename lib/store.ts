@@ -1,3 +1,4 @@
+// DEPRECATED: This mock store is kept for backward compatibility only. All pages should use API routes instead.
 import { useState, useEffect } from 'react';
 
 export type Role = 'investor' | 'admin';
@@ -9,6 +10,19 @@ export interface OnboardingAnswers {
   capitalGoal: string;
   targetDeposit: string;
   riskTolerance: string;
+}
+
+export interface PayoutDetails {
+  cryptoAddress: string;
+  cryptoNetwork: string;
+  bankName: string;
+  bankAccountName: string;
+  bankAccountNumber: string;
+}
+
+export interface NotificationPrefs {
+  notifyDailyRoi: boolean;
+  notifyStrategyAlerts: boolean;
 }
 
 export interface User {
@@ -28,6 +42,10 @@ export interface User {
   copiedTraderId?: string | null;
   onboardingCompleted: boolean;
   onboardingAnswers?: OnboardingAnswers;
+  twoFactorEnabled: boolean;
+  twoFactorSecret: string;
+  payoutDetails: PayoutDetails;
+  notificationPrefs: NotificationPrefs;
 }
 
 export interface MasterTrader {
@@ -163,7 +181,11 @@ const INITIAL_USER: User = {
     capitalGoal: 'Capital Growth',
     targetDeposit: '$5,000 Growth',
     riskTolerance: 'Balanced'
-  }
+  },
+  twoFactorEnabled: false,
+  twoFactorSecret: '',
+  payoutDetails: { cryptoAddress: '', cryptoNetwork: '', bankName: '', bankAccountName: '', bankAccountNumber: '' },
+  notificationPrefs: { notifyDailyRoi: true, notifyStrategyAlerts: true }
 };
 
 const INITIAL_CHARTS: ChartPoint[] = [
@@ -234,6 +256,14 @@ const setStorageItem = <T>(key: string, value: T) => {
     console.error(e);
   }
 };
+
+export const PLAN_MINIMUMS: Record<string, number> = {
+  Starter: 500,
+  Growth: 5000,
+  Elite: 15000,
+};
+
+export const PLAN_ORDER: User['plan'][] = ['None', 'Starter', 'Growth', 'Elite'];
 
 export function useQuantovestStore() {
   const [user, setUser] = useState<User>(() => getStorageItem('user', INITIAL_USER));
@@ -311,7 +341,11 @@ export function useQuantovestStore() {
         allTimeRoiPercent: 22.4,
         plan: 'Elite',
         kycStatus: 'approved',
-        onboardingCompleted: true
+        onboardingCompleted: true,
+        twoFactorEnabled: false,
+        twoFactorSecret: '',
+        payoutDetails: { cryptoAddress: '', cryptoNetwork: '', bankName: '', bankAccountName: '', bankAccountNumber: '' },
+        notificationPrefs: { notifyDailyRoi: true, notifyStrategyAlerts: true }
       };
       setUser(adminUser);
     } else {
@@ -333,7 +367,11 @@ export function useQuantovestStore() {
       allTimeRoiPercent: 0,
       plan: 'None',
       kycStatus: 'unverified',
-      onboardingCompleted: false
+      onboardingCompleted: false,
+      twoFactorEnabled: false,
+      twoFactorSecret: '',
+      payoutDetails: { cryptoAddress: '', cryptoNetwork: '', bankName: '', bankAccountName: '', bankAccountNumber: '' },
+      notificationPrefs: { notifyDailyRoi: true, notifyStrategyAlerts: true }
     };
     setUser(newUser);
   };
@@ -492,6 +530,38 @@ export function useQuantovestStore() {
     setTraders(prev => [newTrader, ...prev]);
   };
 
+  const upgradePlan = (targetPlan: User['plan']): { success: boolean; message: string } => {
+    if (targetPlan === 'None') return { success: false, message: 'Cannot upgrade to None.' };
+    const minBalance = PLAN_MINIMUMS[targetPlan] ?? 0;
+    if (user.balance < minBalance) {
+      const needed = minBalance - user.balance;
+      return { success: false, message: `Insufficient balance. You need $${needed.toLocaleString()} more to qualify for the ${targetPlan} plan.` };
+    }
+    const currentIdx = PLAN_ORDER.indexOf(user.plan);
+    const targetIdx = PLAN_ORDER.indexOf(targetPlan);
+    if (targetIdx <= currentIdx) {
+      return { success: false, message: `You are already on the ${user.plan} plan or higher.` };
+    }
+    setUser(prev => ({ ...prev, plan: targetPlan }));
+    return { success: true, message: `Successfully upgraded to the ${targetPlan} plan!` };
+  };
+
+  const closeAccount = () => {
+    setUser(prev => ({ ...prev, plan: 'None', balance: 0, totalProfit: 0, allTimeRoiPercent: 0 }));
+  };
+
+  const updatePayoutDetails = (details: Partial<PayoutDetails>) => {
+    setUser(prev => ({ ...prev, payoutDetails: { ...prev.payoutDetails, ...details } }));
+  };
+
+  const updateNotificationPrefs = (prefs: Partial<NotificationPrefs>) => {
+    setUser(prev => ({ ...prev, notificationPrefs: { ...prev.notificationPrefs, ...prefs } }));
+  };
+
+  const setTwoFactor = (enabled: boolean, secret: string) => {
+    setUser(prev => ({ ...prev, twoFactorEnabled: enabled, twoFactorSecret: secret }));
+  };
+
   return {
     user,
     traders,
@@ -512,6 +582,11 @@ export function useQuantovestStore() {
     approveWithdrawal,
     approveKyc,
     rejectKyc,
-    createTrader
+    createTrader,
+    upgradePlan,
+    closeAccount,
+    updatePayoutDetails,
+    updateNotificationPrefs,
+    setTwoFactor
   };
 }

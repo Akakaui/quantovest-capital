@@ -5,6 +5,8 @@ import { notifyAdmins } from '@/lib/notifications';
 import { getDb } from '@/lib/db';
 import { deposits } from '@/db/schema';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   const actor = await getCurrentIdentity();
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

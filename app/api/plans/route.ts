@@ -3,6 +3,8 @@ import { eq } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { plans } from "@/db/schema";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   const db = getDb();
   if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });

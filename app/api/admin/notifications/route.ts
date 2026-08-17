@@ -1,14 +1,52 @@
 import { NextResponse } from 'next/server';
-import { getCurrentIdentity } from '@/lib/supabase/identity';
+import { eq, inArray } from 'drizzle-orm';
+import { requireAdmin } from '@/lib/auth-helpers';
 import { broadcastNotification, notifyAdmins } from '@/lib/notifications';
+import { getDb } from '@/lib/db';
+import { investorAccounts, plans, users } from '@/db/schema';
 
 export async function POST(request: Request) {
-  const actor = await getCurrentIdentity();
-  if (!actor?.id || actor.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  const body = await request.json().catch(() => null) as { type?: string; title?: string; body?: string; recipientIds?: string[] } | null;
+  const { identity, error } = await requireAdmin();
+  if (error) return error;
+  const body = await request.json().catch(() => null) as {
+    title?: string;
+    body?: string;
+    audience?: 'all' | 'plan' | 'selected';
+    plans?: string[];
+    userIds?: string[];
+    type?: string;
+    recipientIds?: string[];
+  } | null;
   if (!body?.title?.trim() || !body.body?.trim()) return NextResponse.json({ error: 'Title and message are required.' }, { status: 400 });
+
+  const db = getDb();
   const type = body.type?.trim() || 'admin_message';
-  const delivered = await broadcastNotification(type, body.title.trim(), body.body.trim(), body.recipientIds);
-  await notifyAdmins('admin_message_audit', 'Notification sent', `${body.title.trim()} was delivered to ${delivered} recipient(s).`);
+  const title = body.title.trim();
+  const msgBody = body.body.trim();
+
+  let delivered = 0;
+
+  if (!body.audience || body.audience === 'all' || body.recipientIds) {
+    delivered = await broadcastNotification(type, title, msgBody, body.recipientIds);
+  } else if (body.audience === 'selected') {
+    if (!body.userIds?.length) return NextResponse.json({ error: 'At least one user must be selected.' }, { status: 400 });
+    delivered = await broadcastNotification(type, title, msgBody, body.userIds);
+  } else if (body.audience === 'plan') {
+    if (!db) return NextResponse.json({ error: 'Database is not configured' }, { status: 503 });
+    if (!body.plans?.length) return NextResponse.json({ error: 'At least one plan must be selected.' }, { status: 400 });
+
+    const matchedPlans = await db.select({ id: plans.id }).from(plans).where(inArray(plans.name, body.plans));
+    if (!matchedPlans.length) return NextResponse.json({ error: 'No matching plans found.' }, { status: 400 });
+
+    const planIds = matchedPlans.map(p => p.id);
+    const accounts = await db.select({ investorId: investorAccounts.investorId }).from(investorAccounts).where(inArray(investorAccounts.planId, planIds));
+    const recipientIds = [...Array.from(new Set(accounts.map(a => a.investorId)))];
+    if (recipientIds.length) {
+      await broadcastNotification(type, title, msgBody, recipientIds);
+      delivered = recipientIds.length;
+    }
+  }
+
+  await notifyAdmins('admin_message_audit', 'Notification sent', `${title} was delivered to ${delivered} recipient(s).`);
   return NextResponse.json({ delivered }, { status: 201 });
 }

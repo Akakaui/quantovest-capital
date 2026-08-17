@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { requireAuth } from "@/lib/auth-helpers";
 import { getDb } from "@/lib/db";
 import { referralAttributions, referralRewards } from "@/db/schema";
 
 export async function GET(request: Request) {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const { identity, error } = await requireAuth();
+  if (error) return error;
   const db = getDb();
   if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
   const url = new URL(request.url);
@@ -15,8 +14,8 @@ export async function GET(request: Request) {
   const end = url.searchParams.get("end");
   if (start && end && start > end) return NextResponse.json({ error: "Start date must be before end date" }, { status: 400 });
   const [attributions, rewards] = await Promise.all([
-    db.select({ attributedAt: referralAttributions.attributedAt }).from(referralAttributions).where(eq(referralAttributions.referrerId, session.user.id)),
-    db.select({ createdAt: referralRewards.createdAt, rewardAmountCents: referralRewards.rewardAmountCents }).from(referralRewards).where(eq(referralRewards.referrerId, session.user.id)),
+    db.select({ attributedAt: referralAttributions.attributedAt }).from(referralAttributions).where(eq(referralAttributions.referrerId, identity.id)),
+    db.select({ createdAt: referralRewards.createdAt, rewardAmountCents: referralRewards.rewardAmountCents }).from(referralRewards).where(eq(referralRewards.referrerId, identity.id)),
   ]);
   const points = new Map<string, { signUps: number; earningsCents: number }>();
   for (const item of attributions) {

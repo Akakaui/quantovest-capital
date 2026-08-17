@@ -1,5 +1,4 @@
 import { index, integer, pgTable, primaryKey, serial, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
-import type { AdapterAccount } from "next-auth/adapters";
 
 export const users = pgTable("users", {
   id: varchar("id", { length: 191 }).primaryKey(),
@@ -13,7 +12,7 @@ export const users = pgTable("users", {
 
 export const accounts = pgTable("accounts", {
   userId: varchar("userId", { length: 191 }).notNull(),
-  type: varchar("type", { length: 32 }).$type<AdapterAccount["type"]>().notNull(),
+  type: varchar("type", { length: 32 }).notNull(),
   provider: varchar("provider", { length: 191 }).notNull(),
   providerAccountId: varchar("providerAccountId", { length: 191 }).notNull(),
   refresh_token: text("refresh_token"), access_token: text("access_token"), expires_at: integer("expires_at"),

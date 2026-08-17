@@ -1,25 +1,71 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import InvestorSidebar from '@/components/InvestorSidebar';
 import FundingWarningModal from '@/components/FundingWarningModal';
-import { useQuantovestStore } from '@/lib/store';
 import { Icon } from '@iconify/react';
 
+interface ApiTrader {
+  id: string;
+  name: string;
+  imageUrl: string | null;
+  imagePath: string | null;
+  specialty: string;
+  winRateBps: number;
+  thirtyDayReturnBps: number;
+  riskLevel: number;
+  bio: string | null;
+  active: number;
+  createdAt: string;
+}
+
 export default function TradersPage() {
-  const { traders, copyTrader, user } = useQuantovestStore();
+  const [traders, setTraders] = useState<ApiTrader[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [copiedTraderId, setCopiedTraderId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadTraders = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch('/api/admin/traders');
+        if (!res.ok) throw new Error('Failed to load traders');
+        const data = await res.json();
+        setTraders(data.filter((t: ApiTrader) => t.active === 1));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load traders');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadTraders();
+  }, []);
+
+  useEffect(() => {
+    const stored = localStorage.getItem('quantovest_copiedTraderId');
+    if (stored) setCopiedTraderId(stored);
+  }, []);
 
   const handleCopy = (traderId: string) => {
-    const res = copyTrader(traderId);
-    if (!res.success) {
+    // Check funding - using a placeholder balance; in production this comes from the user's account
+    const storedBalance = localStorage.getItem('quantovest_userBalance');
+    const balance = storedBalance ? parseFloat(storedBalance) : 0;
+    if (balance < 500) {
       setIsWarningOpen(true);
-    } else {
-      setToastMessage(res.message.replace('copytrading', 'investment').replace('copy', 'follow'));
-      setTimeout(() => setToastMessage(null), 4000);
+      return;
     }
+    const trader = traders.find((t) => t.id === traderId);
+    setCopiedTraderId(traderId);
+    localStorage.setItem('quantovest_copiedTraderId', traderId);
+    setToastMessage(`Successfully connected investment strategy to ${trader?.name || 'Master Trader'}!`);
+    setTimeout(() => setToastMessage(null), 4000);
   };
+
+  const bpsToPercent = (bps: number) => (bps / 100).toFixed(1);
 
   return (
     <div className="min-h-screen bg-[#0A0F11] text-[#F3F7F4] flex flex-col md:flex-row font-sans">
@@ -40,63 +86,109 @@ export default function TradersPage() {
           </div>
         )}
 
-        {/* Trader Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {traders.map((trader) => {
-            const isCopying = user.copiedTraderId === trader.id;
-            return (
-              <div key={trader.id} className="p-6 rounded-2xl bg-[#141C1F] border border-[#263437] space-y-5 hover:border-[#22C55E]/40 transition-colors">
+        {/* Loading Skeleton */}
+        {loading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="p-6 rounded-2xl bg-[#141C1F] border border-[#263437] space-y-5 animate-pulse">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <img src={trader.avatar} alt={trader.name} className="w-12 h-12 rounded-full object-cover border border-[#22C55E]/40" />
-                    <div>
-                      <h3 className="text-base font-medium text-[#F3F7F4]">{trader.name}</h3>
-                      <span className="text-[10px] bg-[#0A0F11] text-[#22C55E] border border-[#263437] px-2 py-0.5 rounded-full font-mono">
-                        {trader.specialty}
-                      </span>
+                    <div className="w-12 h-12 rounded-full bg-[#263437]" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-28 bg-[#263437] rounded" />
+                      <div className="h-3 w-20 bg-[#263437] rounded-full" />
                     </div>
                   </div>
-                  {isCopying && (
-                    <span className="px-2.5 py-1 rounded-full bg-[#22C55E] text-[#F3F7F4] font-mono text-[10px] font-bold">
-                      STRATEGY ACTIVE
-                    </span>
-                  )}
                 </div>
-
-                <p className="text-xs text-[#93A09A] leading-relaxed">{trader.bio}</p>
-
-                {/* Metrics */}
-                <div className="grid grid-cols-3 gap-2 p-3 bg-[#0A0F11] border border-[#263437] rounded-xl text-center">
-                  <div>
-                    <p className="text-[10px] text-[#93A09A] font-mono">Win Rate</p>
-                    <p className="text-sm font-mono font-semibold text-[#22C55E]">{trader.winRate}%</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-[#93A09A] font-mono">30D Return</p>
-                    <p className="text-sm font-mono font-semibold text-[#22C55E]">+{trader.thirtyDayReturn}%</p>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-[#93A09A] font-mono">Risk Level</p>
-                    <p className="text-sm font-mono font-semibold text-[#F3F7F4]">{trader.riskLevel} / 5</p>
-                  </div>
+                <div className="h-3 w-full bg-[#263437] rounded" />
+                <div className="h-3 w-3/4 bg-[#263437] rounded" />
+                <div className="grid grid-cols-3 gap-2 p-3 bg-[#0A0F11] border border-[#263437] rounded-xl">
+                  {[1, 2, 3].map((j) => (
+                    <div key={j} className="text-center space-y-1">
+                      <div className="h-2 w-12 bg-[#263437] rounded mx-auto" />
+                      <div className="h-3 w-10 bg-[#263437] rounded mx-auto" />
+                    </div>
+                  ))}
                 </div>
-
-                {/* Follow Button */}
-                <button
-                  onClick={() => handleCopy(trader.id)}
-                  className={`w-full py-3 rounded-full text-xs font-semibold transition-colors flex items-center justify-center gap-2 ${
-                    isCopying
-                      ? 'bg-[#0A0F11] border border-[#263437] text-[#F3F7F4] hover:bg-[#202722]'
-                      : 'bg-[#22C55E] text-[#F3F7F4] hover:bg-[#16A34A]'
-                  }`}
-                >
-                  <Icon icon="solar:users-group-rounded-bold" className="w-4 h-4" />
-                  <span>{isCopying ? 'Strategy Active (Click to Re-follow)' : 'Follow Strategy ($500 Min Fund)'}</span>
-                </button>
+                <div className="h-10 w-full bg-[#263437] rounded-full" />
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="p-6 rounded-2xl bg-[#141C1F] border border-red-500/40 text-center space-y-3">
+            <Icon icon="solar:danger-circle-bold" className="w-10 h-10 text-red-400 mx-auto" />
+            <p className="text-sm text-red-400">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 rounded-full text-xs font-semibold bg-[#22C55E] text-[#F3F7F4] hover:bg-[#16A34A] transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {/* Trader Grid */}
+        {!loading && !error && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {traders.map((trader) => {
+              const isCopying = copiedTraderId === trader.id;
+              return (
+                <div key={trader.id} className="p-6 rounded-2xl bg-[#141C1F] border border-[#263437] space-y-5 hover:border-[#22C55E]/40 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <img src={trader.imageUrl || trader.imagePath || `https://api.dicebear.com/7.x/avataaars/svg?seed=${trader.name}`} alt={trader.name} className="w-12 h-12 rounded-full object-cover border border-[#22C55E]/40" />
+                      <div>
+                        <h3 className="text-base font-medium text-[#F3F7F4]">{trader.name}</h3>
+                        <span className="text-[10px] bg-[#0A0F11] text-[#22C55E] border border-[#263437] px-2 py-0.5 rounded-full font-mono">
+                          {trader.specialty}
+                        </span>
+                      </div>
+                    </div>
+                    {isCopying && (
+                      <span className="px-2.5 py-1 rounded-full bg-[#22C55E] text-[#F3F7F4] font-mono text-[10px] font-bold">
+                        STRATEGY ACTIVE
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-[#93A09A] leading-relaxed">{trader.bio}</p>
+
+                  {/* Metrics */}
+                  <div className="grid grid-cols-3 gap-2 p-3 bg-[#0A0F11] border border-[#263437] rounded-xl text-center">
+                    <div>
+                      <p className="text-[10px] text-[#93A09A] font-mono">Win Rate</p>
+                      <p className="text-sm font-mono font-semibold text-[#22C55E]">{bpsToPercent(trader.winRateBps)}%</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-[#93A09A] font-mono">30D Return</p>
+                      <p className="text-sm font-mono font-semibold text-[#22C55E]">+{bpsToPercent(trader.thirtyDayReturnBps)}%</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-[#93A09A] font-mono">Risk Level</p>
+                      <p className="text-sm font-mono font-semibold text-[#F3F7F4]">{trader.riskLevel} / 5</p>
+                    </div>
+                  </div>
+
+                  {/* Follow Button */}
+                  <button
+                    onClick={() => handleCopy(trader.id)}
+                    className={`w-full py-3 rounded-full text-xs font-semibold transition-colors flex items-center justify-center gap-2 ${
+                      isCopying
+                        ? 'bg-[#0A0F11] border border-[#263437] text-[#F3F7F4] hover:bg-[#202722]'
+                        : 'bg-[#22C55E] text-[#F3F7F4] hover:bg-[#16A34A]'
+                    }`}
+                  >
+                    <Icon icon="solar:users-group-rounded-bold" className="w-4 h-4" />
+                    <span>{isCopying ? 'Strategy Active (Click to Re-follow)' : 'Follow Strategy ($500 Min Fund)'}</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </main>
 
       <FundingWarningModal isOpen={isWarningOpen} onClose={() => setIsWarningOpen(false)} />

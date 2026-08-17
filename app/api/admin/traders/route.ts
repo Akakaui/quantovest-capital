@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server";
-import { getCurrentIdentity } from "@/lib/supabase/identity";
+import { requireAdmin } from "@/lib/auth-helpers";
 import { getDb } from "@/lib/db";
 import { traders } from "@/db/schema";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
+  const { identity, error } = await requireAdmin();
+  if (error) return error;
   const db = getDb();
   if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
   return NextResponse.json(await db.select().from(traders));
 }
 
 export async function POST(request: Request) {
-  const actor = await getCurrentIdentity();
-  if (!actor?.id || actor.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  const { identity, error } = await requireAdmin();
+  if (error) return error;
   const db = getDb();
   if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
   const body = await request.json().catch(() => null) as { name?: string; specialty?: string; imagePath?: string; imageUrl?: string; winRateBps?: number; thirtyDayReturnBps?: number; riskLevel?: number; bio?: string } | null;
