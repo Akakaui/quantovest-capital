@@ -224,9 +224,10 @@ export default function Homepage() {
                 <h3 className="text-2xl font-normal text-white mt-1">Starter Plan</h3>
                 <p className="text-3xl font-mono font-semibold text-[#22C55E] mt-3">$500 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
               </div>
-              <div className="p-4 bg-[#1A1F24] rounded-xl border border-[#202722] space-y-1">
-                <p className="text-xs text-[#A8ACB3]">Target Monthly Return</p>
-                <p className="text-xl font-mono text-[#22C55E] font-semibold">8% – 12% / Month</p>
+              <div className="p-4 bg-[#22C55E]/10 rounded-xl border border-[#22C55E]/30 space-y-1">
+                <p className="text-xs text-[#A8ACB3]">Fixed Daily Return</p>
+                <p className="text-3xl font-mono text-[#22C55E] font-bold">15%</p>
+                <p className="text-xs text-[#A8ACB3]">Every single day, guaranteed rate</p>
               </div>
               <ul className="space-y-3 text-xs text-[#A8ACB3]">
                 <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> FX & Top Crypto Asset Access</li>
@@ -248,9 +249,10 @@ export default function Homepage() {
                 <h3 className="text-2xl font-normal text-white mt-1">Growth Plan</h3>
                 <p className="text-3xl font-mono font-semibold text-[#22C55E] mt-3">$5,000 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
               </div>
-              <div className="p-4 bg-[#1A1F24] rounded-xl border border-[#202722] space-y-1">
-                <p className="text-xs text-[#A8ACB3]">Target Monthly Return</p>
-                <p className="text-xl font-mono text-[#22C55E] font-semibold">14% – 18% / Month</p>
+              <div className="p-4 bg-[#22C55E]/10 rounded-xl border border-[#22C55E]/30 space-y-1">
+                <p className="text-xs text-[#A8ACB3]">Fixed Daily Return</p>
+                <p className="text-3xl font-mono text-[#22C55E] font-bold">25%</p>
+                <p className="text-xs text-[#A8ACB3]">Every single day, guaranteed rate</p>
               </div>
               <ul className="space-y-3 text-xs text-[#A8ACB3]">
                 <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> FX, Crypto & US Stock Equities</li>
@@ -269,9 +271,10 @@ export default function Homepage() {
                 <h3 className="text-2xl font-normal text-white mt-1">Elite Plan</h3>
                 <p className="text-3xl font-mono font-semibold text-[#22C55E] mt-3">$15,000 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
               </div>
-              <div className="p-4 bg-[#1A1F24] rounded-xl border border-[#202722] space-y-1">
-                <p className="text-xs text-[#A8ACB3]">Target Monthly Return</p>
-                <p className="text-xl font-mono text-[#22C55E] font-semibold">20% – 28% / Month</p>
+              <div className="p-4 bg-[#22C55E]/10 rounded-xl border border-[#22C55E]/30 space-y-1">
+                <p className="text-xs text-[#A8ACB3]">Fixed Daily Return</p>
+                <p className="text-3xl font-mono text-[#22C55E] font-bold">35%</p>
+                <p className="text-xs text-[#A8ACB3]">Every single day, guaranteed rate</p>
               </div>
               <ul className="space-y-3 text-xs text-[#A8ACB3]">
                 <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> Full Multi-Asset VIP Access</li>

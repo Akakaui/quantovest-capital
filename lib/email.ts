@@ -1,0 +1,333 @@
+/**
+ * Email System for Quantovest Capital
+ * 
+ * Architecture:
+ * 1. Event helper — receives a business event (e.g., deposit_approved)
+ * 2. Template renderer — loads the correct template with server-derived variables
+ * 3. Outbox — stores pending emails for retry
+ * 4. Provider adapter — sends via Resend/SendGrid/SES
+ * 
+ * To activate: set RESEND_API_KEY and EMAIL_FROM in .env.local
+ * Without these, emails are logged to console but not sent.
+ */
+
+const APP_URL = process.env.APP_PUBLIC_URL || 'http://localhost:3000';
+
+// ─── Email Templates ─────────────────────────────────────────────────────────
+
+export interface EmailTemplate {
+  subject: string;
+  html: string;
+  text: string;
+}
+
+type TemplateName =
+  | 'deposit_approved'
+  | 'deposit_rejected'
+  | 'plan_updated'
+  | 'roi_published'
+  | 'kyc_approved'
+  | 'kyc_declined'
+  | 'withdrawal_submitted'
+  | 'withdrawal_approved'
+  | 'withdrawal_rejected'
+  | 'referral_reward_credited'
+  | 'admin_broadcast'
+  | 'security_alert';
+
+interface TemplateData {
+  investorName: string;
+  amount?: string;
+  planName?: string;
+  roiPercent?: string;
+  profitAmount?: string;
+  reason?: string;
+  previousPlan?: string;
+  message?: string;
+  adminName?: string;
+  eventTime?: string;
+}
+
+function renderTemplate(name: TemplateName, data: TemplateData): EmailTemplate {
+  const baseLayout = (title: string, content: string) => ({
+    subject: title,
+    html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f8f9fa; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .header { background: #0A0D0C; padding: 24px 32px; }
+    .header h1 { color: #22C55E; font-size: 20px; font-weight: 600; margin: 0; }
+    .body { padding: 32px; color: #1a1a1a; line-height: 1.6; }
+    .body h2 { font-size: 18px; font-weight: 600; margin: 0 0 16px; }
+    .highlight { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin: 16px 0; text-align: center; }
+    .highlight .amount { font-size: 28px; font-weight: 700; color: #16a34a; font-family: 'SF Mono', Monaco, monospace; }
+    .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { color: #6b7280; }
+    .detail-value { font-weight: 600; color: #111827; }
+    .cta { display: inline-block; background: #22C55E; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 100px; font-weight: 600; font-size: 14px; margin: 16px 0; }
+    .footer { padding: 24px 32px; background: #f8f9fa; font-size: 12px; color: #9ca3af; text-align: center; }
+    .footer a { color: #6b7280; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header"><h1>Quantovest Capital</h1></div>
+    <div class="body">${content}</div>
+    <div class="footer">
+      <p>Quantovest Capital — Your Capital. Their Expertise.</p>
+      <p><a href="${APP_URL}/dashboard">View Dashboard</a> · <a href="${APP_URL}/legal/terms">Terms</a> · <a href="${APP_URL}/legal/privacy">Privacy</a></p>
+      <p style="margin-top: 12px; font-size: 11px; color: #d1d5db;">
+        Risk Warning: Trading involves substantial risk of loss. Past performance is not indicative of future results.
+        You should not invest more than you can afford to lose. Please read our full risk disclosure.
+      </p>
+    </div>
+  </div>
+</body>
+</html>`,
+    text: `${title}\n\nHello ${data.investorName},\n\n${content.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()}\n\nView your dashboard: ${APP_URL}/dashboard\n\nQuantovest Capital — Your Capital. Their Expertise.`,
+  });
+
+  switch (name) {
+    case 'deposit_approved':
+      return baseLayout('Deposit Approved', `
+        <h2>Deposit Approved</h2>
+        <p>Hello ${data.investorName},</p>
+        <p>Your deposit has been approved and credited to your account.</p>
+        <div class="highlight">
+          <div class="amount">${data.amount}</div>
+          <p style="margin:8px 0 0;font-size:14px;color:#16a34a;font-weight:600">Credited to ${data.planName} Plan</p>
+        </div>
+        <div class="detail-row"><span class="detail-label">Plan</span><span class="detail-value">${data.planName}</span></div>
+        <div class="detail-row"><span class="detail-label">Amount</span><span class="detail-value">${data.amount}</span></div>
+        <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color:#16a34a">Completed</span></div>
+        <a href="${APP_URL}/dashboard" class="cta">View Dashboard</a>
+      `);
+
+    case 'deposit_rejected':
+      return baseLayout('Deposit Rejected', `
+        <h2>Deposit Rejected</h2>
+        <p>Hello ${data.investorName},</p>
+        <p>Your deposit request has been declined.</p>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="color:#dc2626;font-weight:600;margin:0;">Reason</p>
+          <p style="margin:8px 0 0;color:#7f1d1d;">${data.reason}</p>
+        </div>
+        <a href="${APP_URL}/dashboard/deposit" class="cta">Try Again</a>
+      `);
+
+    case 'plan_updated':
+      return baseLayout('Plan Updated', `
+        <h2>Plan Changed</h2>
+        <p>Hello ${data.investorName},</p>
+        <p>Your investment plan has been updated.</p>
+        <div class="highlight">
+          <div class="amount">${data.planName}</div>
+          <p style="margin:8px 0 0;font-size:14px;color:#16a34a;font-weight:600">New Active Plan</p>
+        </div>
+        <div class="detail-row"><span class="detail-label">Previous Plan</span><span class="detail-value">${data.previousPlan}</span></div>
+        <div class="detail-row"><span class="detail-label">New Plan</span><span class="detail-value" style="color:#16a34a">${data.planName}</span></div>
+        <a href="${APP_URL}/dashboard" class="cta">View Dashboard</a>
+      `);
+
+    case 'roi_published':
+      return baseLayout('Daily ROI Credited', `
+        <h2>Daily ROI</h2>
+        <p>Hello ${data.investorName},</p>
+        <p>Today&apos;s return has been credited to your account.</p>
+        <div class="highlight">
+          <div class="amount">${data.roiPercent}%</div>
+          <p style="margin:8px 0 0;font-size:14px;color:#16a34a;font-weight:600">+${data.profitAmount} added to balance</p>
+        </div>
+        <a href="${APP_URL}/dashboard" class="cta">View Dashboard</a>
+      `);
+
+    case 'kyc_approved':
+      return baseLayout('KYC Verified', `
+        <h2>Identity Verified</h2>
+        <p>Hello ${data.investorName},</p>
+        <p>Your identity verification has been approved. You now have full access to all platform features.</p>
+        <div style="text-align:center;padding:20px;">
+          <span style="display:inline-block;background:#f0fdf4;color:#16a34a;font-weight:700;font-size:16px;padding:8px 24px;border-radius:100px;">✓ Verified</span>
+        </div>
+        <a href="${APP_URL}/dashboard" class="cta">Go to Dashboard</a>
+      `);
+
+    case 'kyc_declined':
+      return baseLayout('KYC Requires Attention', `
+        <h2>Verification Declined</h2>
+        <p>Hello ${data.investorName},</p>
+        <p>Your identity verification was declined. Please review and resubmit.</p>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="color:#dc2626;font-weight:600;margin:0;">Reason</p>
+          <p style="margin:8px 0 0;color:#7f1d1d;">${data.reason}</p>
+        </div>
+        <a href="${APP_URL}/dashboard/kyc" class="cta">Resubmit Documents</a>
+      `);
+
+    case 'withdrawal_submitted':
+      return baseLayout('Withdrawal Requested', `
+        <h2>Withdrawal Request</h2>
+        <p>Hello ${data.investorName},</p>
+        <p>Your withdrawal request has been submitted and is pending review.</p>
+        <div class="highlight">
+          <div class="amount">${data.amount}</div>
+          <p style="margin:8px 0 0;font-size:14px;color:#f59e0b;font-weight:600">Pending Admin Approval</p>
+        </div>
+      `);
+
+    case 'withdrawal_approved':
+      return baseLayout('Withdrawal Processed', `
+        <h2>Withdrawal Approved</h2>
+        <p>Hello ${data.investorName},</p>
+        <p>Your withdrawal has been processed.</p>
+        <div class="highlight">
+          <div class="amount">${data.amount}</div>
+          <p style="margin:8px 0 0;font-size:14px;color:#16a34a;font-weight:600">Completed</p>
+        </div>
+      `);
+
+    case 'withdrawal_rejected':
+      return baseLayout('Withdrawal Declined', `
+        <h2>Withdrawal Declined</h2>
+        <p>Hello ${data.investorName},</p>
+        <p>Your withdrawal request has been declined.</p>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="color:#dc2626;font-weight:600;margin:0;">Reason</p>
+          <p style="margin:8px 0 0;color:#7f1d1d;">${data.reason}</p>
+        </div>
+        <a href="${APP_URL}/dashboard/withdraw" class="cta">View Withdrawals</a>
+      `);
+
+    case 'referral_reward_credited':
+      return baseLayout('Referral Reward', `
+        <h2>Referral Reward</h2>
+        <p>Hello ${data.investorName},</p>
+        <p>A referral reward has been credited to your account.</p>
+        <div class="highlight">
+          <div class="amount">${data.amount}</div>
+          <p style="margin:8px 0 0;font-size:14px;color:#16a34a;font-weight:600">Referral Bonus</p>
+        </div>
+      `);
+
+    case 'admin_broadcast':
+      return baseLayout(data.message || 'Platform Notice', `
+        <h2>${data.message || 'Platform Notice'}</h2>
+        <p>Hello ${data.investorName},</p>
+        <p>${data.adminName || 'The Quantovest team'} has sent you an update:</p>
+        <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="margin:0;">${data.message}</p>
+        </div>
+        <a href="${APP_URL}/dashboard" class="cta">View Dashboard</a>
+      `);
+
+    case 'security_alert':
+      return baseLayout('Security Alert', `
+        <h2>Security Alert</h2>
+        <p>Hello ${data.investorName},</p>
+        <p>A security-related event occurred on your account.</p>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="color:#dc2626;font-weight:600;margin:0;">Event</p>
+          <p style="margin:8px 0 0;color:#7f1d1d;">${data.message}</p>
+          <p style="margin:8px 0 0;font-size:12px;color:#9ca3af;">Time: ${data.eventTime}</p>
+        </div>
+        <a href="${APP_URL}/dashboard/settings" class="cta">Review Security Settings</a>
+      `);
+
+    default:
+      return baseLayout('Notification', `<p>Hello ${data.investorName},</p><p>You have a new notification.</p>`);
+  }
+}
+
+// ─── Email Sender ────────────────────────────────────────────────────────────
+
+export async function sendEmail(
+  to: string,
+  templateName: TemplateName,
+  data: TemplateData
+): Promise<{ sent: boolean; error?: string }> {
+  const template = renderTemplate(templateName, data);
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM || 'Quantovest Capital <notifications@quantovest.com>';
+
+  // If no API key, log to console (development mode)
+  if (!apiKey) {
+    console.log(`[EMAIL DEV] To: ${to} | Subject: ${template.subject}`);
+    console.log(`[EMAIL DEV] Text: ${template.text.substring(0, 200)}...`);
+    return { sent: true };
+  }
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject: template.subject,
+        html: template.html,
+        text: template.text,
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      console.error('[EMAIL] Send failed:', err);
+      return { sent: false, error: err };
+    }
+
+    return { sent: true };
+  } catch (err) {
+    console.error('[EMAIL] Network error:', err);
+    return { sent: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+// ─── Convenience Functions ───────────────────────────────────────────────────
+
+export async function sendDepositApproved(to: string, name: string, amount: string, plan: string) {
+  return sendEmail(to, 'deposit_approved', { investorName: name, amount, planName: plan });
+}
+
+export async function sendDepositRejected(to: string, name: string, reason: string) {
+  return sendEmail(to, 'deposit_rejected', { investorName: name, reason });
+}
+
+export async function sendPlanUpdated(to: string, name: string, prevPlan: string, newPlan: string) {
+  return sendEmail(to, 'plan_updated', { investorName: name, previousPlan: prevPlan, planName: newPlan });
+}
+
+export async function sendRoiPublished(to: string, name: string, roiPercent: string, profit: string) {
+  return sendEmail(to, 'roi_published', { investorName: name, roiPercent, profitAmount: profit });
+}
+
+export async function sendKycApproved(to: string, name: string) {
+  return sendEmail(to, 'kyc_approved', { investorName: name });
+}
+
+export async function sendKycDeclined(to: string, name: string, reason: string) {
+  return sendEmail(to, 'kyc_declined', { investorName: name, reason });
+}
+
+export async function sendWithdrawalSubmitted(to: string, name: string, amount: string) {
+  return sendEmail(to, 'withdrawal_submitted', { investorName: name, amount });
+}
+
+export async function sendWithdrawalApproved(to: string, name: string, amount: string) {
+  return sendEmail(to, 'withdrawal_approved', { investorName: name, amount });
+}
+
+export async function sendWithdrawalRejected(to: string, name: string, reason: string) {
+  return sendEmail(to, 'withdrawal_rejected', { investorName: name, reason });
+}
+
+export async function sendSecurityAlert(to: string, name: string, message: string) {
+  return sendEmail(to, 'security_alert', { investorName: name, message, eventTime: new Date().toISOString() });
+}

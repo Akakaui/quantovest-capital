@@ -1,40 +1,166 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import AdminSidebar from '@/components/AdminSidebar';
+import { Icon } from '@iconify/react';
 
-type Investor = { id: string; name: string | null; email: string | null; planName: string | null; minRoiBps: number | null; maxRoiBps: number | null; balanceCents: number | null };
-type Plan = { id: number; name: string; minRoiBps: number; maxRoiBps: number };
+type Investor = { id: string; name: string | null; email: string | null; planName: string | null; balanceCents: number | null; planId: number | null };
+
+const PLAN_ROI: Record<string, { daily: number; label: string }> = {
+  'Starter': { daily: 15, label: '15% Daily' },
+  'Growth': { daily: 25, label: '25% Daily' },
+  'Elite': { daily: 35, label: '35% Daily' },
+};
 
 export default function AdminPerformancePage() {
   const [investors, setInvestors] = useState<Investor[]>([]);
-  const [plans, setPlans] = useState<Plan[]>([]);
   const [investorId, setInvestorId] = useState('');
-  const [percentage, setPercentage] = useState('1.00');
-  const [note, setNote] = useState('FX EUR/USD intraday rally + Crypto BTC momentum execution');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    Promise.all([fetch('/api/admin/investors', { cache: 'no-store' }), fetch('/api/plans', { cache: 'no-store' })]).then(async ([investorResponse, planResponse]) => {
-      if (investorResponse.ok) setInvestors(await investorResponse.json());
-      if (planResponse.ok) setPlans(await planResponse.json());
-      setLoading(false);
-    }).catch(() => { setMessage('Unable to load the persistent investor queue.'); setLoading(false); });
+    fetch('/api/admin/investors', { cache: 'no-store' })
+      .then(async (res) => { if (res.ok) setInvestors(await res.json()); })
+      .catch(() => setMessage('Unable to load investors.'))
+      .finally(() => setLoading(false));
   }, []);
 
-  const selected = investors.find(investor => investor.id === investorId);
-  const range = useMemo(() => selected?.minRoiBps != null && selected.maxRoiBps != null ? { min: selected.minRoiBps / 100, max: selected.maxRoiBps / 100 } : null, [selected]);
+  const selected = investors.find(i => i.id === investorId);
+  const planRoi = selected?.planName ? PLAN_ROI[selected.planName] : null;
 
-  async function publish(event: React.FormEvent) {
-    event.preventDefault();
+  async function publishFixed() {
+    if (!selected || !planRoi) return;
     setSubmitting(true);
-    const response = await fetch('/api/admin/roi', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ investorId, percentageBps: Math.round(Number(percentage) * 100), marketNote: note }) });
-    const data = await response.json().catch(() => ({}));
-    setMessage(response.ok ? `ROI published for ${selected?.name ?? 'investor'} and recorded in the portfolio ledger.` : data.error ?? 'ROI publication failed.');
+    setMessage('');
+    try {
+      const res = await fetch('/api/admin/roi', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          investorId: selected.id,
+          percentageBps: planRoi.daily * 100,
+          marketNote: `${selected.planName} plan fixed daily ROI — ${planRoi.daily}%`,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setMessage(`Published ${planRoi.daily}% ROI for ${selected.name ?? selected.email}. $${((data.profitCents ?? 0) / 100).toFixed(2)} credited.`);
+        // Refresh investor data
+        const updated = await fetch('/api/admin/investors', { cache: 'no-store' });
+        if (updated.ok) setInvestors(await updated.json());
+      } else {
+        setMessage(data.error ?? 'ROI publication failed.');
+      }
+    } catch {
+      setMessage('Network error.');
+    }
     setSubmitting(false);
   }
 
-  return <div className="min-h-screen bg-[#0D1215] text-[#E8EFEB] flex flex-col md:flex-row font-sans"><AdminSidebar /><main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8"><div className="border-b border-[#2B393F] pb-6 space-y-1"><h1 className="text-2xl font-normal">Publish Individual Investor ROI</h1><p className="text-xs text-[#93A09A]">Select one investor. The server validates the ROI against that investor&apos;s active plan before changing their persistent balance.</p></div>{message && <div role="status" className="p-4 bg-[#22C55E]/10 border border-[#22C55E]/50 rounded-xl text-xs text-[#86EFAC]">{message}</div>}<form onSubmit={publish} className="max-w-2xl bg-[#151E23] border border-[#2B393F] rounded-2xl p-6 sm:p-8 space-y-5"><label className="block text-xs text-[#93A09A]">Investor<select required value={investorId} onChange={event => setInvestorId(event.target.value)} disabled={loading} className="mt-2 w-full bg-[#0D1215] border border-[#2B393F] rounded-xl px-4 py-3 text-sm text-[#E8EFEB]"><option value="">{loading ? 'Loading investor accounts…' : 'Select investor'}</option>{investors.map(investor => <option key={investor.id} value={investor.id}>{investor.name ?? investor.email ?? investor.id} · {investor.planName ?? 'No plan'}</option>)}</select></label>{selected && <div className="rounded-xl border border-[#2B393F] bg-[#0D1215] p-4 text-xs text-[#A8ACB3]">Active plan: <strong className="text-white">{selected.planName ?? 'Not assigned'}</strong><span className="mx-2">·</span>Balance: <strong className="text-white">${((selected.balanceCents ?? 0) / 100).toLocaleString()}</strong><span className="mx-2">·</span>Allowed range: <strong className="text-[#86EFAC]">{range ? `${range.min.toFixed(2)}% – ${range.max.toFixed(2)}%` : 'Unavailable'}</strong></div>}<label className="block text-xs text-[#93A09A]">ROI percentage<input required type="number" step="0.01" min={range?.min} max={range?.max} value={percentage} onChange={event => setPercentage(event.target.value)} className="mt-2 w-full bg-[#0D1215] border border-[#2B393F] rounded-xl px-4 py-3 text-lg text-[#E8EFEB] font-mono" /></label><label className="block text-xs text-[#93A09A]">Market allocation note<textarea required rows={3} value={note} onChange={event => setNote(event.target.value)} className="mt-2 w-full bg-[#0D1215] border border-[#2B393F] rounded-xl p-3 text-sm text-[#E8EFEB]" /></label><button disabled={submitting || !investorId} className="w-full py-3.5 rounded-full bg-[#22C55E] text-[#07110B] font-semibold text-xs disabled:opacity-40">{submitting ? 'Publishing…' : 'Publish ROI to This Investor'}</button></form><section className="max-w-2xl rounded-2xl border border-[#2B393F] bg-[#151E23] p-6"><h2 className="text-base">Configured plans</h2><div className="mt-4 grid gap-3 sm:grid-cols-3">{plans.map(plan => <div key={plan.id} className="rounded-xl bg-[#0D1215] p-4 text-xs"><p className="font-semibold text-white">{plan.name}</p><p className="mt-1 text-[#86EFAC]">{(plan.minRoiBps / 100).toFixed(2)}% – {(plan.maxRoiBps / 100).toFixed(2)}%</p></div>)}</div></section></main></div>;
+  const balance = selected ? (selected.balanceCents ?? 0) / 100 : 0;
+  const dailyProfit = planRoi ? balance * planRoi.daily / 100 : 0;
+
+  return (
+    <div className="min-h-screen bg-[#0D1215] text-[#E8EFEB] flex flex-col md:flex-row font-sans">
+      <AdminSidebar />
+      <main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
+        <div className="border-b border-[#2B393F] pb-6 space-y-1">
+          <h1 className="text-2xl font-normal">Publish Daily ROI</h1>
+          <p className="text-xs text-[#93A09A]">Select an investor. Their plan has a fixed daily ROI — just tap the button to publish.</p>
+        </div>
+
+        {message && (
+          <div role="status" className={`p-4 rounded-xl text-xs ${message.includes('failed') || message.includes('error') ? 'bg-[#CF202F]/10 border border-[#CF202F]/50 text-[#FCA5A5]' : 'bg-[#22C55E]/10 border border-[#22C55E]/50 text-[#86EFAC]'}`}>
+            {message}
+          </div>
+        )}
+
+        <label className="block text-xs text-[#93A09A]">
+          Select Investor
+          <select
+            required
+            value={investorId}
+            onChange={e => { setInvestorId(e.target.value); setMessage(''); }}
+            disabled={loading}
+            className="mt-2 w-full bg-[#0D1215] border border-[#2B393F] rounded-xl px-4 py-3 text-sm text-[#E8EFEB]"
+          >
+            <option value="">{loading ? 'Loading investors...' : 'Select investor'}</option>
+            {investors.map(i => (
+              <option key={i.id} value={i.id}>
+                {i.name ?? i.email ?? i.id} — {i.planName ?? 'No plan'} — ${((i.balanceCents ?? 0) / 100).toLocaleString()}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        {selected && (
+          <div className="space-y-6">
+            {/* Investor Info Card */}
+            <div className="rounded-2xl border border-[#2B393F] bg-[#151E23] p-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div>
+                  <p className="text-xs text-[#93A09A]">Investor</p>
+                  <p className="text-sm font-semibold text-white mt-1">{selected.name ?? selected.email}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#93A09A]">Plan</p>
+                  <p className="text-sm font-semibold text-[#22C55E] mt-1">{selected.planName ?? 'None'}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#93A09A]">Balance</p>
+                  <p className="text-sm font-mono font-semibold text-white mt-1">${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-[#93A09A]">Daily ROI</p>
+                  <p className="text-sm font-mono font-semibold text-[#22C55E] mt-1">{planRoi ? `${planRoi.daily}%` : 'N/A'}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* One-Click ROI Button */}
+            {planRoi ? (
+              <div className="rounded-2xl border border-[#22C55E]/30 bg-[#22C55E]/5 p-8 text-center space-y-4">
+                <div className="w-20 h-20 mx-auto rounded-full bg-[#22C55E]/10 flex items-center justify-center">
+                  <Icon icon="solar:chart-up-bold" className="w-10 h-10 text-[#22C55E]" />
+                </div>
+                <div>
+                  <h3 className="text-4xl font-mono font-bold text-[#22C55E]">{planRoi.daily}%</h3>
+                  <p className="text-sm text-[#A8ACB3] mt-1">Fixed daily return for {selected.planName} plan</p>
+                </div>
+                <div className="text-xs text-[#93A09A]">
+                  This will credit <span className="text-[#22C55E] font-mono">${dailyProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span> to the investor&apos;s balance
+                </div>
+                <button
+                  onClick={publishFixed}
+                  disabled={submitting}
+                  className="px-12 py-4 rounded-full bg-[#22C55E] text-[#0A0D0C] font-semibold text-sm hover:bg-[#16A34A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting ? 'Publishing...' : `Publish ${planRoi.daily}% ROI Now`}
+                </button>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-[#CF202F]/30 bg-[#CF202F]/5 p-8 text-center">
+                <p className="text-sm text-[#FCA5A5]">This investor has no active plan. Assign a plan first.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Quick Reference */}
+        <div className="rounded-2xl border border-[#2B393F] bg-[#151E23] p-6 space-y-4">
+          <h3 className="text-sm font-semibold text-white">Fixed ROI Reference</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {Object.entries(PLAN_ROI).map(([plan, { daily }]) => (
+              <div key={plan} className="p-4 rounded-xl bg-[#0D1215] border border-[#2B393F] text-center">
+                <p className="text-xs text-[#93A09A]">{plan}</p>
+                <p className="text-2xl font-mono font-bold text-[#22C55E] mt-1">{daily}%</p>
+                <p className="text-xs text-[#93A09A] mt-1">per day</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
 }
