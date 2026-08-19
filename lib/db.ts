@@ -8,6 +8,6 @@ let client: postgres.Sql | undefined;
 export function getDb() {
   const url = process.env.DATABASE_URL;
   if (!url) return null;
-  client ??= postgres(url, { prepare: false, max: 1, idle_timeout: 20, connect_timeout: 10, ssl: "require" });
+  client ??= postgres(url, { prepare: false, max: 1, idle_timeout: 20, connect_timeout: 10, ssl: url.includes('localhost') ? false : { rejectUnauthorized: false } });
   return drizzle(client, { schema });
 }

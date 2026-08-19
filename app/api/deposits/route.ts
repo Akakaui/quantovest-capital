@@ -8,11 +8,16 @@ import { deposits } from '@/db/schema';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const actor = await getCurrentIdentity();
-  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const db = getDb();
-  if (!db) return NextResponse.json({ error: 'Database is not configured' }, { status: 503 });
-  return NextResponse.json(await db.select().from(deposits).where(eq(deposits.investorId, actor.id)));
+  try {
+    const actor = await getCurrentIdentity();
+    if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const db = getDb();
+    if (!db) return NextResponse.json([]);
+    return NextResponse.json(await db.select().from(deposits).where(eq(deposits.investorId, actor.id)));
+  } catch (err) {
+    console.error('[deposits GET]', err);
+    return NextResponse.json([]);
+  }
 }
 
 export async function POST(request: Request) {

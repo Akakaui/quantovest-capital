@@ -38,30 +38,34 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unsupported asset pair" }, { status: 400 });
   }
 
-  let rate = baseFrom / baseTo;
-  let feeBps = 50;
+  try {
+    let rate = baseFrom / baseTo;
+    let feeBps = 50;
 
-  const db = getDb();
-  if (db) {
-    const [config] = await db.select().from(swapConfig).where(
-      eq(swapConfig.fromAsset, from) 
-    ).limit(1);
-    if (config && config.active) {
-      rate *= parseFloat(config.rateMultiplier);
-      feeBps = config.feeBps;
+    const db = getDb();
+    if (db) {
+      const [config] = await db.select().from(swapConfig).where(
+        eq(swapConfig.fromAsset, from)
+      ).limit(1);
+      if (config && config.active) {
+        rate *= parseFloat(config.rateMultiplier);
+        feeBps = config.feeBps;
+      }
     }
+
+    const fee = amount * (feeBps / 10000);
+    const receiveAmount = amount * rate - fee;
+
+    return NextResponse.json({
+      from,
+      to,
+      fromAmount: amount,
+      rate: rate.toFixed(8),
+      fee: fee.toFixed(6),
+      feeBps,
+      receiveAmount: receiveAmount.toFixed(6),
+    });
+  } catch {
+    return NextResponse.json([]);
   }
-
-  const fee = amount * (feeBps / 10000);
-  const receiveAmount = amount * rate - fee;
-
-  return NextResponse.json({
-    from,
-    to,
-    fromAmount: amount,
-    rate: rate.toFixed(8),
-    fee: fee.toFixed(6),
-    feeBps,
-    receiveAmount: receiveAmount.toFixed(6),
-  });
 }

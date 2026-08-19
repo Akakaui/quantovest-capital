@@ -10,8 +10,12 @@ export async function GET() {
   const { identity, error } = await requireAuth();
   if (error) return error;
   const db = getDb();
-  if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
+  if (!db) return NextResponse.json([]);
 
-  const holdings = await db.select().from(portfolioHoldings).where(eq(portfolioHoldings.investorId, identity.id));
-  return NextResponse.json(holdings);
+  try {
+    const holdings = await db.select().from(portfolioHoldings).where(eq(portfolioHoldings.investorId, identity.id));
+    return NextResponse.json(holdings);
+  } catch {
+    return NextResponse.json([]);
+  }
 }

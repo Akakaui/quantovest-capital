@@ -8,21 +8,27 @@ import { portfolioLedger, referralRewards, referralWithdrawals } from "@/db/sche
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const { identity, error } = await requireAdmin();
-  if (error) return error;
-  const db = getDb();
-  if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
-  return NextResponse.json(await db.select().from(referralWithdrawals));
+  try {
+    const { identity, error } = await requireAdmin();
+    if (error) return error;
+    const db = getDb();
+    if (!db) return NextResponse.json([]);
+    return NextResponse.json(await db.select().from(referralWithdrawals));
+  } catch (err) {
+    console.error('[referrals/withdrawals]', err);
+    return NextResponse.json([], { status: 500 });
+  }
 }
 
 export async function PATCH(request: Request) {
-  const { identity, error } = await requireAdmin();
-  if (error) return error;
-  const db = getDb();
-  if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
-  const body = await request.json().catch(() => null) as { withdrawalId?: number; action?: "approve" | "reject"; reviewNote?: string } | null;
-  if (!body?.withdrawalId || (body.action !== "approve" && body.action !== "reject")) return NextResponse.json({ error: "Withdrawal and action are required." }, { status: 400 });
   try {
+    const { identity, error } = await requireAdmin();
+    if (error) return error;
+    const db = getDb();
+    if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
+    const body = await request.json().catch(() => null) as { withdrawalId?: number; action?: "approve" | "reject"; reviewNote?: string } | null;
+    if (!body?.withdrawalId || (body.action !== "approve" && body.action !== "reject")) return NextResponse.json({ error: "Withdrawal and action are required." }, { status: 400 });
+    try {
     let investorId: string | null = null;
     let amountCents = 0;
     await db.transaction(async tx => {
@@ -48,5 +54,9 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ updated: true });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Settlement failed." }, { status: 400 });
+  }
+  } catch (err) {
+    console.error('[referrals/withdrawals PATCH]', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

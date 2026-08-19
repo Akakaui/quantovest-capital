@@ -36,47 +36,51 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unsupported asset pair" }, { status: 400 });
   }
 
-  let rate = baseFrom / baseTo;
-  let feeBps = 50;
+  try {
+    let rate = baseFrom / baseTo;
+    let feeBps = 50;
 
-  const [config] = await db.select().from(swapConfig).where(
-    eq(swapConfig.fromAsset, from)
-  ).limit(1);
-  if (config && config.active) {
-    rate *= parseFloat(config.rateMultiplier);
-    feeBps = config.feeBps;
+    const [config] = await db.select().from(swapConfig).where(
+      eq(swapConfig.fromAsset, from)
+    ).limit(1);
+    if (config && config.active) {
+      rate *= parseFloat(config.rateMultiplier);
+      feeBps = config.feeBps;
+    }
+
+    const fee = body.fromAmount * (feeBps / 10000);
+    const toAmount = body.fromAmount * rate - fee;
+
+    const [inserted] = await db.insert(swapTransactions).values({
+      investorId: identity.id,
+      fromAsset: from,
+      toAsset: to,
+      fromAmount: body.fromAmount.toString(),
+      toAmount: toAmount.toFixed(6),
+      rate: rate.toFixed(8),
+      feeCents: Math.round(fee * 100),
+      status: "completed",
+    }).returning({ id: swapTransactions.id });
+
+    await db.insert(portfolioLedger).values({
+      investorId: identity.id,
+      type: "swap",
+      amountCents: Math.round(body.fromAmount * 100),
+      referenceId: String(inserted.id),
+      description: `Swapped ${body.fromAmount} ${from} to ${toAmount.toFixed(6)} ${to}`,
+    });
+
+    return NextResponse.json({
+      id: inserted.id,
+      from,
+      to,
+      fromAmount: body.fromAmount,
+      toAmount: toAmount.toFixed(6),
+      rate: rate.toFixed(8),
+      fee: fee.toFixed(6),
+      status: "completed",
+    }, { status: 201 });
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Swap failed." }, { status: 500 });
   }
-
-  const fee = body.fromAmount * (feeBps / 10000);
-  const toAmount = body.fromAmount * rate - fee;
-
-  const [inserted] = await db.insert(swapTransactions).values({
-    investorId: identity.id,
-    fromAsset: from,
-    toAsset: to,
-    fromAmount: body.fromAmount.toString(),
-    toAmount: toAmount.toFixed(6),
-    rate: rate.toFixed(8),
-    feeCents: Math.round(fee * 100),
-    status: "completed",
-  }).returning({ id: swapTransactions.id });
-
-  await db.insert(portfolioLedger).values({
-    investorId: identity.id,
-    type: "swap",
-    amountCents: Math.round(body.fromAmount * 100),
-    referenceId: String(inserted.id),
-    description: `Swapped ${body.fromAmount} ${from} to ${toAmount.toFixed(6)} ${to}`,
-  });
-
-  return NextResponse.json({
-    id: inserted.id,
-    from,
-    to,
-    fromAmount: body.fromAmount,
-    toAmount: toAmount.toFixed(6),
-    rate: rate.toFixed(8),
-    fee: fee.toFixed(6),
-    status: "completed",
-  }, { status: 201 });
 }

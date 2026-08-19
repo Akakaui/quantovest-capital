@@ -12,12 +12,16 @@ export async function POST(request: Request) {
   const db = getDb();
   if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
 
-  const body = await request.json().catch(() => null) as { endpoint?: string } | null;
-  if (!body?.endpoint) {
-    return NextResponse.json({ error: "Endpoint is required" }, { status: 400 });
+  try {
+    const body = await request.json().catch(() => null) as { endpoint?: string } | null;
+    if (!body?.endpoint) {
+      return NextResponse.json({ error: "Endpoint is required" }, { status: 400 });
+    }
+
+    await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, body.endpoint));
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Unsubscribe failed." }, { status: 500 });
   }
-
-  await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, body.endpoint));
-
-  return NextResponse.json({ success: true });
 }

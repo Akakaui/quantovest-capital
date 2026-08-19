@@ -8,11 +8,16 @@ import { kycApplications } from '@/db/schema';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const actor = await getCurrentIdentity();
-  if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  const db = getDb();
-  if (!db) return NextResponse.json({ error: 'Database is not configured' }, { status: 503 });
-  return NextResponse.json(await db.select().from(kycApplications).where(eq(kycApplications.investorId, actor.id)).orderBy(desc(kycApplications.createdAt)).limit(10));
+  try {
+    const actor = await getCurrentIdentity();
+    if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const db = getDb();
+    if (!db) return NextResponse.json([]);
+    return NextResponse.json(await db.select().from(kycApplications).where(eq(kycApplications.investorId, actor.id)).orderBy(desc(kycApplications.createdAt)).limit(10));
+  } catch (err) {
+    console.error('[kyc GET]', err);
+    return NextResponse.json([]);
+  }
 }
 
 export async function POST(request: Request) {

@@ -12,29 +12,33 @@ export async function POST(request: Request) {
   const db = getDb();
   if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
 
-  const body = await request.json().catch(() => null) as {
-    endpoint?: string;
-    p256dh?: string;
-    auth?: string;
-  } | null;
+  try {
+    const body = await request.json().catch(() => null) as {
+      endpoint?: string;
+      p256dh?: string;
+      auth?: string;
+    } | null;
 
-  if (!body?.endpoint || !body?.p256dh || !body?.auth) {
-    return NextResponse.json({ error: "Invalid subscription" }, { status: 400 });
+    if (!body?.endpoint || !body?.p256dh || !body?.auth) {
+      return NextResponse.json({ error: "Invalid subscription" }, { status: 400 });
+    }
+
+    const existing = await db.select().from(pushSubscriptions).where(
+      eq(pushSubscriptions.endpoint, body.endpoint)
+    );
+
+    if (existing.length === 0) {
+      await db.insert(pushSubscriptions).values({
+        userId: identity.id,
+        endpoint: body.endpoint,
+        p256dh: body.p256dh,
+        auth: body.auth,
+        userAgent: request.headers.get("user-agent") ?? undefined,
+      });
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Subscribe failed." }, { status: 500 });
   }
-
-  const existing = await db.select().from(pushSubscriptions).where(
-    eq(pushSubscriptions.endpoint, body.endpoint)
-  );
-
-  if (existing.length === 0) {
-    await db.insert(pushSubscriptions).values({
-      userId: identity.id,
-      endpoint: body.endpoint,
-      p256dh: body.p256dh,
-      auth: body.auth,
-      userAgent: request.headers.get("user-agent") ?? undefined,
-    });
-  }
-
-  return NextResponse.json({ success: true });
 }

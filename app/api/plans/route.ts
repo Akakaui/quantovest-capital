@@ -6,8 +6,13 @@ import { plans } from "@/db/schema";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const db = getDb();
-  if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
-  const rows = await db.select().from(plans).where(eq(plans.active, 1));
-  return NextResponse.json(rows);
+  try {
+    const db = getDb();
+    if (!db) return NextResponse.json([]);
+    const rows = await db.select().from(plans).where(eq(plans.active, 1));
+    return NextResponse.json(rows);
+  } catch (err) {
+    console.error('[plans GET]', err);
+    return NextResponse.json([]);
+  }
 }

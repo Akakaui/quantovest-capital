@@ -8,21 +8,27 @@ import { deposits, investorAccounts, plans, portfolioLedger } from '@/db/schema'
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const { identity, error } = await requireAdmin();
-  if (error) return error;
-  const db = getDb();
-  if (!db) return NextResponse.json({ error: 'Database is not configured' }, { status: 503 });
-  return NextResponse.json(await db.select().from(deposits).where(eq(deposits.status, 'pending')));
+  try {
+    const { identity, error } = await requireAdmin();
+    if (error) return error;
+    const db = getDb();
+    if (!db) return NextResponse.json([]);
+    return NextResponse.json(await db.select().from(deposits).where(eq(deposits.status, 'pending')));
+  } catch (err) {
+    console.error('[deposits]', err);
+    return NextResponse.json([], { status: 500 });
+  }
 }
 
 export async function PATCH(request: Request) {
-  const { identity, error } = await requireAdmin();
-  if (error) return error;
-  const db = getDb();
-  if (!db) return NextResponse.json({ error: 'Database is not configured' }, { status: 503 });
-  const body = await request.json().catch(() => null) as { depositId?: string; action?: 'approve' | 'reject'; reviewNote?: string } | null;
-  if (!body?.depositId || (body.action !== 'approve' && body.action !== 'reject')) return NextResponse.json({ error: 'Deposit and action are required.' }, { status: 400 });
   try {
+    const { identity, error } = await requireAdmin();
+    if (error) return error;
+    const db = getDb();
+    if (!db) return NextResponse.json({ error: 'Database is not configured' }, { status: 503 });
+    const body = await request.json().catch(() => null) as { depositId?: string; action?: 'approve' | 'reject'; reviewNote?: string } | null;
+    if (!body?.depositId || (body.action !== 'approve' && body.action !== 'reject')) return NextResponse.json({ error: 'Deposit and action are required.' }, { status: 400 });
+    try {
     const result = await db.transaction(async tx => {
       const rows = await tx.select().from(deposits).where(and(eq(deposits.id, body.depositId!), eq(deposits.status, 'pending'))).limit(1);
       if (!rows[0]) throw new Error('Pending deposit was not found.');
@@ -47,5 +53,9 @@ export async function PATCH(request: Request) {
     return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Deposit review failed.' }, { status: 400 });
+  }
+  } catch (err) {
+    console.error('[deposits PATCH]', err);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

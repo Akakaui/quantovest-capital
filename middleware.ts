@@ -33,6 +33,11 @@ function isInvestorRoute(pathname: string): boolean {
     '/api/history',
     '/api/referrals',
     '/api/deposit-instructions',
+    '/api/investor-profile',
+    '/api/portfolio',
+    '/api/swap',
+    '/api/traders',
+    '/api/push',
   ];
   return investorApiRoutes.some((route) => pathname.startsWith(route));
 }
@@ -46,7 +51,12 @@ function isAdminRoute(pathname: string): boolean {
 // Removed vulnerable manual cookie parsing functions
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
-  const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  if (!supabaseUrl || !supabaseKey) return response;
+
+  const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
