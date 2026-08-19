@@ -12,10 +12,38 @@ export async function GET() {
     if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const db = getDb();
-    if (!db) return NextResponse.json({ error: 'Database is not configured' }, { status: 503 });
+    if (!db) return NextResponse.json({
+      id: actor.id,
+      name: null,
+      email: actor.email,
+      avatar: null,
+      role: actor.role,
+      balance: 0,
+      totalInvested: 0,
+      totalProfit: 0,
+      dailyRoiPercent: 0,
+      allTimeRoiPercent: 0,
+      plan: 'None',
+      kycStatus: 'unverified',
+      onboardingCompleted: false,
+    });
 
     const [userRow] = await db.select().from(users).where(eq(users.id, actor.id)).limit(1);
-    if (!userRow) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    if (!userRow) return NextResponse.json({
+      id: actor.id,
+      name: null,
+      email: actor.email,
+      avatar: null,
+      role: actor.role,
+      balance: 0,
+      totalInvested: 0,
+      totalProfit: 0,
+      dailyRoiPercent: 0,
+      allTimeRoiPercent: 0,
+      plan: 'None',
+      kycStatus: 'unverified',
+      onboardingCompleted: false,
+    });
 
     const [account] = await db.select().from(investorAccounts).where(eq(investorAccounts.investorId, actor.id)).limit(1);
 
