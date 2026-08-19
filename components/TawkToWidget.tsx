@@ -6,8 +6,8 @@ export default function TawkToWidget() {
   useEffect(() => {
     // Tawk.to Live Chat Widget
     // Replace the property and widget IDs with your own from https://tawk.to
-    const propertyId = 'REPLACE_WITH_YOUR_TAWK_PROPERTY_ID';
-    const widgetId = 'REPLACE_WITH_YOUR_TAWK_WIDGET_ID';
+    const propertyId = '6a85b38fd3b146344a1b76c1';
+    const widgetId = '1k0d4ar0u';
 
     if (typeof window !== 'undefined' && !(window as any).Tawk_API) {
       (window as any).Tawk_API = (window as any).Tawk_API || {};
