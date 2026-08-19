@@ -43,32 +43,7 @@ function isAdminRoute(pathname: string): boolean {
   return false;
 }
 
-function hasSessionCookie(request: NextRequest): boolean {
-  return request.cookies.getAll().some((cookie) => {
-    return cookie.name.startsWith('sb-') && cookie.name.endsWith('-auth-token') && cookie.value.length > 0;
-  });
-}
-
-function isAdminFromSession(request: NextRequest): boolean {
-  const sessionCookie = request.cookies.getAll().find((cookie) => {
-    return cookie.name.startsWith('sb-') && cookie.name.endsWith('-auth-token');
-  });
-  if (!sessionCookie) return false;
-
-  try {
-    const parts = sessionCookie.value.split('.');
-    if (parts.length !== 3) return false;
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
-    const role =
-      payload?.app_metadata?.role ??
-      payload?.user_metadata?.role ??
-      payload?.role;
-    return role === 'admin';
-  } catch {
-    return false;
-  }
-}
-
+// Removed vulnerable manual cookie parsing functions
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, {
@@ -84,11 +59,13 @@ export async function middleware(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getClaims();
+  const { data: { user } } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isAuthenticated = hasSessionCookie(request);
-  const isAdmin = isAdminFromSession(request);
+  const isAuthenticated = !!user;
+  
+  const role = user?.app_metadata?.role ?? user?.user_metadata?.role ?? 'investor';
+  const isAdmin = role === 'admin';
 
   if (isPublicRoute(pathname)) {
     if (isAuthenticated && (pathname === '/login' || pathname === '/signup')) {
