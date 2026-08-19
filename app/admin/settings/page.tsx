@@ -82,7 +82,7 @@ export default function AdminSettingsPage() {
       <main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
         <div className="border-b border-[#2B393F] pb-6 space-y-1">
           <div className="flex items-center gap-2 text-xs text-[#22C55E] font-mono">
-            <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-[#22C55E]" />
             CONFIGURATION
           </div>
           <h1 className="text-2xl font-normal text-[#E8EFEB]">Platform Settings</h1>

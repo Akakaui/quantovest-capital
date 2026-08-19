@@ -3,121 +3,285 @@
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import RoiCalculatorModal from '@/components/RoiCalculatorModal';
 import Link from 'next/link';
 import { Icon } from '@iconify/react';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
+
+const PLANS = [
+  {
+    name: 'Starter',
+    min: 500,
+    dailyRoi: 15,
+    color: '#22C55E',
+    features: ['FX & Top Crypto Asset Access', 'Daily ROI Dashboard Updates', '0% Management Fee (15% Perf Fee)'],
+  },
+  {
+    name: 'Growth',
+    min: 5000,
+    dailyRoi: 25,
+    color: '#22C55E',
+    recommended: true,
+    features: ['FX, Crypto & US Equities Access', 'Dedicated Account Manager', 'Priority Investment Execution'],
+  },
+  {
+    name: 'Elite',
+    min: 15000,
+    dailyRoi: 35,
+    color: '#22C55E',
+    features: ['Full Multi-Asset VIP Access', 'Custom Risk Controls', 'Direct Portfolio Manager Insights'],
+  },
+];
 
 export default function PlansPage() {
-  const [isCalcOpen, setIsCalcOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<number>(1);
+  const [deposit, setDeposit] = useState(5000);
+  const [months, setMonths] = useState(6);
+
+  const plan = PLANS[selectedPlan];
+  const dailyReturn = deposit * (plan.dailyRoi / 100);
+  const tradingDays = 21;
+  const monthlyRoi = (Math.pow(1 + plan.dailyRoi / 100, tradingDays) - 1) * 100;
+
+  const chartData = [];
+  let val = deposit;
+  for (let i = 0; i <= months; i++) {
+    chartData.push({ month: i === 0 ? 'Now' : `M${i}`, value: Math.round(val) });
+    val = val * (1 + monthlyRoi / 100);
+  }
+  const projected = Math.round(val);
+  const profit = projected - deposit;
 
   return (
     <div className="min-h-screen bg-white text-[#0A0D0C] flex flex-col font-sans">
-      <Navbar mode="light" onOpenCalculator={() => setIsCalcOpen(true)} />
+      <Navbar mode="light" />
 
-      {/* Hero Header */}
-      <section className="py-20 bg-[#F7F7F7] border-b border-[#DEE1E6]">
+      {/* Hero */}
+      <section className="py-12 sm:py-20 bg-[#F7F7F7] border-b border-[#DEE1E6]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 text-center space-y-4">
           <span className="text-xs font-mono uppercase tracking-widest text-[#22C55E]">Transparent Tiers</span>
-          <h1 className="text-4xl sm:text-6xl font-normal text-[#0A0D0C]">
-            Investment Plans & Target ROI
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-normal text-[#0A0D0C]">
+            Investment Plans
           </h1>
-          <p className="text-base text-[#5B616E] max-w-xl mx-auto">
-            Choose your preferred capital tier starting at $500. Quantovest automatically distributes exposure across FX, Crypto, and Stocks.
+          <p className="text-sm sm:text-base text-[#5B616E] max-w-xl mx-auto">
+            Fixed daily returns. No hidden fees. Pick a tier and start earning.
           </p>
-          <button
-            onClick={() => setIsCalcOpen(true)}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#22C55E] text-[#0A0D0C] font-semibold text-xs hover:bg-[#16A34A] transition-colors shadow-sm"
-          >
-            <Icon icon="solar:calculator-bold" className="w-5 h-5" />
-            Launch Interactive ROI Calculator Graph
-          </button>
         </div>
       </section>
 
-      {/* Plans Grid */}
-      <section className="py-20 bg-white">
+      {/* Plan Cards */}
+      <section className="py-12 sm:py-20 bg-white">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Starter Plan */}
-            <div className="p-8 rounded-2xl bg-[#F7F7F7] border border-[#DEE1E6] space-y-6">
-              <div>
-                <span className="text-xs font-mono text-[#5B616E]">STARTER TIER</span>
-                <h3 className="text-2xl font-normal text-[#0A0D0C] mt-1">Starter Plan</h3>
-                <p className="text-3xl font-mono font-semibold text-[#22C55E] mt-3">$500 <span className="text-xs font-sans text-[#5B616E]">Min Deposit</span></p>
-              </div>
-              <div className="p-4 bg-white rounded-xl border border-[#DEE1E6] space-y-1">
-                <p className="text-xs text-[#5B616E]">Target Monthly ROI</p>
-                <p className="text-xl font-mono text-[#22C55E] font-semibold">8% – 12% / Month</p>
-              </div>
-              <ul className="space-y-3 text-xs text-[#5B616E]">
-                <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> FX & Top Crypto Asset Access</li>
-                <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> Daily ROI Dashboard Updates</li>
-                <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> 0% Management Fee (15% Perf Fee)</li>
-              </ul>
-              <Link
-                href="/signup"
-                className="w-full block py-3.5 rounded-full text-center text-xs font-semibold bg-[#0A0D0C] text-white hover:bg-[#12161A] transition-colors"
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+            {PLANS.map((p, i) => (
+              <button
+                key={p.name}
+                onClick={() => { setSelectedPlan(i); setDeposit(p.min); }}
+                className={`p-6 sm:p-8 rounded-2xl text-left space-y-5 transition-all ${
+                  selectedPlan === i
+                    ? 'bg-[#0A0D0C] text-white border-2 border-[#22C55E] shadow-xl scale-[1.02]'
+                    : 'bg-[#F7F7F7] border border-[#DEE1E6] hover:border-[#22C55E]/50'
+                }`}
               >
-                Select Starter Plan ($500)
-              </Link>
-            </div>
+                {p.recommended && (
+                  <span className="inline-block px-3 py-1 rounded-full bg-[#22C55E] text-[#0A0D0C] font-mono text-[10px] font-bold uppercase">
+                    Recommended
+                  </span>
+                )}
+                <div>
+                  <span className={`text-xs font-mono ${selectedPlan === i ? 'text-[#22C55E]' : 'text-[#5B616E]'}`}>
+                    {p.name.toUpperCase()} TIER
+                  </span>
+                  <h3 className={`text-xl sm:text-2xl font-normal mt-1 ${selectedPlan === i ? 'text-white' : 'text-[#0A0D0C]'}`}>
+                    {p.name} Plan
+                  </h3>
+                </div>
 
-            {/* Growth Plan */}
-            <div className="p-8 rounded-2xl bg-[#0A0D0C] text-white border-2 border-[#22C55E] space-y-6 relative shadow-xl scale-105">
-              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#22C55E] text-[#0A0D0C] font-mono text-[10px] font-bold uppercase tracking-wider">
-                Recommended
-              </span>
-              <div>
-                <span className="text-xs font-mono text-[#22C55E]">GROWTH TIER</span>
-                <h3 className="text-2xl font-normal text-white mt-1">Growth Plan</h3>
-                <p className="text-3xl font-mono font-semibold text-[#22C55E] mt-3">$5,000 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
-              </div>
-              <div className="p-4 bg-[#12161A] rounded-xl border border-[#202722] space-y-1">
-                <p className="text-xs text-[#A8ACB3]">Target Monthly ROI</p>
-                <p className="text-xl font-mono text-[#22C55E] font-semibold">14% – 18% / Month</p>
-              </div>
-              <ul className="space-y-3 text-xs text-[#A8ACB3]">
-                <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> FX, Crypto & US Equities Access</li>
-                <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> Dedicated Account Manager</li>
-                <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> Priority Investment Execution</li>
-              </ul>
-              <Link
-                href="/signup"
-                className="w-full block py-3.5 rounded-full text-center text-xs font-semibold bg-[#22C55E] text-[#0A0D0C] hover:bg-[#16A34A] transition-colors shadow-lg"
-              >
-                Select Growth Plan ($5,000)
-              </Link>
-            </div>
+                <div className={`p-4 rounded-xl border ${selectedPlan === i ? 'bg-[#12161A] border-[#202722]' : 'bg-white border-[#DEE1E6]'}`}>
+                  <p className={`text-[10px] uppercase font-mono ${selectedPlan === i ? 'text-[#A8ACB3]' : 'text-[#5B616E]'}`}>
+                    Fixed Daily Return
+                  </p>
+                  <p className="text-3xl sm:text-4xl font-mono font-bold text-[#22C55E] mt-1 truncate">
+                    {p.dailyRoi}%
+                  </p>
+                  <p className={`text-xs mt-1 ${selectedPlan === i ? 'text-[#A8ACB3]' : 'text-[#5B616E]'}`}>
+                    per trading day
+                  </p>
+                </div>
 
-            {/* Elite Plan */}
-            <div className="p-8 rounded-2xl bg-[#F7F7F7] border border-[#DEE1E6] space-y-6">
-              <div>
-                <span className="text-xs font-mono text-[#5B616E]">ELITE TIER</span>
-                <h3 className="text-2xl font-normal text-[#0A0D0C] mt-1">Elite Plan</h3>
-                <p className="text-3xl font-mono font-semibold text-[#22C55E] mt-3">$15,000 <span className="text-xs font-sans text-[#5B616E]">Min Deposit</span></p>
+                <div className={`p-3 rounded-xl border ${selectedPlan === i ? 'bg-[#12161A] border-[#202722]' : 'bg-white border-[#DEE1E6]'}`}>
+                  <p className={`text-[10px] uppercase font-mono ${selectedPlan === i ? 'text-[#A8ACB3]' : 'text-[#5B616E]'}`}>
+                    Min Deposit
+                  </p>
+                  <p className={`text-lg font-mono font-semibold mt-0.5 ${selectedPlan === i ? 'text-white' : 'text-[#0A0D0C]'}`}>
+                    ${p.min.toLocaleString()}
+                  </p>
+                </div>
+
+                <ul className="space-y-2.5">
+                  {p.features.map((f, fi) => (
+                    <li key={fi} className={`flex items-start gap-2 text-xs ${selectedPlan === i ? 'text-[#A8ACB3]' : 'text-[#5B616E]'}`}>
+                      <Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E] shrink-0 mt-0.5" />
+                      <span>{f}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <Link
+                  href="/signup"
+                  className={`w-full block py-3.5 rounded-full text-center text-xs font-semibold transition-colors ${
+                    selectedPlan === i
+                      ? 'bg-[#22C55E] text-[#0A0D0C] hover:bg-[#16A34A]'
+                      : 'bg-[#0A0D0C] text-white hover:bg-[#12161A]'
+                  }`}
+                >
+                  Select {p.name} Plan (${p.min.toLocaleString()})
+                </Link>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Live Calculator */}
+      <section className="py-12 sm:py-20 bg-[#F7F7F7] border-t border-[#DEE1E6]">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
+          <div className="text-center mb-8 sm:mb-12 space-y-2">
+            <span className="text-xs font-mono uppercase tracking-widest text-[#22C55E]">Live Calculator</span>
+            <h2 className="text-2xl sm:text-4xl font-normal text-[#0A0D0C]">Project Your Returns</h2>
+          </div>
+
+          <div className="bg-white border border-[#DEE1E6] rounded-2xl p-6 sm:p-8 shadow-sm">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Controls */}
+              <div className="space-y-6">
+                <div>
+                  <label className="text-xs font-semibold text-[#5B616E] block mb-2">
+                    Investment Amount
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-mono text-[#5B616E]">$</span>
+                    <input
+                      type="number"
+                      min={plan.min}
+                      max="1000000"
+                      value={deposit}
+                      onChange={e => setDeposit(Math.max(plan.min, Number(e.target.value)))}
+                      className="w-full bg-[#F7F7F7] border border-[#DEE1E6] rounded-xl pl-8 pr-4 py-3 text-lg font-mono font-bold text-[#0A0D0C] focus:outline-none focus:border-[#22C55E]"
+                    />
+                  </div>
+                  <input
+                    type="range"
+                    min={plan.min}
+                    max={Math.max(plan.min * 10, 50000)}
+                    step={plan.min <= 500 ? 100 : 500}
+                    value={deposit}
+                    onChange={e => setDeposit(Number(e.target.value))}
+                    className="w-full accent-[#22C55E] mt-3"
+                  />
+                  <div className="flex justify-between text-[10px] text-[#5B616E] mt-1 font-mono">
+                    <span>${plan.min.toLocaleString()}</span>
+                    <span>${(plan.min * 5).toLocaleString()}</span>
+                    <span>${(plan.min * 10).toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-semibold text-[#5B616E] flex justify-between mb-2">
+                    <span>Time Horizon</span>
+                    <span className="font-mono text-[#22C55E]">{months} months</span>
+                  </label>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[1, 3, 6, 12].map(m => (
+                      <button
+                        key={m}
+                        onClick={() => setMonths(m)}
+                        className={`py-2.5 rounded-xl text-xs font-mono font-medium transition-all ${
+                          months === m
+                            ? 'bg-[#22C55E] text-[#0A0D0C]'
+                            : 'bg-[#F7F7F7] border border-[#DEE1E6] text-[#5B616E] hover:border-[#22C55E]'
+                        }`}
+                      >
+                        {m}M
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Plan summary */}
+                <div className="p-4 bg-[#F7F7F7] border border-[#DEE1E6] rounded-xl space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-[#5B616E]">Active Plan</span>
+                    <span className="font-semibold text-[#22C55E]">{plan.name}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-[#5B616E]">Daily Return</span>
+                    <span className="font-mono font-bold text-[#22C55E]">{plan.dailyRoi}%</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-[#5B616E]">Daily Dollar Return</span>
+                    <span className="font-mono font-semibold text-[#0A0D0C]">${dailyReturn.toLocaleString(undefined, {maximumFractionDigits: 0})}/day</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-[#5B616E]">Monthly (Compounded)</span>
+                    <span className="font-mono font-semibold text-[#0A0D0C]">~{monthlyRoi.toFixed(0)}%</span>
+                  </div>
+                </div>
               </div>
-              <div className="p-4 bg-white rounded-xl border border-[#DEE1E6] space-y-1">
-                <p className="text-xs text-[#5B616E]">Target Monthly ROI</p>
-                <p className="text-xl font-mono text-[#22C55E] font-semibold">20% – 28% / Month</p>
+
+              {/* Results */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-4 bg-[#F7F7F7] border border-[#DEE1E6] rounded-xl">
+                    <p className="text-[10px] text-[#5B616E] uppercase font-mono">Profit</p>
+                    <p className="text-xl sm:text-2xl font-mono font-bold text-[#22C55E] mt-1 truncate">
+                      +${profit.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-[#F7F7F7] border border-[#DEE1E6] rounded-xl">
+                    <p className="text-[10px] text-[#5B616E] uppercase font-mono">Total</p>
+                    <p className="text-xl sm:text-2xl font-mono font-bold text-[#0A0D0C] mt-1 truncate">
+                      ${projected.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="h-48 sm:h-56 w-full bg-[#F7F7F7] border border-[#DEE1E6] rounded-xl p-3">
+                  <p className="text-[10px] text-[#5B616E] font-mono mb-1">Growth Projection</p>
+                  <ResponsiveContainer width="100%" height="85%">
+                    <AreaChart data={chartData}>
+                      <defs>
+                        <linearGradient id="planGrad" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#22C55E" stopOpacity={0.2}/>
+                          <stop offset="95%" stopColor="#22C55E" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#5B616E' }} axisLine={false} tickLine={false} />
+                      <YAxis hide domain={['dataMin', 'dataMax']} />
+                      <Tooltip
+                        contentStyle={{ backgroundColor: '#fff', borderColor: '#DEE1E6', borderRadius: '12px', fontSize: '11px', color: '#0A0D0C' }}
+                        formatter={(val: any) => [`$${Number(val).toLocaleString()}`, 'Portfolio']}
+                      />
+                      <Area type="monotone" dataKey="value" stroke="#22C55E" strokeWidth={2} fillOpacity={1} fill="url(#planGrad)" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <Link
+                  href="/signup"
+                  className="w-full block py-4 rounded-full text-center text-sm font-semibold bg-[#22C55E] text-[#0A0D0C] hover:bg-[#16A34A] transition-colors"
+                >
+                  Start with {plan.name} Plan — ${deposit.toLocaleString()}
+                </Link>
+                <p className="text-[10px] text-[#5B616E] text-center">
+                  *Projected returns based on fixed daily ROI. Actual returns may vary.
+                </p>
               </div>
-              <ul className="space-y-3 text-xs text-[#5B616E]">
-                <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> Full Multi-Asset VIP Access</li>
-                <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> Custom Risk Controls</li>
-                <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> Direct Portfolio Manager Insights</li>
-              </ul>
-              <Link
-                href="/signup"
-                className="w-full block py-3.5 rounded-full text-center text-xs font-semibold bg-[#0A0D0C] text-white hover:bg-[#12161A] transition-colors"
-              >
-                Select Elite Plan ($15,000)
-              </Link>
             </div>
           </div>
         </div>
       </section>
 
       <Footer />
-      <RoiCalculatorModal isOpen={isCalcOpen} onClose={() => setIsCalcOpen(false)} />
     </div>
   );
 }

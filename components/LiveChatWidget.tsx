@@ -108,7 +108,7 @@ export default function LiveChatWidget() {
         >
           <Icon icon="solar:chat-round-dots-bold" className="w-6 h-6 group-hover:scale-110 transition-transform" />
           <span className="hidden sm:inline font-semibold pr-1">Support</span>
-          <span className="w-2.5 h-2.5 rounded-full bg-[#0A0D0C] animate-pulse"></span>
+          <span className="w-2.5 h-2.5 rounded-full bg-[#0A0D0C]"></span>
         </button>
       )}
     </div>

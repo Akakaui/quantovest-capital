@@ -1,14 +1,34 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import InvestorSidebar from '@/components/InvestorSidebar';
-import { useQuantovestStore } from '@/lib/store';
 import { generateSecret, getQRCodeUrl, verifyTOTP } from '@/lib/totp';
 import { Icon } from '@iconify/react';
+import { createClient } from '@/lib/supabase/client';
+
+interface Profile {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string | null;
+  role: string;
+  balance: number;
+  totalInvested: number;
+  totalProfit: number;
+  dailyRoiPercent: number;
+  allTimeRoiPercent: number;
+  plan: string;
+  kycStatus: string;
+  onboardingCompleted: boolean;
+  twoFactorEnabled?: boolean;
+  twoFactorSecret?: string;
+  payoutDetails?: Record<string, string>;
+  notificationPrefs?: Record<string, boolean>;
+}
 
 export default function SettingsPage() {
-  const { user, updatePayoutDetails, updateNotificationPrefs, setTwoFactor } = useQuantovestStore();
-  const [name, setName] = useState(user.name);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [name, setName] = useState('');
   const [image, setImage] = useState<File | null>(null);
   const [message, setMessage] = useState('');
   const [saving, setSaving] = useState(false);
@@ -19,17 +39,54 @@ export default function SettingsPage() {
   const [disableCode, setDisableCode] = useState('');
   const [showDisable, setShowDisable] = useState(false);
 
-  const [cryptoAddress, setCryptoAddress] = useState(user.payoutDetails.cryptoAddress);
-  const [cryptoNetwork, setCryptoNetwork] = useState(user.payoutDetails.cryptoNetwork);
-  const [bankName, setBankName] = useState(user.payoutDetails.bankName);
-  const [bankAccountName, setBankAccountName] = useState(user.payoutDetails.bankAccountName);
-  const [bankAccountNumber, setBankAccountNumber] = useState(user.payoutDetails.bankAccountNumber);
+  const [cryptoAddress, setCryptoAddress] = useState('');
+  const [cryptoNetwork, setCryptoNetwork] = useState('');
+  const [bankName, setBankName] = useState('');
+  const [bankAccountName, setBankAccountName] = useState('');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
   const [payoutMsg, setPayoutMsg] = useState('');
   const [savingPayout, setSavingPayout] = useState(false);
 
-  const [notifyDailyRoi, setNotifyDailyRoi] = useState(user.notificationPrefs.notifyDailyRoi);
-  const [notifyStrategyAlerts, setNotifyStrategyAlerts] = useState(user.notificationPrefs.notifyStrategyAlerts);
+  const [notifyDailyRoi, setNotifyDailyRoi] = useState(true);
+  const [notifyStrategyAlerts, setNotifyStrategyAlerts] = useState(true);
   const [notifyMsg, setNotifyMsg] = useState('');
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const res = await fetch('/api/investor-profile', { headers: { Authorization: `Bearer ${session.access_token}` } });
+        if (res.ok) {
+          const data = await res.json();
+          setProfile(data);
+          setName(data.name ?? '');
+        }
+        const settingsRes = await fetch('/api/profile', { headers: { Authorization: `Bearer ${session.access_token}` } });
+        if (settingsRes.ok) {
+          const settings = await settingsRes.json();
+          if (settings.payoutDetails) {
+            const pd = typeof settings.payoutDetails === 'string' ? JSON.parse(settings.payoutDetails) : settings.payoutDetails;
+            setCryptoAddress(pd.cryptoAddress || '');
+            setCryptoNetwork(pd.cryptoNetwork || '');
+            setBankName(pd.bankName || '');
+            setBankAccountName(pd.bankAccountName || '');
+            setBankAccountNumber(pd.bankAccountNumber || '');
+          }
+          if (settings.notificationPrefs) {
+            const np = typeof settings.notificationPrefs === 'string' ? JSON.parse(settings.notificationPrefs) : settings.notificationPrefs;
+            setNotifyDailyRoi(np.notifyDailyRoi ?? true);
+            setNotifyStrategyAlerts(np.notifyStrategyAlerts ?? true);
+          }
+          if (settings.twoFactorEnabled !== undefined) {
+            setProfile(p => p ? { ...p, twoFactorEnabled: settings.twoFactorEnabled, twoFactorSecret: settings.twoFactorSecret } : p);
+          }
+        }
+      } catch { /* ignore */ }
+    }
+    void loadProfile();
+  }, []);
 
   async function saveProfile(event: React.FormEvent) {
     event.preventDefault(); setSaving(true); setMessage('');
@@ -54,9 +111,14 @@ export default function SettingsPage() {
     setShow2faModal(true);
   }
 
-  function handleVerify2FA() {
+  async function handleVerify2FA() {
     if (verifyTOTP(pendingSecret, verifyCode)) {
-      setTwoFactor(true, pendingSecret);
+      await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ twoFactorEnabled: true, twoFactorSecret: pendingSecret }),
+      });
+      setProfile(p => p ? { ...p, twoFactorEnabled: true, twoFactorSecret: pendingSecret } : p);
       setShow2faModal(false);
       setMessage('Two-factor authentication enabled successfully.');
     } else {
@@ -64,9 +126,14 @@ export default function SettingsPage() {
     }
   }
 
-  function handleDisable2FA() {
-    if (verifyTOTP(user.twoFactorSecret, disableCode)) {
-      setTwoFactor(false, '');
+  async function handleDisable2FA() {
+    if (profile?.twoFactorSecret && verifyTOTP(profile.twoFactorSecret, disableCode)) {
+      await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ twoFactorEnabled: false, twoFactorSecret: '' }),
+      });
+      setProfile(p => p ? { ...p, twoFactorEnabled: false, twoFactorSecret: '' } : p);
       setShowDisable(false);
       setDisableCode('');
       setMessage('Two-factor authentication disabled.');
@@ -75,16 +142,35 @@ export default function SettingsPage() {
     }
   }
 
-  function handleSavePayout() {
+  async function handleSavePayout() {
     setSavingPayout(true); setPayoutMsg('');
-    updatePayoutDetails({ cryptoAddress, cryptoNetwork, bankName, bankAccountName, bankAccountNumber });
+    await fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ payoutDetails: { cryptoAddress, cryptoNetwork, bankName, bankAccountName, bankAccountNumber } }),
+    });
     setPayoutMsg('Payout details saved.');
     setSavingPayout(false);
   }
 
-  function handleSaveNotifications() {
-    updateNotificationPrefs({ notifyDailyRoi, notifyStrategyAlerts });
+  async function handleSaveNotifications() {
+    await fetch('/api/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notificationPrefs: { notifyDailyRoi, notifyStrategyAlerts } }),
+    });
     setNotifyMsg('Notification preferences saved.');
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen bg-[#0A0F11] text-[#F3F7F4] flex flex-col md:flex-row font-sans">
+        <InvestorSidebar />
+        <main className="flex-1 p-8 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-[#22C55E] border-t-transparent rounded-full animate-spin" />
+        </main>
+      </div>
+    );
   }
 
   return (
@@ -104,11 +190,11 @@ export default function SettingsPage() {
           {/* Profile Section */}
           <form onSubmit={saveProfile} className="flex flex-col gap-4 pb-6 border-b border-[#263437]">
             <div className="flex items-center gap-4">
-              <img src={user.avatar} alt={user.name} className="w-16 h-16 rounded-full border-2 border-[#22C55E]/40 object-cover" />
+              <img src={profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.name}`} alt={profile.name} className="w-16 h-16 rounded-full border-2 border-[#22C55E]/40 object-cover" />
               <div>
-                <h3 className="text-lg font-medium">{user.name}</h3>
-                <p className="text-xs text-[#93A09A] font-mono">{user.email}</p>
-                <span className="text-[10px] bg-[#22C55E]/10 text-[#22C55E] px-2.5 py-0.5 rounded-full font-mono mt-1 inline-block">{user.plan} Plan Investor</span>
+                <h3 className="text-lg font-medium">{profile.name}</h3>
+                <p className="text-xs text-[#93A09A] font-mono">{profile.email}</p>
+                <span className="text-[10px] bg-[#22C55E]/10 text-[#22C55E] px-2.5 py-0.5 rounded-full font-mono mt-1 inline-block">{profile.plan} Plan Investor</span>
               </div>
             </div>
             <label className="text-xs text-[#93A09A]">Display name
@@ -118,7 +204,7 @@ export default function SettingsPage() {
               <input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => setImage(event.target.files?.[0] ?? null)} className="mt-1 w-full text-xs" />
             </label>
             <button disabled={saving} className="self-start rounded-full bg-[#22C55E] px-5 py-3 text-xs font-semibold text-[#07110B] disabled:opacity-40">
-              {saving ? 'Saving…' : 'Save Profile'}
+              {saving ? 'Saving\u2026' : 'Save Profile'}
             </button>
           </form>
 
@@ -129,10 +215,10 @@ export default function SettingsPage() {
               <div>
                 <p className="text-xs font-semibold text-[#F3F7F4]">Two-Factor Authentication</p>
                 <p className="text-[10px] text-[#93A09A] mt-0.5">
-                  {user.twoFactorEnabled ? 'Enabled — withdrawals require a TOTP code' : 'Disabled — enable for extra security'}
+                  {profile.twoFactorEnabled ? 'Enabled \u2014 withdrawals require a TOTP code' : 'Disabled \u2014 enable for extra security'}
                 </p>
               </div>
-              {user.twoFactorEnabled ? (
+              {profile.twoFactorEnabled ? (
                 <button onClick={() => { setShowDisable(true); setDisableCode(''); }} className="px-4 py-2 rounded-full border border-rose-500/30 text-rose-400 text-[10px] font-semibold hover:bg-rose-500/10 transition-colors">
                   Disable 2FA
                 </button>
@@ -174,7 +260,7 @@ export default function SettingsPage() {
               </label>
             </div>
             <button onClick={handleSavePayout} disabled={savingPayout} className="self-start rounded-full bg-[#22C55E] px-5 py-3 text-xs font-semibold text-[#07110B] disabled:opacity-40">
-              {savingPayout ? 'Saving…' : 'Save Payout Details'}
+              {savingPayout ? 'Saving\u2026' : 'Save Payout Details'}
             </button>
           </div>
 
@@ -219,7 +305,7 @@ export default function SettingsPage() {
                 </button>
               </div>
               <div className="flex justify-center">
-                <img src={getQRCodeUrl(user.email, pendingSecret)} alt="2FA QR Code" className="w-48 h-48 rounded-xl bg-white p-2" />
+                <img src={getQRCodeUrl(profile.email, pendingSecret)} alt="2FA QR Code" className="w-48 h-48 rounded-xl bg-white p-2" />
               </div>
               <div className="space-y-2">
                 <p className="text-[10px] text-[#93A09A]">Scan this QR code with Google Authenticator, then enter the 6-digit code below.</p>

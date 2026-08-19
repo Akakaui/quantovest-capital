@@ -2,16 +2,23 @@
 
 import React, { useState } from 'react';
 import { Icon } from '@iconify/react';
-import { useQuantovestStore, OnboardingAnswers } from '@/lib/store';
 
 interface OnboardingModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+export interface OnboardingAnswers {
+  experience: string;
+  assetInterest: string;
+  capitalGoal: string;
+  targetDeposit: string;
+  riskTolerance: string;
+}
+
 export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
-  const { completeOnboarding } = useQuantovestStore();
   const [step, setStep] = useState(1);
+  const [saving, setSaving] = useState(false);
   const [answers, setAnswers] = useState<OnboardingAnswers>({
     experience: 'Intermediate',
     assetInterest: 'Multi-Asset',
@@ -22,17 +29,24 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
 
   if (!isOpen) return null;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < 5) {
       setStep(step + 1);
     } else {
-      completeOnboarding(answers);
+      setSaving(true);
+      try {
+        await fetch('/api/profile', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ onboardingAnswers: answers, onboardingCompleted: true }),
+        });
+      } catch { /* ignore */ }
       onClose();
     }
   };
 
   return (
-    <div className="fixed inset-[#0A0D0C] bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 font-sans">
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 font-sans">
       <div className="bg-[#12161A] border border-[#202722] rounded-2xl max-w-lg w-full p-6 sm:p-8 text-white relative shadow-2xl animate-in zoom-in-95 duration-200">
         {/* Step Indicator */}
         <div className="flex items-center justify-between mb-6 border-b border-[#202722] pb-4">
@@ -212,9 +226,10 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
           )}
           <button
             onClick={handleNext}
+            disabled={saving}
             className="px-6 py-2.5 rounded-full text-xs font-semibold bg-[#22C55E] text-[#0A0D0C] hover:bg-[#16A34A] flex items-center gap-2"
           >
-            <span>{step === 5 ? 'Complete Onboarding' : 'Continue'}</span>
+            <span>{step === 5 ? (saving ? 'Saving...' : 'Complete Onboarding') : 'Continue'}</span>
             <Icon icon="solar:alt-arrow-right-bold" className="w-4 h-4" />
           </button>
         </div>

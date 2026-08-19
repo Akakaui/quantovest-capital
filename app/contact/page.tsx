@@ -44,7 +44,7 @@ export default function ContactPage() {
                 <input
                   type="text"
                   required
-                  placeholder="Alexander Sterling"
+                  placeholder="Your full name"
                   className="w-full bg-white border border-[#DEE1E6] rounded-xl px-4 py-2.5 text-xs text-[#0A0D0C] focus:outline-none focus:border-[#22C55E]"
                 />
               </div>
@@ -54,7 +54,7 @@ export default function ContactPage() {
                 <input
                   type="email"
                   required
-                  placeholder="alex@quantovest.com"
+                  placeholder="you@email.com"
                   className="w-full bg-white border border-[#DEE1E6] rounded-xl px-4 py-2.5 text-xs text-[#0A0D0C] focus:outline-none focus:border-[#22C55E]"
                 />
               </div>

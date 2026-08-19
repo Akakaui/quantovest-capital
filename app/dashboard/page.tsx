@@ -7,7 +7,7 @@ import KycModal from '@/components/KycModal';
 import RoiCalculatorModal from '@/components/RoiCalculatorModal';
 import AllocationRingChart from '@/components/AllocationRingChart';
 import { createClient } from '@/lib/supabase/client';
-import { PLAN_MINIMUMS, PLAN_ORDER } from '@/lib/store';
+import { PLAN_MINIMUMS, PLAN_ORDER } from '@/lib/constants';
 import { Icon } from '@iconify/react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 import Link from 'next/link';
@@ -401,7 +401,7 @@ export default function InvestorDashboard() {
             <div>
               <h3 className="text-base font-normal text-[#F3F7F4] flex items-center gap-2">
                 Portfolio Signal Growth Line
-                <span className="w-2 h-2 rounded-full bg-[#22C55E] animate-pulse"></span>
+                <span className="w-2 h-2 rounded-full bg-[#22C55E]"></span>
               </h3>
               <p className="text-xs text-[#93A09A]">Dynamic daily updates driven by trading firm strategy execution</p>
             </div>

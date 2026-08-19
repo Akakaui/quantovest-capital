@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import InvestorSidebar from '@/components/InvestorSidebar';
-import FundingWarningModal from '@/components/FundingWarningModal';
+import CopyModal from '@/components/traders/CopyModal';
+import MyCopies from '@/components/traders/MyCopies';
 import { Icon } from '@iconify/react';
 
 interface ApiTrader {
@@ -23,12 +24,14 @@ export default function TradersPage() {
   const [traders, setTraders] = useState<ApiTrader[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isWarningOpen, setIsWarningOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [copiedTraderId, setCopiedTraderId] = useState<string | null>(null);
+  const [copiedTraderIds, setCopiedTraderIds] = useState<Set<string>>(new Set());
+  const [copyModalOpen, setCopyModalOpen] = useState(false);
+  const [selectedTrader, setSelectedTrader] = useState<{ id: string; name: string } | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    const loadTraders = async () => {
+    async function loadTraders() {
       try {
         setLoading(true);
         setError(null);
@@ -41,29 +44,35 @@ export default function TradersPage() {
       } finally {
         setLoading(false);
       }
-    };
+    }
     loadTraders();
   }, []);
 
   useEffect(() => {
-    const stored = localStorage.getItem('quantovest_copiedTraderId');
-    if (stored) setCopiedTraderId(stored);
-  }, []);
-
-  const handleCopy = (traderId: string) => {
-    // Check funding - using a placeholder balance; in production this comes from the user's account
-    const storedBalance = localStorage.getItem('quantovest_userBalance');
-    const balance = storedBalance ? parseFloat(storedBalance) : 0;
-    if (balance < 500) {
-      setIsWarningOpen(true);
-      return;
+    async function loadCopies() {
+      try {
+        const res = await fetch('/api/traders/my');
+        if (res.ok) {
+          const data = await res.json();
+          setCopiedTraderIds(new Set(data.map((c: { traderId: string }) => c.traderId)));
+        }
+      } catch { /* ignore */ }
     }
-    const trader = traders.find((t) => t.id === traderId);
-    setCopiedTraderId(traderId);
-    localStorage.setItem('quantovest_copiedTraderId', traderId);
-    setToastMessage(`Successfully connected investment strategy to ${trader?.name || 'Master Trader'}!`);
+    void loadCopies();
+  }, [refreshKey]);
+
+  function handleCopyClick(traderId: string, traderName: string) {
+    setSelectedTrader({ id: traderId, name: traderName });
+    setCopyModalOpen(true);
+  }
+
+  function handleCopySuccess(traderId: string) {
+    setCopiedTraderIds(prev => new Set(prev).add(traderId));
+    setCopyModalOpen(false);
+    setToastMessage(`Successfully connected strategy!`);
+    setRefreshKey(k => k + 1);
     setTimeout(() => setToastMessage(null), 4000);
-  };
+  }
 
   const bpsToPercent = (bps: number) => (bps / 100).toFixed(1);
 
@@ -77,6 +86,9 @@ export default function TradersPage() {
           <h1 className="text-2xl font-normal text-[#F3F7F4]">Portfolio Strategy Hub</h1>
           <p className="text-xs text-[#93A09A]">Browse and follow institutional strategy experts across FX, Crypto, and Equities.</p>
         </div>
+
+        {/* My Copies */}
+        <MyCopies key={refreshKey} onRefresh={() => setRefreshKey(k => k + 1)} />
 
         {/* Toast Notification */}
         {toastMessage && (
@@ -101,7 +113,6 @@ export default function TradersPage() {
                   </div>
                 </div>
                 <div className="h-3 w-full bg-[#263437] rounded" />
-                <div className="h-3 w-3/4 bg-[#263437] rounded" />
                 <div className="grid grid-cols-3 gap-2 p-3 bg-[#0A0F11] border border-[#263437] rounded-xl">
                   {[1, 2, 3].map((j) => (
                     <div key={j} className="text-center space-y-1">
@@ -134,7 +145,7 @@ export default function TradersPage() {
         {!loading && !error && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {traders.map((trader) => {
-              const isCopying = copiedTraderId === trader.id;
+              const isCopying = copiedTraderIds.has(trader.id);
               return (
                 <div key={trader.id} className="p-6 rounded-2xl bg-[#141C1F] border border-[#263437] space-y-5 hover:border-[#22C55E]/40 transition-colors">
                   <div className="flex items-start justify-between">
@@ -174,7 +185,7 @@ export default function TradersPage() {
 
                   {/* Follow Button */}
                   <button
-                    onClick={() => handleCopy(trader.id)}
+                    onClick={() => isCopying ? {} : handleCopyClick(trader.id, trader.name)}
                     className={`w-full py-3 rounded-full text-xs font-semibold transition-colors flex items-center justify-center gap-2 ${
                       isCopying
                         ? 'bg-[#0A0F11] border border-[#263437] text-[#F3F7F4] hover:bg-[#202722]'
@@ -182,7 +193,7 @@ export default function TradersPage() {
                     }`}
                   >
                     <Icon icon="solar:users-group-rounded-bold" className="w-4 h-4" />
-                    <span>{isCopying ? 'Strategy Active (Click to Re-follow)' : 'Follow Strategy ($500 Min Fund)'}</span>
+                    <span>{isCopying ? 'Strategy Active' : 'Follow Strategy ($500 Min)'}</span>
                   </button>
                 </div>
               );
@@ -191,7 +202,16 @@ export default function TradersPage() {
         )}
       </main>
 
-      <FundingWarningModal isOpen={isWarningOpen} onClose={() => setIsWarningOpen(false)} />
+      {/* Copy Modal */}
+      {selectedTrader && (
+        <CopyModal
+          isOpen={copyModalOpen}
+          traderId={selectedTrader.id}
+          traderName={selectedTrader.name}
+          onClose={() => { setCopyModalOpen(false); setSelectedTrader(null); }}
+          onSuccess={handleCopySuccess}
+        />
+      )}
     </div>
   );
 }

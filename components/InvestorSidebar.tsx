@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
-import { useQuantovestStore } from '@/lib/store';
+import { createClient } from '@/lib/supabase/client';
 import NotificationCenter from '@/components/NotificationCenter';
 
 interface InvestorSidebarProps {
@@ -18,23 +18,35 @@ const navLinks = [
   { label: 'Portfolio Managers', href: '/dashboard/traders', icon: 'solar:users-group-rounded-bold' },
   { label: 'Deposit', href: '/dashboard/deposit', icon: 'solar:wallet-money-bold' },
   { label: 'Withdraw', href: '/dashboard/withdraw', icon: 'solar:card-send-bold' },
+  { label: 'History', href: '/dashboard/history', icon: 'solar:clock-circle-bold' },
+  { label: 'Portfolio', href: '/dashboard/portfolio', icon: 'solar:chart-square-bold' },
+  { label: 'Swap', href: '/dashboard/swap', icon: 'solar:arrow-right-left-bold' },
   { label: 'Referrals', href: '/dashboard/referrals', icon: 'solar:share-bold' },
   { label: 'Identity KYC', href: '/dashboard/kyc', icon: 'solar:shield-check-bold' },
   { label: 'Settings', href: '/dashboard/settings', icon: 'solar:settings-bold' },
 ];
 
-const mobileTabs = [
-  { label: 'Home', href: '/dashboard', icon: 'solar:home-bold' },
-  { label: 'Portfolio', href: '/dashboard', icon: 'solar:chart-square-bold' },
-  { label: 'Trades', href: '/dashboard/traders', icon: 'solar:arrow-right-left-bold' },
-  { label: 'Profile', href: '/dashboard/settings', icon: 'solar:user-circle-bold' },
-];
-
 export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenCalculator }: InvestorSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useQuantovestStore();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [user, setUser] = useState<{ name: string; email: string; avatar: string | null; kycStatus: string }>({ name: '', email: '', avatar: null, kycStatus: 'unverified' });
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+        const res = await fetch('/api/investor-profile', { headers: { Authorization: `Bearer ${session.access_token}` } });
+        if (res.ok) {
+          const data = await res.json();
+          setUser({ name: data.name ?? '', email: data.email ?? '', avatar: data.avatar, kycStatus: data.kycStatus ?? 'unverified' });
+        }
+      } catch { /* ignore */ }
+    }
+    void load();
+  }, []);
 
   useEffect(() => {
     if (drawerOpen) {
@@ -44,6 +56,10 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
     }
     return () => { document.body.style.overflow = ''; };
   }, [drawerOpen]);
+
+  const displayName = user.name || 'Investor';
+  const displayEmail = user.email || '';
+  const avatarSrc = user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`;
 
   return (
     <>
@@ -99,20 +115,11 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
         </div>
 
         <div className="m-4 p-4 bg-[#151D20] border border-[#263437] rounded-xl flex items-center gap-3">
-          <img src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full object-cover border border-[#4ADE80]/40" />
+          <img src={avatarSrc} alt={displayName} className="w-9 h-9 rounded-full object-cover border border-[#4ADE80]/40" />
           <div className="truncate">
-            <p className="text-xs font-semibold text-[#F4F7F3] truncate">{user.name}</p>
-            <p className="text-[10px] text-[#8D9994] truncate font-mono">{user.email}</p>
+            <p className="text-xs font-semibold text-[#F4F7F3] truncate">{displayName}</p>
+            <p className="text-[10px] text-[#8D9994] truncate font-mono">{displayEmail}</p>
           </div>
-        </div>
-
-        <div className="px-4 mb-4 space-y-2">
-          <p className="text-[10px] uppercase font-mono text-[#74817B] px-2 tracking-wider">Quick Actions</p>
-          <div className="grid grid-cols-2 gap-2">
-            <button onClick={() => { setDrawerOpen(false); onOpenDeposit ? onOpenDeposit() : router.push('/dashboard/deposit'); }} className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-full bg-[#4ADE80] text-[#07110B] text-xs font-semibold hover:bg-[#86EFAC] transition-colors"><Icon icon="solar:wallet-money-bold" className="w-4 h-4" />Deposit</button>
-            <button onClick={() => { setDrawerOpen(false); onOpenWithdraw ? onOpenWithdraw() : router.push('/dashboard/withdraw'); }} className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-full bg-[#151D20] border border-[#30403D] text-[#DCE8E0] text-xs font-medium hover:border-[#4ADE80]/50 transition-colors"><Icon icon="solar:card-send-bold" className="w-4 h-4 text-[#4ADE80]" />Withdraw</button>
-          </div>
-          {onOpenCalculator && <button onClick={() => { setDrawerOpen(false); onOpenCalculator(); }} className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-full bg-[#151D20] border border-[#4ADE80]/30 text-[#4ADE80] text-xs font-mono hover:bg-[#4ADE80]/10 transition-colors mt-2"><Icon icon="solar:calculator-bold" className="w-4 h-4" />Calculate ROI Graph</button>}
         </div>
 
         <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto">
@@ -156,16 +163,8 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
           <NotificationCenter />
         </div>
         <div className="m-4 p-4 bg-[#151D20] border border-[#263437] rounded-xl flex items-center gap-3">
-          <img src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full object-cover border border-[#4ADE80]/40" />
-          <div className="truncate"><p className="text-xs font-semibold text-[#F4F7F3] truncate">{user.name}</p><p className="text-[10px] text-[#8D9994] truncate font-mono">{user.email}</p></div>
-        </div>
-        <div className="px-4 mb-4 space-y-2">
-          <p className="text-[10px] uppercase font-mono text-[#74817B] px-2 tracking-wider">Quick Actions</p>
-          <div className="grid grid-cols-2 gap-2">
-            <button onClick={() => onOpenDeposit ? onOpenDeposit() : router.push('/dashboard/deposit')} className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-full bg-[#4ADE80] text-[#07110B] text-xs font-semibold hover:bg-[#86EFAC] transition-colors"><Icon icon="solar:wallet-money-bold" className="w-4 h-4" />Deposit</button>
-            <button onClick={() => onOpenWithdraw ? onOpenWithdraw() : router.push('/dashboard/withdraw')} className="flex items-center justify-center gap-1.5 py-2 px-3 rounded-full bg-[#151D20] border border-[#30403D] text-[#DCE8E0] text-xs font-medium hover:border-[#4ADE80]/50 transition-colors"><Icon icon="solar:card-send-bold" className="w-4 h-4 text-[#4ADE80]" />Withdraw</button>
-          </div>
-          {onOpenCalculator && <button onClick={onOpenCalculator} className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-full bg-[#151D20] border border-[#4ADE80]/30 text-[#4ADE80] text-xs font-mono hover:bg-[#4ADE80]/10 transition-colors mt-2"><Icon icon="solar:calculator-bold" className="w-4 h-4" />Calculate ROI Graph</button>}
+          <img src={avatarSrc} alt={displayName} className="w-9 h-9 rounded-full object-cover border border-[#4ADE80]/40" />
+          <div className="truncate"><p className="text-xs font-semibold text-[#F4F7F3] truncate">{displayName}</p><p className="text-[10px] text-[#8D9994] truncate font-mono">{displayEmail}</p></div>
         </div>
         <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto">
           <p className="text-[10px] uppercase font-mono text-[#74817B] px-2 tracking-wider mb-2">Investor workspace</p>
@@ -176,25 +175,6 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
           <Link href="/" className="flex items-center gap-2 text-[#8D9994] hover:text-[#F4F7F3] text-xs pt-2 border-t border-[#202A2D]"><Icon icon="solar:logout-3-bold" className="w-4 h-4" />Back to Public Website</Link>
         </div>
       </aside>
-
-      {/* Mobile Bottom Nav */}
-      <div className="investor-mobile-nav md:hidden fixed bottom-0 left-0 right-0 bg-[#0D1214]/95 backdrop-blur border-t border-[#202A2D] z-40 px-2 py-2 flex items-center justify-around text-[#F4F7F3] pb-[max(8px,env(safe-area-inset-bottom))]">
-        {mobileTabs.map((tab) => {
-          const isActive = pathname === tab.href;
-          return (
-            <Link
-              key={tab.href + tab.label}
-              href={tab.href}
-              className={`flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg text-[10px] font-medium transition-colors ${
-                isActive ? 'text-[#4ADE80]' : 'text-[#74817B]'
-              }`}
-            >
-              <Icon icon={tab.icon} className="w-5 h-5" />
-              <span>{tab.label}</span>
-            </Link>
-          );
-        })}
-      </div>
     </>
   );
 }

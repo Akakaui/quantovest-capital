@@ -1,9 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Icon } from '@iconify/react';
 
 type Notice = { id: number; title: string; body: string; type: string; isRead: number; createdAt: string };
+type Tab = 'all' | 'personal' | 'announcements';
+
+const PERSONAL_TYPES = ['deposit', 'withdrawal', 'kyc', 'roi', 'referral', 'security', 'plan', 'swap'];
+const ANNOUNCEMENT_TYPES = ['admin_broadcast', 'platform', 'system', 'announcement', 'maintenance'];
+
+function isAnnouncement(type: string): boolean {
+  return ANNOUNCEMENT_TYPES.some(t => type.includes(t));
+}
 
 function typeIcon(type: string): string {
   if (type.includes('deposit')) return 'solar:wallet-bold';
@@ -12,7 +20,9 @@ function typeIcon(type: string): string {
   if (type.includes('roi')) return 'solar:graph-bold';
   if (type.includes('referral')) return 'solar:share-bold';
   if (type.includes('security')) return 'solar:lock-bold';
-  if (type.includes('admin')) return 'solar:buildings-2-bold';
+  if (type.includes('swap')) return 'solar:arrow-right-left-bold';
+  if (type.includes('plan')) return 'solar:medal-bold';
+  if (isAnnouncement(type)) return 'solar:megaphone-bold';
   return 'solar:bell-bold';
 }
 
@@ -20,6 +30,7 @@ export default function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notice[]>([]);
   const [unread, setUnread] = useState(0);
+  const [tab, setTab] = useState<Tab>('all');
 
   async function load() {
     const response = await fetch('/api/notifications', { cache: 'no-store' });
@@ -35,6 +46,20 @@ export default function NotificationCenter() {
     const timer = window.setInterval(() => void load(), 30000);
     return () => window.clearInterval(timer);
   }, []);
+
+  const filtered = useMemo(() => {
+    if (tab === 'personal') return items.filter(i => !isAnnouncement(i.type));
+    if (tab === 'announcements') return items.filter(i => isAnnouncement(i.type));
+    return items;
+  }, [items, tab]);
+
+  const unreadByTab = useMemo(() => {
+    return {
+      all: items.filter(i => !i.isRead).length,
+      personal: items.filter(i => !i.isRead && !isAnnouncement(i.type)).length,
+      announcements: items.filter(i => !i.isRead && isAnnouncement(i.type)).length,
+    };
+  }, [items]);
 
   async function mark(id?: number) {
     await fetch('/api/notifications', {
@@ -61,20 +86,57 @@ export default function NotificationCenter() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-12 z-50 w-[min(360px,calc(100vw-2rem))] rounded-2xl border border-white/10 bg-[#101714] p-3 shadow-2xl">
-          <div className="flex items-center justify-between px-2 pb-2">
+        <div className="absolute right-0 top-12 z-50 w-[min(380px,calc(100vw-2rem))] rounded-2xl border border-white/10 bg-[#101714] shadow-2xl overflow-hidden">
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 pt-4 pb-2">
             <p className="text-xs font-semibold text-white">Notifications</p>
             {unread > 0 && (
-              <button onClick={() => void mark()} className="text-[10px] text-[#d6a85c]">
+              <button onClick={() => void mark()} className="text-[10px] text-[#d6a85c] hover:underline">
                 Mark all read
               </button>
             )}
           </div>
-          <div className="max-h-80 space-y-2 overflow-y-auto">
-            {items.length === 0 ? (
-              <p className="px-2 py-6 text-center text-xs text-[#94a59a]">No notifications yet.</p>
+
+          {/* Tabs */}
+          <div className="flex gap-1 px-4 pb-3">
+            {([
+              { key: 'all' as Tab, label: 'All', count: unreadByTab.all },
+              { key: 'personal' as Tab, label: 'Personal', count: unreadByTab.personal },
+              { key: 'announcements' as Tab, label: 'Updates', count: unreadByTab.announcements },
+            ]).map(t => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-medium transition-colors ${
+                  tab === t.key
+                    ? 'bg-[#d6a85c]/20 text-[#d6a85c]'
+                    : 'text-[#7f9185] hover:text-[#b9c6bd] hover:bg-white/[.04]'
+                }`}
+              >
+                {t.label}
+                {t.count > 0 && (
+                  <span className={`min-w-4 rounded-full px-1 text-center text-[8px] font-bold ${
+                    tab === t.key ? 'bg-[#d6a85c] text-[#07100c]' : 'bg-white/10 text-[#7f9185]'
+                  }`}>
+                    {t.count}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="border-t border-white/5" />
+
+          {/* Notification List */}
+          <div className="max-h-80 overflow-y-auto p-2 space-y-1">
+            {filtered.length === 0 ? (
+              <p className="px-2 py-8 text-center text-xs text-[#7f9185]">
+                {tab === 'personal' && 'No personal notifications.'}
+                {tab === 'announcements' && 'No announcements yet.'}
+                {tab === 'all' && 'No notifications yet.'}
+              </p>
             ) : (
-              items.map(item => (
+              filtered.map(item => (
                 <button
                   key={item.id}
                   onClick={() => void mark(item.id)}
@@ -89,6 +151,11 @@ export default function NotificationCenter() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
+                      {isAnnouncement(item.type) && (
+                        <span className="shrink-0 px-1.5 py-0.5 rounded bg-[#d6a85c]/15 text-[8px] font-mono font-bold text-[#d6a85c] uppercase">
+                          Broadcast
+                        </span>
+                      )}
                       <p className={`text-xs font-semibold truncate ${item.isRead ? 'text-[#b9c6bd]' : 'text-white'}`}>{item.title}</p>
                       {!item.isRead && <span className="shrink-0 w-1.5 h-1.5 rounded-full bg-[#d6a85c]" />}
                     </div>
