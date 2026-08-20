@@ -61,33 +61,13 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const opts = { credentials: 'include' as const };
-        const [investorsRes, depositsRes, withdrawalsRes, kycRes] = await Promise.all([
-          fetch('/api/admin/investors', opts),
-          fetch('/api/admin/deposits', opts),
-          fetch('/api/admin/withdrawals', opts),
-          fetch('/api/admin/kyc', opts),
-        ]);
-
-        if (investorsRes.ok) {
-          const investors: InvestorRow[] = await investorsRes.json();
-          const totalCents = investors.reduce((sum, inv) => sum + (inv.balanceCents || 0), 0);
-          setAumCents(totalCents);
-        }
-
-        if (depositsRes.ok) {
-          const deposits: DepositRow[] = await depositsRes.json();
-          setPendingDeposits(deposits.length);
-        }
-
-        if (withdrawalsRes.ok) {
-          const withdrawals: WithdrawalRow[] = await withdrawalsRes.json();
-          setPendingWithdrawals(withdrawals.filter(w => w.status === 'pending').length);
-        }
-
-        if (kycRes.ok) {
-          const kyc: KycRow[] = await kycRes.json();
-          setPendingKyc(kyc.length);
+        const res = await fetch('/api/admin/dashboard', { credentials: 'include' });
+        if (res.ok) {
+          const data = await res.json();
+          setAumCents(data.aumCents ?? 0);
+          setPendingDeposits(data.pendingDeposits ?? 0);
+          setPendingWithdrawals(data.pendingWithdrawals ?? 0);
+          setPendingKyc(data.pendingKyc ?? 0);
         }
       } catch (e) {
         console.error('Failed to load admin dashboard data', e);
