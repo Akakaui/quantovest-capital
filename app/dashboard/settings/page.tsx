@@ -57,13 +57,16 @@ export default function SettingsPage() {
         const supabase = createClient();
         const { data: { session } } = await supabase.auth.getSession();
         if (!session) return;
-        const res = await fetch('/api/investor-profile', { headers: { Authorization: `Bearer ${session.access_token}` } });
-        if (res.ok) {
-          const data = await res.json();
+        const headers = { Authorization: `Bearer ${session.access_token}` };
+        const [profileRes, settingsRes] = await Promise.all([
+          fetch('/api/investor-profile', { headers }),
+          fetch('/api/profile', { headers }),
+        ]);
+        if (profileRes.ok) {
+          const data = await profileRes.json();
           setProfile(data);
           setName(data.name ?? '');
         }
-        const settingsRes = await fetch('/api/profile', { headers: { Authorization: `Bearer ${session.access_token}` } });
         if (settingsRes.ok) {
           const settings = await settingsRes.json();
           if (settings.payoutDetails) {
