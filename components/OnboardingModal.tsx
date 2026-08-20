@@ -156,9 +156,9 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
             <p className="text-xs text-[#A8ACB3]">Quantovest offers 3 institutional plan tiers.</p>
             <div className="space-y-2.5 pt-2">
               {[
-                { name: '$500 Starter Plan', roi: '8% - 12% Monthly' },
-                { name: '$5,000 Growth Plan', roi: '14% - 18% Monthly' },
-                { name: '$15,000+ Elite Plan', roi: '20% - 28% Monthly' }
+                { name: '$500 Starter Plan', roi: '15% Daily' },
+                { name: '$5,000 Growth Plan', roi: '25% Daily' },
+                { name: '$15,000+ Elite Plan', roi: '35% Daily' }
               ].map((opt) => (
                 <button
                   key={opt.name}

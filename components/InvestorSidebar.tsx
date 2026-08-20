@@ -61,6 +61,12 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
   const displayEmail = user.email || '';
   const avatarSrc = user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`;
 
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/login');
+  }
+
   return (
     <>
       {/* Mobile Sticky Header */}
@@ -147,9 +153,9 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
             <span>Identity KYC Status</span>
             <span className={`px-2 py-0.5 rounded-full font-mono text-[10px] font-semibold ${user.kycStatus === 'approved' ? 'bg-[#4ADE80]/10 text-[#4ADE80]' : user.kycStatus === 'pending' ? 'bg-amber-500/20 text-amber-300' : 'bg-rose-500/20 text-rose-300'}`}>{user.kycStatus.toUpperCase()}</span>
           </div>
-          <Link href="/" className="flex items-center gap-2 text-[#8D9994] hover:text-[#F4F7F3] text-xs pt-2 border-t border-[#202A2D]">
-            <Icon icon="solar:logout-3-bold" className="w-4 h-4" />Back to Public Website
-          </Link>
+          <button onClick={handleLogout} className="flex items-center gap-2 text-[#8D9994] hover:text-[#F4F7F3] text-xs pt-2 border-t border-[#202A2D]">
+            <Icon icon="solar:logout-3-bold" className="w-4 h-4" />Logout
+          </button>
         </div>
       </aside>
 
@@ -172,7 +178,7 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
         </nav>
         <div className="p-4 border-t border-[#202A2D] text-xs space-y-2">
           <div className="flex items-center justify-between text-[#8D9994] text-[11px]"><span>Identity KYC Status</span><span className={`px-2 py-0.5 rounded-full font-mono text-[10px] font-semibold ${user.kycStatus === 'approved' ? 'bg-[#4ADE80]/10 text-[#4ADE80]' : user.kycStatus === 'pending' ? 'bg-amber-500/20 text-amber-300' : 'bg-rose-500/20 text-rose-300'}`}>{user.kycStatus.toUpperCase()}</span></div>
-          <Link href="/" className="flex items-center gap-2 text-[#8D9994] hover:text-[#F4F7F3] text-xs pt-2 border-t border-[#202A2D]"><Icon icon="solar:logout-3-bold" className="w-4 h-4" />Back to Public Website</Link>
+          <button onClick={handleLogout} className="flex items-center gap-2 text-[#8D9994] hover:text-[#F4F7F3] text-xs pt-2 border-t border-[#202A2D]"><Icon icon="solar:logout-3-bold" className="w-4 h-4" />Logout</button>
         </div>
       </aside>
     </>

@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"image" text,
 	"phone" varchar(32),
 	"role" varchar(24) DEFAULT 'investor' NOT NULL,
+	"onboardingCompleted" boolean DEFAULT false NOT NULL,
+	"onboardingAnswers" json,
 	"createdAt" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );

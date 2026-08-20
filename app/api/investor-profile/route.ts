@@ -78,7 +78,7 @@ export async function GET() {
         allTimeRoiPercent,
         plan: planName ?? 'None',
         kycStatus: latestKyc?.status ?? 'unverified',
-        onboardingCompleted: !!account,
+        onboardingCompleted: userRow.onboardingCompleted ?? false,
       });
     } catch (dbErr) {
       console.error('[investor-profile] DB error, returning fallback', dbErr);

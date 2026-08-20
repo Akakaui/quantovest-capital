@@ -1,4 +1,4 @@
-import { index, integer, pgTable, primaryKey, serial, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
+import { boolean, index, integer, json, pgTable, primaryKey, serial, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
   id: varchar("id", { length: 191 }).primaryKey(),
@@ -8,6 +8,8 @@ export const users = pgTable("users", {
   image: text("image"),
   phone: varchar("phone", { length: 32 }),
   role: varchar("role", { length: 24 }).default("investor").notNull(),
+  onboardingCompleted: boolean("onboardingCompleted").default(false).notNull(),
+  onboardingAnswers: json("onboardingAnswers"),
   createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull(),
 });
 
