@@ -56,10 +56,10 @@ export default function PlansPage() {
       <Navbar mode="light" />
 
       {/* Hero */}
-      <section className="py-12 sm:py-20 bg-[#F7F7F7] border-b border-[#DEE1E6]">
+      <section className="py-10 sm:py-20 bg-[#F7F7F7] border-b border-[#DEE1E6]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 text-center space-y-4">
           <span className="text-xs font-mono uppercase tracking-widest text-[#22C55E]">Transparent Tiers</span>
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-normal text-[#0A0D0C]">
+          <h1 className="text-2xl sm:text-5xl lg:text-6xl font-normal text-[#0A0D0C]">
             Investment Plans
           </h1>
           <p className="text-sm sm:text-base text-[#5B616E] max-w-xl mx-auto">
@@ -69,14 +69,14 @@ export default function PlansPage() {
       </section>
 
       {/* Plan Cards */}
-      <section className="py-12 sm:py-20 bg-white">
+      <section className="py-10 sm:py-20 bg-white">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-8">
             {PLANS.map((p, i) => (
               <button
                 key={p.name}
                 onClick={() => { setSelectedPlan(i); setDeposit(p.min); }}
-                className={`p-6 sm:p-8 rounded-2xl text-left space-y-5 transition-all ${
+                className={`p-5 sm:p-8 rounded-2xl text-left space-y-5 transition-all ${
                   selectedPlan === i
                     ? 'bg-[#0A0D0C] text-white border-2 border-[#22C55E] shadow-xl scale-[1.02]'
                     : 'bg-[#F7F7F7] border border-[#DEE1E6] hover:border-[#22C55E]/50'
@@ -100,7 +100,7 @@ export default function PlansPage() {
                   <p className={`text-[10px] uppercase font-mono ${selectedPlan === i ? 'text-[#A8ACB3]' : 'text-[#5B616E]'}`}>
                     Fixed Daily Return
                   </p>
-                  <p className="text-3xl sm:text-4xl font-mono font-bold text-[#22C55E] mt-1 truncate">
+                  <p className="text-2xl sm:text-4xl font-mono font-bold text-[#22C55E] mt-1 truncate">
                     {p.dailyRoi}%
                   </p>
                   <p className={`text-xs mt-1 ${selectedPlan === i ? 'text-[#A8ACB3]' : 'text-[#5B616E]'}`}>
@@ -143,14 +143,14 @@ export default function PlansPage() {
       </section>
 
       {/* Live Calculator */}
-      <section className="py-12 sm:py-20 bg-[#F7F7F7] border-t border-[#DEE1E6]">
+      <section className="py-10 sm:py-20 bg-[#F7F7F7] border-t border-[#DEE1E6]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-          <div className="text-center mb-8 sm:mb-12 space-y-2">
+          <div className="text-center mb-6 sm:mb-12 space-y-2">
             <span className="text-xs font-mono uppercase tracking-widest text-[#22C55E]">Live Calculator</span>
-            <h2 className="text-2xl sm:text-4xl font-normal text-[#0A0D0C]">Project Your Returns</h2>
+            <h2 className="text-xl sm:text-4xl font-normal text-[#0A0D0C]">Project Your Returns</h2>
           </div>
 
-          <div className="bg-white border border-[#DEE1E6] rounded-2xl p-6 sm:p-8 shadow-sm">
+          <div className="bg-white border border-[#DEE1E6] rounded-2xl p-5 sm:p-8 shadow-sm">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Controls */}
               <div className="space-y-6">
@@ -231,15 +231,15 @@ export default function PlansPage() {
               {/* Results */}
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-4 bg-[#F7F7F7] border border-[#DEE1E6] rounded-xl">
+                  <div className="p-3 sm:p-4 bg-[#F7F7F7] border border-[#DEE1E6] rounded-xl">
                     <p className="text-[10px] text-[#5B616E] uppercase font-mono">Profit</p>
-                    <p className="text-xl sm:text-2xl font-mono font-bold text-[#22C55E] mt-1 truncate">
+                    <p className="text-lg sm:text-2xl font-mono font-bold text-[#22C55E] mt-1 truncate">
                       +${profit.toLocaleString()}
                     </p>
                   </div>
-                  <div className="p-4 bg-[#F7F7F7] border border-[#DEE1E6] rounded-xl">
+                  <div className="p-3 sm:p-4 bg-[#F7F7F7] border border-[#DEE1E6] rounded-xl">
                     <p className="text-[10px] text-[#5B616E] uppercase font-mono">Total</p>
-                    <p className="text-xl sm:text-2xl font-mono font-bold text-[#0A0D0C] mt-1 truncate">
+                    <p className="text-lg sm:text-2xl font-mono font-bold text-[#0A0D0C] mt-1 truncate">
                       ${projected.toLocaleString()}
                     </p>
                   </div>

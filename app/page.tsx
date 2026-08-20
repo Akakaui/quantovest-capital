@@ -129,26 +129,26 @@ export default function Homepage() {
       </div>
 
       {/* 3. Stats Bar */}
-      <section className="py-16 bg-[#0A0D0C] border-b border-[#202722]">
+      <section className="py-10 sm:py-16 bg-[#0A0D0C] border-b border-[#202722]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
             <div className="p-6 bg-[#12161A] border border-[#202722] rounded-2xl">
-              <p className="text-xs uppercase font-mono text-[#A8ACB3] mb-2">Total AUM Managed</p>
-              <h3 className="text-4xl font-mono font-normal text-white">
+              <p className="text-[10px] sm:text-xs uppercase font-mono text-[#A8ACB3] mb-2">Total AUM Managed</p>
+              <h3 className="text-3xl sm:text-4xl font-mono font-normal text-white">
                 <CountUpNumber end={42850000} prefix="$" suffix="+" duration={2400} />
               </h3>
               <div className="mt-4 flex justify-center"><SignalLine width={96} delay={200} /></div>
             </div>
             <div className="p-6 bg-[#12161A] border border-[#202722] rounded-2xl">
-              <p className="text-xs uppercase font-mono text-[#A8ACB3] mb-2">Strategy Win Rate</p>
-              <h3 className="text-4xl font-mono font-normal text-[#22C55E]">
+              <p className="text-[10px] sm:text-xs uppercase font-mono text-[#A8ACB3] mb-2">Strategy Win Rate</p>
+              <h3 className="text-3xl sm:text-4xl font-mono font-normal text-[#22C55E]">
                 <CountUpNumber end={94.2} suffix="%" decimals={1} duration={2000} />
               </h3>
               <div className="mt-4 flex justify-center"><SignalLine width={96} delay={400} /></div>
             </div>
             <div className="p-6 bg-[#12161A] border border-[#202722] rounded-2xl">
-              <p className="text-xs uppercase font-mono text-[#A8ACB3] mb-2">Active Investors</p>
-              <h3 className="text-4xl font-mono font-normal text-white">
+              <p className="text-[10px] sm:text-xs uppercase font-mono text-[#A8ACB3] mb-2">Active Investors</p>
+              <h3 className="text-3xl sm:text-4xl font-mono font-normal text-white">
                 <CountUpNumber end={14820} prefix="" suffix="+" duration={2200} />
               </h3>
               <div className="mt-4 flex justify-center"><SignalLine width={96} delay={600} /></div>
@@ -158,18 +158,18 @@ export default function Homepage() {
       </section>
 
       {/* 4. How It Works */}
-      <section className="py-24 bg-white text-[#0A0D0C]">
+      <section className="py-16 sm:py-24 bg-white text-[#0A0D0C]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-            <h2 className="text-3xl sm:text-5xl font-normal text-[#0A0D0C]">
+          <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-16 space-y-4">
+            <h2 className="text-2xl sm:text-5xl font-normal text-[#0A0D0C]">
               Institutional Investing Made Simple
             </h2>
-            <p className="text-base text-[#5B616E]">
+            <p className="text-sm sm:text-base text-[#5B616E]">
               You deposit capital. Our verified experts execute strategies. Quantovest automatically manages your returns.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-8">
             {steps.map((st, i) => (
               <motion.div
                 key={i}
@@ -177,24 +177,24 @@ export default function Homepage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: i * 0.15 }}
                 viewport={{ once: true }}
-                className="p-6 rounded-2xl bg-[#F7F7F7] border border-[#DEE1E6] space-y-4 relative"
+                className="p-5 sm:p-6 rounded-2xl bg-[#F7F7F7] border border-[#DEE1E6] space-y-4 relative"
               >
-                <span className="text-xs font-mono font-semibold text-[#22C55E] bg-[#22C55E]/10 px-2.5 py-1 rounded-full">
+                <span className="text-[10px] sm:text-xs font-mono font-semibold text-[#22C55E] bg-[#22C55E]/10 px-2.5 py-1 rounded-full">
                   STEP {st.step}
                 </span>
                 <div className="w-12 h-12 rounded-xl bg-[#0A0D0C] flex items-center justify-center">
                   <Icon icon={st.icon} className="w-6 h-6 text-[#22C55E]" />
                 </div>
-                <h3 className="text-lg font-medium text-[#0A0D0C]">{st.title}</h3>
+                <h3 className="text-base sm:text-lg font-medium text-[#0A0D0C]">{st.title}</h3>
                 <p className="text-xs text-[#5B616E] leading-relaxed">{st.desc}</p>
               </motion.div>
             ))}
           </div>
 
-          <div className="text-center mt-12">
+          <div className="text-center mt-10 sm:mt-12">
             <Link
               href="/how-it-works"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-[#0A0D0C] text-white text-sm font-semibold hover:bg-[#12161A] transition-colors"
+              className="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-3.5 rounded-full bg-[#0A0D0C] text-white text-sm font-semibold hover:bg-[#12161A] transition-colors"
             >
               Learn More About Our Investment Process
               <Icon icon="solar:alt-arrow-right-bold" className="w-4 h-4 text-[#22C55E]" />
@@ -204,25 +204,25 @@ export default function Homepage() {
       </section>
 
       {/* 5. Investment Plans Preview */}
-      <section className="py-24 bg-[#0A0D0C] text-white border-t border-[#202722]">
+      <section className="py-16 sm:py-24 bg-[#0A0D0C] text-white border-t border-[#202722]">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
+          <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-16 space-y-4">
             <span className="text-xs font-mono uppercase tracking-widest text-[#22C55E]">Tailored Plans</span>
-            <h2 className="text-3xl sm:text-5xl font-normal text-white">
+            <h2 className="text-2xl sm:text-5xl font-normal text-white">
               Transparent Capital Tiers
             </h2>
-            <p className="text-base text-[#A8ACB3]">
+            <p className="text-sm sm:text-base text-[#A8ACB3]">
               Every tier provides institutional-grade risk management and automated daily portfolio returns.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
             {/* Starter */}
-            <div className="p-8 rounded-2xl bg-[#12161A] border border-[#202722] space-y-6">
+            <div className="p-6 sm:p-8 rounded-2xl bg-[#12161A] border border-[#202722] space-y-6">
               <div>
                 <span className="text-xs font-mono text-[#A8ACB3]">TIER 1</span>
-                <h3 className="text-2xl font-normal text-white mt-1">Starter Plan</h3>
-                <p className="text-3xl font-mono font-semibold text-[#22C55E] mt-3">$500 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
+                <h3 className="text-xl sm:text-2xl font-normal text-white mt-1">Starter Plan</h3>
+                <p className="text-2xl sm:text-3xl font-mono font-semibold text-[#22C55E] mt-3">$500 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
               </div>
               <div className="p-4 bg-[#22C55E]/10 rounded-xl border border-[#22C55E]/30 space-y-1">
                 <p className="text-xs text-[#A8ACB3]">Fixed Daily Return</p>
@@ -240,14 +240,14 @@ export default function Homepage() {
             </div>
 
             {/* Growth */}
-            <div className="p-8 rounded-2xl bg-[#12161A] border-2 border-[#22C55E] space-y-6 relative shadow-2xl scale-105">
+            <div className="p-6 sm:p-8 rounded-2xl bg-[#12161A] border-2 border-[#22C55E] space-y-6 relative shadow-2xl md:scale-105">
               <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#22C55E] text-[#0A0D0C] font-mono text-[10px] font-bold uppercase tracking-wider">
                 Most Popular
               </span>
               <div>
                 <span className="text-xs font-mono text-[#22C55E]">TIER 2</span>
-                <h3 className="text-2xl font-normal text-white mt-1">Growth Plan</h3>
-                <p className="text-3xl font-mono font-semibold text-[#22C55E] mt-3">$5,000 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
+                <h3 className="text-xl sm:text-2xl font-normal text-white mt-1">Growth Plan</h3>
+                <p className="text-2xl sm:text-3xl font-mono font-semibold text-[#22C55E] mt-3">$5,000 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
               </div>
               <div className="p-4 bg-[#22C55E]/10 rounded-xl border border-[#22C55E]/30 space-y-1">
                 <p className="text-xs text-[#A8ACB3]">Fixed Daily Return</p>
@@ -265,11 +265,11 @@ export default function Homepage() {
             </div>
 
             {/* Elite */}
-            <div className="p-8 rounded-2xl bg-[#12161A] border border-[#202722] space-y-6">
+            <div className="p-6 sm:p-8 rounded-2xl bg-[#12161A] border border-[#202722] space-y-6">
               <div>
                 <span className="text-xs font-mono text-[#A8ACB3]">TIER 3</span>
-                <h3 className="text-2xl font-normal text-white mt-1">Elite Plan</h3>
-                <p className="text-3xl font-mono font-semibold text-[#22C55E] mt-3">$15,000 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
+                <h3 className="text-xl sm:text-2xl font-normal text-white mt-1">Elite Plan</h3>
+                <p className="text-2xl sm:text-3xl font-mono font-semibold text-[#22C55E] mt-3">$15,000 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
               </div>
               <div className="p-4 bg-[#22C55E]/10 rounded-xl border border-[#22C55E]/30 space-y-1">
                 <p className="text-xs text-[#A8ACB3]">Fixed Daily Return</p>

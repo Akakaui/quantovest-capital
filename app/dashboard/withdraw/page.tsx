@@ -134,7 +134,7 @@ export default function WithdrawPage() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="rounded-xl border border-[#263437] bg-[#0A0F11] p-4 text-xs text-[#93A09A]">
+                <div className="rounded-xl border border-[#263437] bg-[#0A0F11] p-4 text-xs text-[#93A09A] overflow-hidden">
                   Available balance: <strong className="text-white">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
                   {profile?.plan && profile.plan !== 'None' && (
                     <span className="ml-2 text-[#22C55E]">({profile.plan} plan — min ${planMinimum.toLocaleString()})</span>
@@ -182,7 +182,7 @@ export default function WithdrawPage() {
                 {closeAccountMode && (
                   <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-[10px] text-rose-300">
                     <Icon icon="solar:warning-bold" className="w-4 h-4 inline mr-1" />
-                    You are about to withdraw your entire balance (${balance.toLocaleString()}) and close your account. After admin approval, your account will be set to $0 with no active plan.
+                    You are about to withdraw your entire balance (${balance.toLocaleString()}) and close your account. After approval, your account will be set to $0 with no active plan.
                   </div>
                 )}
 

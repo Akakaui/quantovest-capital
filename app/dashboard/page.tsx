@@ -282,10 +282,10 @@ export default function InvestorDashboard() {
       <main className="dashboard-main flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
         {/* Top Header Bar */}
         <div className="dashboard-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#263437] pb-6">
-          <div className="flex items-center gap-3">
-            <img src={profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.name}`} alt={profile.name} className="w-12 h-12 rounded-full border-2 border-[#22C55E]/40 object-cover shadow-md" />
-            <div>
-              <h1 className="text-2xl font-normal text-[#F3F7F4]">Hello, {profile.name}</h1>
+          <div className="flex items-center gap-3 min-w-0">
+            <img src={profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.name}`} alt={profile.name} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-[#22C55E]/40 object-cover shadow-md shrink-0" />
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-2xl font-normal text-[#F3F7F4] truncate">Hello, {profile.name}</h1>
               <p className="text-xs text-[#93A09A] flex items-center gap-2">
                 Plan: <span className="text-[#22C55E] font-semibold font-mono">{profile.plan}</span>
                 <span>•</span>
@@ -301,7 +301,7 @@ export default function InvestorDashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             {kycStatus !== 'approved' && (
               <button
                 onClick={() => setIsKycOpen(true)}
@@ -331,15 +331,15 @@ export default function InvestorDashboard() {
         {/* KYC Floating Banner Alert */}
         {kycStatus !== 'approved' && (
           <div className="dashboard-kyc-alert p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Icon icon="solar:shield-warning-bold" className="w-6 h-6 text-amber-400 shrink-0" />
-              <p className="text-xs text-amber-200">
+            <div className="flex items-start gap-3 min-w-0">
+              <Icon icon="solar:shield-warning-bold" className="w-6 h-6 text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-[10px] sm:text-xs text-amber-200">
                 <strong>Identity Verification Pending:</strong> Complete minimal 2-document upload (Government ID + Proof of Address) to enable instant copytrade processing.
               </p>
             </div>
             <button
               onClick={() => setIsKycOpen(true)}
-              className="px-5 py-2 rounded-full bg-amber-400 text-[#F3F7F4] text-xs font-semibold hover:bg-amber-300 transition-colors whitespace-nowrap"
+              className="w-full sm:w-auto px-5 py-2 rounded-full bg-amber-400 text-[#F3F7F4] text-xs font-semibold hover:bg-amber-300 transition-colors whitespace-nowrap shrink-0"
             >
               Upload Documents Now
             </button>
@@ -477,7 +477,7 @@ export default function InvestorDashboard() {
       {/* Upgrade Plan Modal */}
       {isUpgradeOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#141C1F] border border-[#263437] rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl">
+          <div className="bg-[#141C1F] border border-[#263437] rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6 space-y-5 shadow-2xl">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-semibold">Upgrade Your Plan</h3>
               <button onClick={() => setIsUpgradeOpen(false)} className="text-[#93A09A] hover:text-white">
@@ -543,7 +543,7 @@ export default function InvestorDashboard() {
       {/* Interactive Welcome Tour Overlay */}
       {tourStep !== null && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 text-[#F3F7F4]">
-          <div className="bg-[#141C1F] border border-[#263437] rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
+          <div className="bg-[#141C1F] border border-[#263437] rounded-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between border-b border-[#263437] pb-2">
               <span className="text-[10px] uppercase font-mono text-[#22C55E] font-bold tracking-wider">
                 Step {tourStep + 1} of 4 • User Guide

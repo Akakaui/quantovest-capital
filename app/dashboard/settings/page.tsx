@@ -189,11 +189,11 @@ export default function SettingsPage() {
         <div className="max-w-2xl bg-[#141C1F] border border-[#263437] rounded-2xl p-6 sm:p-8 space-y-6">
           {/* Profile Section */}
           <form onSubmit={saveProfile} className="flex flex-col gap-4 pb-6 border-b border-[#263437]">
-            <div className="flex items-center gap-4">
-              <img src={profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.name}`} alt={profile.name} className="w-16 h-16 rounded-full border-2 border-[#22C55E]/40 object-cover" />
-              <div>
-                <h3 className="text-lg font-medium">{profile.name}</h3>
-                <p className="text-xs text-[#93A09A] font-mono">{profile.email}</p>
+            <div className="flex items-center gap-3 sm:gap-4">
+              <img src={profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.name}`} alt={profile.name} className="w-14 h-14 sm:w-16 sm:h-16 rounded-full border-2 border-[#22C55E]/40 object-cover shrink-0" />
+              <div className="min-w-0">
+                <h3 className="text-base sm:text-lg font-medium truncate">{profile.name}</h3>
+                <p className="text-xs text-[#93A09A] font-mono truncate">{profile.email}</p>
                 <span className="text-[10px] bg-[#22C55E]/10 text-[#22C55E] px-2.5 py-0.5 rounded-full font-mono mt-1 inline-block">{profile.plan} Plan Investor</span>
               </div>
             </div>

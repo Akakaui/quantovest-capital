@@ -97,7 +97,7 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
 
       {/* Drawer Sidebar */}
       <aside
-        className={`fixed top-0 left-0 h-full w-72 bg-[#0D1214] border-r border-[#202A2D] z-50 md:hidden flex flex-col transform transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        className={`fixed top-0 left-0 h-full w-[85vw] max-w-72 bg-[#0D1214] border-r border-[#202A2D] z-50 md:hidden flex flex-col transform transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           drawerOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >

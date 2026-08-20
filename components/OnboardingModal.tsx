@@ -48,6 +48,9 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
   return (
     <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4 font-sans">
       <div className="bg-[#12161A] border border-[#202722] rounded-2xl max-w-lg w-full p-6 sm:p-8 text-white relative shadow-2xl animate-in zoom-in-95 duration-200">
+        <button onClick={onClose} className="absolute top-4 right-4 text-[#A8ACB3] hover:text-white transition-colors">
+          <Icon icon="solar:close-bold" className="w-5 h-5" />
+        </button>
         {/* Step Indicator */}
         <div className="flex items-center justify-between mb-6 border-b border-[#202722] pb-4">
           <div className="flex items-center gap-2">
