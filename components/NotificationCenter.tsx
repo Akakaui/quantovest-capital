@@ -20,7 +20,7 @@ function typeIcon(type: string): string {
   if (type.includes('roi')) return 'solar:graph-bold';
   if (type.includes('referral')) return 'solar:share-bold';
   if (type.includes('security')) return 'solar:lock-bold';
-  if (type.includes('swap')) return 'solar:arrow-right-left-bold';
+  if (type.includes('swap')) return 'solar:transfer-horizontal-bold';
   if (type.includes('plan')) return 'solar:medal-bold';
   if (isAnnouncement(type)) return 'solar:megaphone-bold';
   return 'solar:bell-bold';

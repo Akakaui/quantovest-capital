@@ -20,7 +20,7 @@ const navLinks = [
   { label: 'Withdraw', href: '/dashboard/withdraw', icon: 'solar:card-send-bold' },
   { label: 'History', href: '/dashboard/history', icon: 'solar:clock-circle-bold' },
   { label: 'Portfolio', href: '/dashboard/portfolio', icon: 'solar:chart-square-bold' },
-  { label: 'Swap', href: '/dashboard/swap', icon: 'solar:arrow-right-left-bold' },
+  { label: 'Swap', href: '/dashboard/swap', icon: 'solar:transfer-horizontal-bold' },
   { label: 'Referrals', href: '/dashboard/referrals', icon: 'solar:share-bold' },
   { label: 'Identity KYC', href: '/dashboard/kyc', icon: 'solar:shield-check-bold' },
   { label: 'Settings', href: '/dashboard/settings', icon: 'solar:settings-bold' },
