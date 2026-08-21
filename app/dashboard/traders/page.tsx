@@ -35,7 +35,7 @@ export default function TradersPage() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch('/api/admin/traders');
+        const res = await fetch('/api/traders');
         if (!res.ok) throw new Error('Failed to load traders');
         const data = await res.json();
         setTraders(data.filter((t: ApiTrader) => t.active === 1));

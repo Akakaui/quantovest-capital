@@ -40,18 +40,11 @@ function formatCurrency(cents: number): string {
   return '$' + dollars.toLocaleString('en-US');
 }
 
-function SkeletonBlock({ className = '' }: { className?: string }) {
-  return (
-    <div className={`animate-pulse rounded-2xl bg-[#1A252C] border border-[#2B393F] ${className}`} />
-  );
-}
-
 export default function AdminDashboard() {
   const [aumCents, setAumCents] = useState(0);
   const [pendingDeposits, setPendingDeposits] = useState(0);
   const [pendingWithdrawals, setPendingWithdrawals] = useState(0);
   const [pendingKyc, setPendingKyc] = useState(0);
-  const [loading, setLoading] = useState(true);
   const [msgTitle, setMsgTitle] = useState('');
   const [msgBody, setMsgBody] = useState('');
   const [msgAudience, setMsgAudience] = useState<'all' | 'plan'>('all');
@@ -71,8 +64,6 @@ export default function AdminDashboard() {
         }
       } catch (e) {
         console.error('Failed to load admin dashboard data', e);
-      } finally {
-        setLoading(false);
       }
     }
     fetchData();
@@ -94,15 +85,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Action Counters Banner */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <SkeletonBlock className="h-[88px]" />
-            <SkeletonBlock className="h-[88px]" />
-            <SkeletonBlock className="h-[88px]" />
-            <SkeletonBlock className="h-[88px]" />
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div className="p-5 rounded-2xl bg-[#151E23] border border-[#2B393F] space-y-1">
               <p className="text-[10px] uppercase font-mono text-[#93A09A]">Total Managed AUM</p>
               <p className="text-2xl font-mono font-semibold text-[#22C55E]">{formatCurrency(aumCents)}</p>
@@ -131,8 +114,7 @@ export default function AdminDashboard() {
               </div>
               <p className="text-2xl font-mono font-semibold text-[#E8EFEB]">{pendingKyc} Pending</p>
             </Link>
-          </div>
-        )}
+        </div>
 
         {/* Quick Tools Navigation Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

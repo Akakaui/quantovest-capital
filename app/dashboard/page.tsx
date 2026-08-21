@@ -4,13 +4,15 @@ import React, { useState, useEffect, useCallback } from 'react';
 import InvestorSidebar from '@/components/InvestorSidebar';
 import OnboardingModal from '@/components/OnboardingModal';
 import KycModal from '@/components/KycModal';
-import RoiCalculatorModal from '@/components/RoiCalculatorModal';
-import AllocationRingChart from '@/components/AllocationRingChart';
 import { createClient } from '@/lib/supabase/client';
 import { PLAN_MINIMUMS, PLAN_ORDER } from '@/lib/constants';
 import { Icon } from '@iconify/react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 import Link from 'next/link';
+import dynamicImport from 'next/dynamic';
+
+const DynamicRoiCalculatorModal = dynamicImport(() => import('@/components/RoiCalculatorModal'), { ssr: false });
+const DynamicAllocationRingChart = dynamicImport(() => import('@/components/AllocationRingChart'), { ssr: false });
+const DashboardAreaChart = dynamicImport(() => import('@/components/DashboardAreaChart'), { ssr: false });
 
 export const dynamic = 'force-dynamic';
 
@@ -143,14 +145,16 @@ function ErrorState({ message, onRetry }: { message: string; onRetry: () => void
 }
 
 export default function InvestorDashboard() {
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<Profile>({
+    id: '', name: '', email: '', avatar: null, role: 'investor', balance: 0,
+    totalInvested: 0, totalProfit: 0, dailyRoiPercent: 0, allTimeRoiPercent: 0,
+    plan: 'Starter', kycStatus: 'pending', onboardingCompleted: true,
+  });
   const [deposits, setDeposits] = useState<DepositRow[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRow[]>([]);
   const [kycData, setKycData] = useState<KycRow[]>([]);
   const [chartData, setChartData] = useState<ChartPoint[]>([]);
   const [dailyLogs, setDailyLogs] = useState<ActivityLog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const [isMasked, setIsMasked] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
@@ -160,8 +164,6 @@ export default function InvestorDashboard() {
   const [tourStep, setTourStep] = useState<number | null>(null);
 
   const fetchAllData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
     try {
       const supabase = createClient();
       const { data: { session } } = await supabase.auth.getSession();
@@ -179,17 +181,14 @@ export default function InvestorDashboard() {
         fetch('/api/kyc', { headers }),
       ]);
 
-      if (!profileRes.ok) throw new Error('Failed to load profile');
-      if (!depositsRes.ok) throw new Error('Failed to load deposits');
-      if (!withdrawalsRes.ok) throw new Error('Failed to load withdrawals');
-      if (!kycRes.ok) throw new Error('Failed to load KYC data');
+      const [profileData, depositsData, withdrawalsData, kycDataRes] = await Promise.all([
+        profileRes.ok ? profileRes.json() : Promise.resolve(null),
+        depositsRes.ok ? depositsRes.json() : Promise.resolve([] as DepositRow[]),
+        withdrawalsRes.ok ? withdrawalsRes.json() : Promise.resolve([] as WithdrawalRow[]),
+        kycRes.ok ? kycRes.json() : Promise.resolve([] as KycRow[]),
+      ]) as [Profile | null, DepositRow[], WithdrawalRow[], KycRow[]];
 
-      const profileData: Profile = await profileRes.json();
-      const depositsData: DepositRow[] = await depositsRes.json();
-      const withdrawalsData: WithdrawalRow[] = await withdrawalsRes.json();
-      const kycDataRes: KycRow[] = await kycRes.json();
-
-      setProfile(profileData);
+      if (profileData) setProfile(profileData);
       setDeposits(depositsData);
       setWithdrawals(withdrawalsData);
       setKycData(kycDataRes);
@@ -197,7 +196,7 @@ export default function InvestorDashboard() {
       const approvedDeposits = depositsData.filter(d => d.status === 'approved');
       const approvedWithdrawals = withdrawalsData.filter(w => w.status === 'approved');
 
-      if (approvedDeposits.length > 0) {
+      if (profileData && approvedDeposits.length > 0) {
         let cumulative = 0;
         const points: ChartPoint[] = approvedDeposits.map((d) => {
           cumulative += d.amountCents / 100;
@@ -214,7 +213,7 @@ export default function InvestorDashboard() {
           });
         }
         setChartData(points);
-      } else {
+      } else if (profileData) {
         setChartData([
           { date: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' }), value: profileData.balance },
         ]);
@@ -236,11 +235,7 @@ export default function InvestorDashboard() {
       ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
       setDailyLogs(logs);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
-    } finally {
-      setLoading(false);
-    }
+    } catch { /* silent */ }
   }, []);
 
   useEffect(() => {
@@ -248,7 +243,6 @@ export default function InvestorDashboard() {
   }, [fetchAllData]);
 
   useEffect(() => {
-    if (!profile) return;
     if (!profile.onboardingCompleted) {
       setIsOnboardingOpen(true);
     } else if (profile.kycStatus !== 'approved') {
@@ -257,17 +251,13 @@ export default function InvestorDashboard() {
   }, [profile]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && profile?.onboardingCompleted) {
+    if (typeof window !== 'undefined' && profile.onboardingCompleted) {
       const tourDone = localStorage.getItem('quantovest_tour_completed');
       if (!tourDone) {
         setTourStep(0);
       }
     }
-  }, [profile?.onboardingCompleted]);
-
-  if (loading) return <LoadingSkeleton />;
-  if (error) return <ErrorState message={error} onRetry={fetchAllData} />;
-  if (!profile) return <ErrorState message="Profile data not found" onRetry={fetchAllData} />;
+  }, [profile.onboardingCompleted]);
 
   const kycStatus = kycData.length > 0 ? kycData[0].status : profile.kycStatus;
 
@@ -412,29 +402,11 @@ export default function InvestorDashboard() {
             </div>
           </div>
 
-          <div className="h-72 w-full pt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="signalGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#22C55E" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#22C55E" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="date" stroke="#A8ACB3" fontSize={11} tickLine={false} />
-                <YAxis stroke="#A8ACB3" fontSize={11} tickLine={false} domain={['dataMin - 100', 'dataMax + 100']} tickFormatter={(v) => `$${v}`} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#12161A', borderColor: '#202722', borderRadius: '12px', fontSize: '12px', color: '#FFF' }}
-                  formatter={(val: any) => [`$${Number(val).toLocaleString()}`, 'Portfolio Value']}
-                />
-                <Area type="monotone" dataKey="value" stroke="#22C55E" strokeWidth={3} fillOpacity={1} fill="url(#signalGradient)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
+          <DashboardAreaChart chartData={chartData} />
         </div>
 
         {/* Portfolio Allocation Ring Chart */}
-        <AllocationRingChart plan={profile.plan} />
+        <DynamicAllocationRingChart plan={profile.plan} />
 
         {/* Daily Strategy Activity Log */}
         <div className="dashboard-activity-card p-6 rounded-2xl bg-[#141C1F] border border-[#263437] space-y-4">
@@ -472,7 +444,7 @@ export default function InvestorDashboard() {
       {/* Modals */}
       <OnboardingModal isOpen={isOnboardingOpen} onClose={() => setIsOnboardingOpen(false)} />
       <KycModal isOpen={isKycOpen} onClose={() => setIsKycOpen(false)} />
-      <RoiCalculatorModal isOpen={isCalcOpen} onClose={() => setIsCalcOpen(false)} />
+      <DynamicRoiCalculatorModal isOpen={isCalcOpen} onClose={() => setIsCalcOpen(false)} />
 
       {/* Upgrade Plan Modal */}
       {isUpgradeOpen && (
@@ -516,7 +488,7 @@ export default function InvestorDashboard() {
                               body: JSON.stringify({ planName })
                             }).then(res => res.json()).then(data => {
                               if (data.success) {
-                                setProfile(p => p ? { ...p, plan: planName } : p);
+                                setProfile(p => ({ ...p, plan: planName }));
                                 setIsUpgradeOpen(false);
                               }
                             });

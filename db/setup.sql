@@ -31,6 +31,10 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"role" varchar(24) DEFAULT 'investor' NOT NULL,
 	"onboardingCompleted" boolean DEFAULT false NOT NULL,
 	"onboardingAnswers" json,
+	"twoFactorEnabled" boolean DEFAULT false NOT NULL,
+	"twoFactorSecret" text,
+	"payoutDetails" json,
+	"notificationPrefs" json,
 	"createdAt" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );

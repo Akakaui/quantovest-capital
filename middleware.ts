@@ -73,7 +73,7 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
   const isAuthenticated = !!user;
-  
+
   const role = user?.app_metadata?.role ?? user?.user_metadata?.role ?? 'investor';
   const isAdmin = role === 'admin';
 
@@ -86,6 +86,9 @@ export async function middleware(request: NextRequest) {
 
   if (isAdminRoute(pathname)) {
     if (!isAuthenticated) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
       return NextResponse.redirect(new URL('/login', request.url));
     }
     if (!isAdmin) {
@@ -96,7 +99,13 @@ export async function middleware(request: NextRequest) {
 
   if (isInvestorRoute(pathname)) {
     if (!isAuthenticated) {
+      if (pathname.startsWith('/api/')) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
       return NextResponse.redirect(new URL('/login', request.url));
+    }
+    if (isAdmin && !pathname.startsWith('/admin')) {
+      return NextResponse.redirect(new URL('/admin', request.url));
     }
     return response;
   }

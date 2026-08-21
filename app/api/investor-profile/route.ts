@@ -35,8 +35,18 @@ export async function GET() {
       if (!userRow) return NextResponse.json(fallbackProfile(actor));
 
       let account: typeof investorAccounts.$inferSelect | undefined;
+      let latestRoi: any[] = [];
+      let latestKyc: typeof kycApplications.$inferSelect | undefined;
+
       try {
-        [account] = await db.select().from(investorAccounts).where(eq(investorAccounts.investorId, actor.id)).limit(1);
+        const [[acct], roi, [kyc]] = await Promise.all([
+          db.select().from(investorAccounts).where(eq(investorAccounts.investorId, actor.id)).limit(1),
+          db.select().from(roiEntries).where(eq(roiEntries.investorId, actor.id)).orderBy(desc(roiEntries.entryDate)).limit(1),
+          db.select().from(kycApplications).where(eq(kycApplications.investorId, actor.id)).orderBy(desc(kycApplications.createdAt)).limit(1),
+        ]);
+        account = acct;
+        latestRoi = roi;
+        latestKyc = kyc;
       } catch {}
 
       let planName: string | null = null;
@@ -46,16 +56,6 @@ export async function GET() {
           planName = plan?.name ?? null;
         } catch {}
       }
-
-      let latestRoi: any[] = [];
-      try {
-        latestRoi = await db.select().from(roiEntries).where(eq(roiEntries.investorId, actor.id)).orderBy(desc(roiEntries.entryDate)).limit(1);
-      } catch {}
-
-      let latestKyc: typeof kycApplications.$inferSelect | undefined;
-      try {
-        [latestKyc] = await db.select().from(kycApplications).where(eq(kycApplications.investorId, actor.id)).orderBy(desc(kycApplications.createdAt)).limit(1);
-      } catch {}
 
       const balanceCents = account?.balanceCents ?? 0;
       const principalCents = account?.principalCents ?? 0;

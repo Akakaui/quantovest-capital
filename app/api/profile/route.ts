@@ -1,10 +1,43 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { getCurrentIdentity } from "@/lib/supabase/identity";
 import { getDb } from "@/lib/db";
-import { users } from "@/db/schema";
+import { users, recoveryCodes } from "@/db/schema";
+import { generateRecoveryCodes } from "@/lib/recovery-codes";
 
 export const dynamic = "force-dynamic";
+
+export async function GET() {
+  try {
+    const actor = await getCurrentIdentity();
+    if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const db = getDb();
+    if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
+    const rows = await db.select({
+      name: users.name,
+      image: users.image,
+      twoFactorEnabled: users.twoFactorEnabled,
+      twoFactorSecret: users.twoFactorSecret,
+      payoutDetails: users.payoutDetails,
+      notificationPrefs: users.notificationPrefs,
+      onboardingCompleted: users.onboardingCompleted,
+      onboardingAnswers: users.onboardingAnswers,
+    }).from(users).where(eq(users.id, actor.id)).limit(1);
+
+    const profile = rows[0] ?? null;
+    if (profile?.twoFactorEnabled) {
+      const unusedCodes = await db.select({ id: recoveryCodes.id })
+        .from(recoveryCodes)
+        .where(and(eq(recoveryCodes.userId, actor.id), isNull(recoveryCodes.usedAt)));
+      return NextResponse.json({ ...profile, unusedRecoveryCodeCount: unusedCodes.length });
+    }
+
+    return NextResponse.json(profile);
+  } catch (err) {
+    console.error('[profile GET]', err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
 
 export async function PATCH(request: Request) {
   try {
@@ -39,7 +72,15 @@ export async function PATCH(request: Request) {
     }
 
     await db.update(users).set(updates).where(eq(users.id, actor.id));
-    return NextResponse.json({ updated: true });
+
+    let recoveryCodesList: string[] | undefined;
+    if (body.twoFactorEnabled === true) {
+      try {
+        recoveryCodesList = await generateRecoveryCodes(actor.id);
+      } catch { /* recovery codes generation failed — non-fatal */ }
+    }
+
+    return NextResponse.json({ updated: true, recoveryCodes: recoveryCodesList });
   } catch (err) {
     console.error('[profile PATCH]', err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

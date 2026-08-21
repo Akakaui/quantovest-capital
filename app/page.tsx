@@ -5,11 +5,13 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ThreeDPhoneHero from '@/components/ThreeDPhoneHero';
-import RoiCalculatorModal from '@/components/RoiCalculatorModal';
 import CountUpNumber from '@/components/CountUpNumber';
 import SignalLine from '@/components/SignalLine';
 import { Icon } from '@iconify/react';
 import { motion } from 'framer-motion';
+import dynamic from 'next/dynamic';
+
+const DynamicRoiCalculatorModal = dynamic(() => import('@/components/RoiCalculatorModal'), { ssr: false });
 
 interface TickerItem {
   pair: string;
@@ -290,7 +292,7 @@ export default function Homepage() {
       </section>
 
       <Footer />
-      <RoiCalculatorModal isOpen={isCalcOpen} onClose={() => setIsCalcOpen(false)} />
+      <DynamicRoiCalculatorModal isOpen={isCalcOpen} onClose={() => setIsCalcOpen(false)} />
     </div>
   );
 }

@@ -24,10 +24,16 @@ interface Profile {
   twoFactorSecret?: string;
   payoutDetails?: Record<string, string>;
   notificationPrefs?: Record<string, boolean>;
+  unusedRecoveryCodeCount?: number;
 }
 
 export default function SettingsPage() {
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [profile, setProfile] = useState<Profile>({
+    id: '', name: '', email: '', avatar: null, role: 'investor',
+    balance: 0, totalInvested: 0, totalProfit: 0, dailyRoiPercent: 0,
+    allTimeRoiPercent: 0, plan: 'None', kycStatus: 'unverified',
+    onboardingCompleted: false,
+  });
   const [name, setName] = useState('');
   const [image, setImage] = useState<File | null>(null);
   const [message, setMessage] = useState('');
@@ -38,6 +44,11 @@ export default function SettingsPage() {
   const [verifyCode, setVerifyCode] = useState('');
   const [disableCode, setDisableCode] = useState('');
   const [showDisable, setShowDisable] = useState(false);
+
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
+  const [showRecoveryView, setShowRecoveryView] = useState(false);
+  const [unusedCount, setUnusedCount] = useState(0);
 
   const [cryptoAddress, setCryptoAddress] = useState('');
   const [cryptoNetwork, setCryptoNetwork] = useState('');
@@ -52,23 +63,49 @@ export default function SettingsPage() {
   const [notifyMsg, setNotifyMsg] = useState('');
 
   useEffect(() => {
+    let cancelled = false;
     async function loadProfile() {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const user = session.user;
+      const authName = (user.user_metadata?.name as string) || (user.email ?? '').split('@')[0];
+      const authProfile: Profile = {
+        id: user.id,
+        name: authName,
+        email: user.email ?? '',
+        avatar: (user.user_metadata?.avatar_url as string) || null,
+        role: 'investor',
+        balance: 0,
+        totalInvested: 0,
+        totalProfit: 0,
+        dailyRoiPercent: 0,
+        allTimeRoiPercent: 0,
+        plan: 'None',
+        kycStatus: 'unverified',
+        onboardingCompleted: false,
+      };
+      if (!cancelled) {
+        setProfile(authProfile);
+        setName(authProfile.name);
+      }
+
+      const headers = { Authorization: `Bearer ${session.access_token}` };
       try {
-        const supabase = createClient();
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
-        const headers = { Authorization: `Bearer ${session.access_token}` };
-        const [profileRes, settingsRes] = await Promise.all([
+        const [profileRes, settingsRes] = await Promise.allSettled([
           fetch('/api/investor-profile', { headers }),
           fetch('/api/profile', { headers }),
         ]);
-        if (profileRes.ok) {
-          const data = await profileRes.json();
-          setProfile(data);
+        if (cancelled) return;
+
+        if (profileRes.status === 'fulfilled' && profileRes.value.ok) {
+          const data = await profileRes.value.json();
+          setProfile(prev => prev ? { ...prev, ...data } : data);
           setName(data.name ?? '');
         }
-        if (settingsRes.ok) {
-          const settings = await settingsRes.json();
+        if (settingsRes.status === 'fulfilled' && settingsRes.value.ok) {
+          const settings = await settingsRes.value.json();
           if (settings.payoutDetails) {
             const pd = typeof settings.payoutDetails === 'string' ? JSON.parse(settings.payoutDetails) : settings.payoutDetails;
             setCryptoAddress(pd.cryptoAddress || '');
@@ -83,12 +120,13 @@ export default function SettingsPage() {
             setNotifyStrategyAlerts(np.notifyStrategyAlerts ?? true);
           }
           if (settings.twoFactorEnabled !== undefined) {
-            setProfile(p => p ? { ...p, twoFactorEnabled: settings.twoFactorEnabled, twoFactorSecret: settings.twoFactorSecret } : p);
+            setProfile(p => ({ ...p, twoFactorEnabled: settings.twoFactorEnabled, twoFactorSecret: settings.twoFactorSecret, unusedRecoveryCodeCount: settings.unusedRecoveryCodeCount }));
           }
         }
-      } catch { /* ignore */ }
+      } catch { /* ignore - auth data is already shown */ }
     }
     void loadProfile();
+    return () => { cancelled = true; };
   }, []);
 
   async function saveProfile(event: React.FormEvent) {
@@ -116,13 +154,18 @@ export default function SettingsPage() {
 
   async function handleVerify2FA() {
     if (verifyTOTP(pendingSecret, verifyCode)) {
-      await fetch('/api/profile', {
+      const res = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ twoFactorEnabled: true, twoFactorSecret: pendingSecret }),
       });
-      setProfile(p => p ? { ...p, twoFactorEnabled: true, twoFactorSecret: pendingSecret } : p);
+      const data = await res.json().catch(() => ({}));
+      setProfile(p => ({ ...p, twoFactorEnabled: true, twoFactorSecret: pendingSecret }));
       setShow2faModal(false);
+      if (data.recoveryCodes && data.recoveryCodes.length > 0) {
+        setRecoveryCodes(data.recoveryCodes);
+        setShowRecoveryModal(true);
+      }
       setMessage('Two-factor authentication enabled successfully.');
     } else {
       setMessage('Invalid verification code. Please try again.');
@@ -130,13 +173,13 @@ export default function SettingsPage() {
   }
 
   async function handleDisable2FA() {
-    if (profile?.twoFactorSecret && verifyTOTP(profile.twoFactorSecret, disableCode)) {
+    if (profile.twoFactorSecret && verifyTOTP(profile.twoFactorSecret, disableCode)) {
       await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ twoFactorEnabled: false, twoFactorSecret: '' }),
       });
-      setProfile(p => p ? { ...p, twoFactorEnabled: false, twoFactorSecret: '' } : p);
+      setProfile(p => ({ ...p, twoFactorEnabled: false, twoFactorSecret: '' }));
       setShowDisable(false);
       setDisableCode('');
       setMessage('Two-factor authentication disabled.');
@@ -165,15 +208,18 @@ export default function SettingsPage() {
     setNotifyMsg('Notification preferences saved.');
   }
 
-  if (!profile) {
-    return (
-      <div className="min-h-screen bg-[#0A0F11] text-[#F3F7F4] flex flex-col md:flex-row font-sans">
-        <InvestorSidebar />
-        <main className="flex-1 p-8 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-[#22C55E] border-t-transparent rounded-full animate-spin" />
-        </main>
-      </div>
-    );
+  function copyRecoveryCodes() {
+    navigator.clipboard.writeText(recoveryCodes.join('\n')).catch(() => {});
+  }
+
+  function downloadRecoveryCodes() {
+    const blob = new Blob([recoveryCodes.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'quantovest-recovery-codes.txt';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   return (
@@ -231,6 +277,17 @@ export default function SettingsPage() {
                 </button>
               )}
             </div>
+            {profile.twoFactorEnabled && (
+              <div className="p-4 bg-[#0A0F11] border border-[#263437] rounded-xl flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-[#F3F7F4]">Recovery Codes</p>
+                  <p className="text-[10px] text-[#93A09A] mt-0.5">Use these if you lose access to your authenticator</p>
+                </div>
+                <button onClick={() => setShowRecoveryView(true)} className="px-4 py-2 rounded-full border border-[#263437] text-[#93A09A] text-[10px] font-semibold hover:bg-[#1A1F24] transition-colors">
+                  View Codes {profile.unusedRecoveryCodeCount != null && `(${profile.unusedRecoveryCodeCount})`}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Payout Details Section */}
@@ -342,6 +399,64 @@ export default function SettingsPage() {
               </label>
               <button onClick={handleDisable2FA} disabled={disableCode.length !== 6} className="w-full rounded-full bg-rose-500/20 border border-rose-500/40 px-5 py-3 text-xs font-semibold text-rose-300 disabled:opacity-40">
                 Confirm Disable
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Recovery Codes Display Modal */}
+        {showRecoveryModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-[#141C1F] border border-[#263437] rounded-2xl max-w-sm w-full p-6 space-y-5 shadow-2xl">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-semibold">Your Recovery Codes</h3>
+                <button onClick={() => { setShowRecoveryModal(false); setRecoveryCodes([]); }} className="text-[#93A09A] hover:text-white">
+                  <Icon icon="solar:close-bold" className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3">
+                <p className="text-[10px] text-amber-300 font-semibold">Save these codes now. They will not be shown again.</p>
+                <p className="text-[10px] text-amber-400/70 mt-1">Each code can only be used once. Store them in a safe place.</p>
+              </div>
+              <div className="bg-[#0A0F11] border border-[#263437] rounded-xl p-4">
+                <div className="grid grid-cols-2 gap-2">
+                  {recoveryCodes.map((c, i) => (
+                    <span key={i} className="text-xs font-mono text-[#F3F7F4] bg-[#141C1F] border border-[#263437] rounded-lg px-3 py-2 text-center">{c}</span>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={copyRecoveryCodes} className="flex-1 rounded-full border border-[#263437] px-4 py-2.5 text-[10px] font-semibold text-[#93A09A] hover:bg-[#1A1F24] transition-colors flex items-center justify-center gap-1.5">
+                  <Icon icon="solar:copy-bold" className="w-3.5 h-3.5" /> Copy
+                </button>
+                <button onClick={downloadRecoveryCodes} className="flex-1 rounded-full bg-[#22C55E]/10 border border-[#22C55E]/30 px-4 py-2.5 text-[10px] font-semibold text-[#22C55E] hover:bg-[#22C55E]/20 transition-colors flex items-center justify-center gap-1.5">
+                  <Icon icon="solar:download-bold" className="w-3.5 h-3.5" /> Download
+                </button>
+              </div>
+              <button onClick={() => { setShowRecoveryModal(false); setRecoveryCodes([]); }} className="w-full rounded-full bg-[#22C55E] px-5 py-3 text-xs font-semibold text-[#07110B]">
+                I Have Saved My Codes
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* View Recovery Codes Modal */}
+        {showRecoveryView && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-[#141C1F] border border-[#263437] rounded-2xl max-w-sm w-full p-6 space-y-5 shadow-2xl">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-semibold">Recovery Codes</h3>
+                <button onClick={() => setShowRecoveryView(false)} className="text-[#93A09A] hover:text-white">
+                  <Icon icon="solar:close-bold" className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="bg-[#0A0F11] border border-[#263437] rounded-xl p-4 text-center space-y-2">
+                <Icon icon="solar:shield-check-bold" className="w-10 h-10 text-[#22C55E] mx-auto" />
+                <p className="text-xs text-[#F3F7F4] font-semibold">2FA is Active</p>
+                <p className="text-[10px] text-[#93A09A]">Recovery codes can only be viewed once when 2FA is first enabled. If you have lost your codes, disable and re-enable 2FA to generate new ones.</p>
+              </div>
+              <button onClick={() => setShowRecoveryView(false)} className="w-full rounded-full bg-[#22C55E] px-5 py-3 text-xs font-semibold text-[#07110B]">
+                Close
               </button>
             </div>
           </div>

@@ -17,8 +17,25 @@ export default function LoginPage() {
     event.preventDefault();
     setLoading(true);
     setMessage('');
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setMessage(error.message); else router.push('/dashboard');
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setMessage(error.message);
+    } else {
+      try {
+        const res = await fetch('/api/profile', {
+          headers: { Authorization: `Bearer ${data.session.access_token}` },
+        });
+        if (res.ok) {
+          const profile = await res.json();
+          if (profile.twoFactorEnabled) {
+            router.push('/verify-2fa');
+            setLoading(false);
+            return;
+          }
+        }
+      } catch { /* ignore — fall through to dashboard */ }
+      router.push('/dashboard');
+    }
     setLoading(false);
   }
 

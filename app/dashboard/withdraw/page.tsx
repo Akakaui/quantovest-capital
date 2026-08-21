@@ -27,8 +27,8 @@ export default function WithdrawPage() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const planMinimum = PLAN_MINIMUMS[profile?.plan ?? ''] ?? 0;
 

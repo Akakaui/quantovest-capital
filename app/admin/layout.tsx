@@ -10,10 +10,8 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-[#0D1215] text-[#E8EFEB] min-h-screen font-sans antialiased">
-        {children}
-      </body>
-    </html>
+    <div className="bg-[#0D1215] text-[#E8EFEB] min-h-screen font-sans antialiased">
+      {children}
+    </div>
   );
 }
