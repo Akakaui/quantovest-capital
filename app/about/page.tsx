@@ -17,7 +17,7 @@ export default function AboutPage() {
             About Quantovest Capital
           </h1>
           <p className="text-base text-[#5B616E] max-w-xl mx-auto">
-            Democratizing institutional managed investment execution across Foreign Exchange, Crypto, and Global Equities.
+            Professional managed investment across Foreign Exchange, Crypto, and Global Equities.
           </p>
         </div>
       </section>
@@ -26,10 +26,10 @@ export default function AboutPage() {
         <div className="max-w-[800px] mx-auto px-4 sm:px-6 space-y-8 text-sm leading-relaxed text-[#5B616E]">
           <h2 className="text-2xl font-normal text-[#0A0D0C]">Bridging Individual Capital & Expert Insight</h2>
           <p>
-            Quantovest Capital was founded on a simple premise: non-trading investors deserve transparent access to institutional market returns without personally managing high-risk intraday order books.
+            Quantovest Capital was founded on a simple premise: investors deserve transparent access to market returns without personally managing high-risk intraday order books.
           </p>
           <p>
-            By combining algorithmic multi-asset risk allocation with vetted portfolio manager execution, Quantovest allows investors to participate in global FX, cryptocurrency, and blue-chip equity market alpha.
+            By combining multi-asset risk allocation with vetted portfolio manager execution, Quantovest allows investors to participate in global FX, cryptocurrency, and blue-chip equity markets.
           </p>
           <motion.div 
             initial={{ opacity: 0, y: 20 }}

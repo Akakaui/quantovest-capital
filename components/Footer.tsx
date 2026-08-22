@@ -19,7 +19,7 @@ export default function Footer() {
               </div>
             </Link>
             <p className="text-xs leading-relaxed text-[#A8ACB3] max-w-sm">
-              Quantovest Capital provides institutional-grade investment management across foreign exchange, cryptocurrency, and global stock markets.
+              Quantovest Capital provides professional investment management across foreign exchange, cryptocurrency, and global stock markets.
             </p>
           </div>
 

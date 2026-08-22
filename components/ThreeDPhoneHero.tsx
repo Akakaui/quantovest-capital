@@ -10,11 +10,6 @@ export default function ThreeDPhoneHero() {
       <div className="pointer-events-none absolute -left-24 top-[-15%] h-[720px] w-[360px] rounded-full border border-[#22C55E]/20 opacity-70 [transform:rotate(18deg)]" />
       <div className="pointer-events-none absolute right-[-15%] top-[-20%] h-[620px] w-[620px] rounded-full border border-[#22C55E]/10 opacity-70" />
       <div className="relative z-10 w-full max-w-[620px] space-y-6 text-center items-center">
-        <div className="flex items-center justify-center gap-3 text-[11px] font-mono font-semibold uppercase tracking-[0.16em] text-[#4ADE80]">
-          <span className="h-px w-10 bg-[#4ADE80]" />
-          <span>Institutional Investment Platform</span>
-        </div>
-        <div className="h-px w-full bg-[#202722]" />
         <h1 className="mx-auto max-w-[620px] text-[3.25rem] font-normal leading-[0.98] tracking-[-0.06em] text-white sm:text-[4.75rem] lg:text-[5.25rem]">
           Your Capital.<br />
           <span className="text-[#4ADE80]">Our Expertise.</span>

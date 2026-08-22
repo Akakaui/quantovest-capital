@@ -555,7 +555,7 @@ export default function InvestorDashboard() {
                   Portfolio Strategy Managers
                 </h4>
                 <p className="text-xs text-[#93A09A] leading-relaxed">
-                  Click on the &quot;Portfolio Managers&quot; tab in the sidebar (or bottom bar on mobile) to select and follow institutional strategy experts.
+                  Click on the &quot;Portfolio Managers&quot; tab in the sidebar (or bottom bar on mobile) to select and follow a strategy manager.
                 </p>
               </div>
             )}

@@ -111,7 +111,7 @@ export default function KycModal({ isOpen, onClose }: KycModalProps) {
             </div>
             <div>
               <h3 className="text-base font-normal text-white">Identity Verification (KYC)</h3>
-              <p className="text-xs text-[#A8ACB3]">Minimal 2-document verification for institutional compliance</p>
+              <p className="text-xs text-[#A8ACB3]">Upload 2 documents to verify your identity</p>
             </div>
           </div>
           <button onClick={onClose} className="text-[#A8ACB3] hover:text-white p-1">

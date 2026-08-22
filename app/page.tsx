@@ -164,7 +164,7 @@ export default function Homepage() {
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto mb-10 sm:mb-16 space-y-4">
             <h2 className="text-2xl sm:text-5xl font-normal text-[#0A0D0C]">
-              Institutional Investing Made Simple
+              Invest Smarter, Not Harder
             </h2>
             <p className="text-sm sm:text-base text-[#5B616E]">
               You deposit capital. Our verified experts execute strategies. Quantovest automatically manages your returns.
@@ -214,7 +214,7 @@ export default function Homepage() {
               Transparent Capital Tiers
             </h2>
             <p className="text-sm sm:text-base text-[#A8ACB3]">
-              Every tier provides institutional-grade risk management and automated daily portfolio returns.
+              Every tier provides professional risk management and automated daily portfolio returns.
             </p>
           </div>
 

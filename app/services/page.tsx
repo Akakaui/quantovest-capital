@@ -33,7 +33,7 @@ export default function ServicesPage() {
               <h2 className="text-2xl font-normal text-[#0A0D0C]">Foreign Exchange (FX) Trading</h2>
             </div>
             <p className="text-xs text-[#5B616E] leading-relaxed">
-              Institutional currency trading covering major pairs (EUR/USD, GBP/USD, USD/JPY) and high-frequency intraday momentum. Tight spread execution and automated stop-loss protection.
+              Currency trading covering major pairs (EUR/USD, GBP/USD, USD/JPY) and intraday momentum. Tight spread execution and automated stop-loss protection.
             </p>
           </div>
 

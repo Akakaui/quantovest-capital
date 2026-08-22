@@ -39,8 +39,8 @@ export default function TradersPage() {
         if (!res.ok) throw new Error('Failed to load traders');
         const data = await res.json();
         setTraders(data.filter((t: ApiTrader) => t.active === 1));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load traders');
+      } catch {
+        setError('Could not load portfolio managers. Please try again.');
       } finally {
         setLoading(false);
       }
@@ -83,8 +83,8 @@ export default function TradersPage() {
       <main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
         {/* Header */}
         <div className="border-b border-[#263437] pb-6 space-y-1">
-          <h1 className="text-2xl font-normal text-[#F3F7F4]">Portfolio Strategy Hub</h1>
-          <p className="text-xs text-[#93A09A]">Browse and follow institutional strategy experts across FX, Crypto, and Equities.</p>
+          <h1 className="text-2xl font-normal text-[#F3F7F4]">Portfolio Managers</h1>
+          <p className="text-xs text-[#93A09A]">Browse strategy managers and follow their approach to grow your portfolio.</p>
         </div>
 
         {/* My Copies */}
@@ -144,6 +144,13 @@ export default function TradersPage() {
         {/* Trader Grid */}
         {!loading && !error && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {traders.length === 0 && (
+              <div className="col-span-full p-8 rounded-2xl bg-[#141C1F] border border-[#263437] text-center space-y-3">
+                <Icon icon="solar:users-group-rounded-bold" className="w-10 h-10 text-[#93A09A] mx-auto" />
+                <p className="text-sm text-[#93A09A]">No portfolio managers available yet.</p>
+                <p className="text-[10px] text-[#5B616E]">Check back soon — new managers are added regularly.</p>
+              </div>
+            )}
             {traders.map((trader) => {
               const isCopying = copiedTraderIds.has(trader.id);
               return (

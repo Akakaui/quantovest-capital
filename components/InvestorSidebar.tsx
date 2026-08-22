@@ -108,7 +108,6 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
             </div>
             <div>
               <span className="text-[#F4F7F3] text-base tracking-tight">QUANTOVEST</span>
-              <span className="text-[9px] tracking-widest text-[#4ADE80] uppercase font-mono block -mt-1">INVESTOR PORTAL</span>
             </div>
           </Link>
           <button
@@ -129,7 +128,7 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
         </div>
 
         <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto">
-          <p className="text-[10px] uppercase font-mono text-[#74817B] px-2 tracking-wider mb-2">Investor workspace</p>
+          <p className="text-[10px] uppercase font-mono text-[#74817B] px-2 tracking-wider mb-2">Navigation</p>
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -164,7 +163,7 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
         <div className="p-6 border-b border-[#202A2D] flex items-center justify-between">
           <Link href="/dashboard" className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-[#151D20] border border-[#2C393C] flex items-center justify-center text-[#4ADE80]"><Icon icon="solar:chart-square-bold" className="w-5 h-5" /></div>
-            <div><span className="text-[#F4F7F3] text-base tracking-tight">QUANTOVEST</span><span className="text-[9px] tracking-widest text-[#4ADE80] uppercase font-mono block -mt-1">INVESTOR PORTAL</span></div>
+            <div><span className="text-[#F4F7F3] text-base tracking-tight">QUANTOVEST</span></div>
           </Link>
           <NotificationCenter />
         </div>
@@ -173,7 +172,7 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
           <div className="truncate"><p className="text-xs font-semibold text-[#F4F7F3] truncate">{displayName}</p><p className="text-[10px] text-[#8D9994] truncate font-mono">{displayEmail}</p></div>
         </div>
         <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto">
-          <p className="text-[10px] uppercase font-mono text-[#74817B] px-2 tracking-wider mb-2">Investor workspace</p>
+          <p className="text-[10px] uppercase font-mono text-[#74817B] px-2 tracking-wider mb-2">Navigation</p>
           {navLinks.map((link) => { const isActive = pathname === link.href; return <Link key={link.href} href={link.href} className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-all ${isActive ? 'bg-[#4ADE80] text-[#07110B] font-semibold shadow-[0_8px_24px_rgba(74,222,128,0.16)]' : 'text-[#9AA7A0] hover:text-[#F4F7F3] hover:bg-[#172124]'}`}><Icon icon={link.icon} className={`w-5 h-5 ${isActive ? 'text-[#07110B]' : 'text-[#4ADE80]'}`} /><span>{link.label}</span></Link>; })}
         </nav>
         <div className="p-4 border-t border-[#202A2D] text-xs space-y-2">

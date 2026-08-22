@@ -12,7 +12,7 @@ export default function HowItWorksPage() {
     {
       step: '01',
       title: 'Account Registration & Plan Selection',
-      desc: 'Select your capital allocation tier ($1,500 Starter, $7,500 Growth, or $45,000 Elite). Complete our 5-step investor questionnaire to align risk tolerance with your financial goals.',
+      desc: 'Select your capital allocation tier ($1,500 Starter, $7,500 Growth, or $45,000 Elite). Complete your account setup and you are ready to invest.',
       icon: 'solar:card-search-bold'
     },
     {
@@ -47,7 +47,7 @@ export default function HowItWorksPage() {
             How Quantovest Investing Works
           </h1>
           <p className="text-base text-[#5B616E] max-w-xl mx-auto">
-            You don&apos;t need trading experience. Deposit capital into your preferred plan tier, select strategy experts, and our automated engine mirrors institutional trades in real time.
+            You don&apos;t need trading experience. Deposit capital into your preferred plan tier, select a portfolio manager, and our system mirrors their trades in real time.
           </p>
         </div>
       </section>

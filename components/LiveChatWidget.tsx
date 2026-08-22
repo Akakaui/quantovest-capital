@@ -8,7 +8,7 @@ export default function LiveChatWidget() {
   const [messages, setMessages] = useState<Array<{ sender: 'user' | 'agent'; text: string; time: string }>>([
     {
       sender: 'agent',
-      text: 'Welcome to Quantovest Capital. How can our institutional copytrading team assist you today?',
+      text: 'Welcome to Quantovest Capital. How can our support team assist you today?',
       time: 'Just now'
     }
   ]);
