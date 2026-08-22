@@ -15,8 +15,14 @@ export async function GET() {
       console.error('[investors] Database connection unavailable');
       return NextResponse.json({ error: 'Database connection unavailable' }, { status: 503 });
     }
-    const rows = await db.select({ id: users.id, name: users.name, email: users.email, accountId: investorAccounts.id, planId: investorAccounts.planId, balanceCents: investorAccounts.balanceCents, principalCents: investorAccounts.principalCents, planName: plans.name, minRoiBps: plans.minRoiBps, maxRoiBps: plans.maxRoiBps }).from(users).where(eq(users.role, 'investor')).leftJoin(investorAccounts, eq(users.id, investorAccounts.investorId)).leftJoin(plans, eq(investorAccounts.planId, plans.id));
-    return NextResponse.json(rows);
+    try {
+      const rows = await db.select({ id: users.id, name: users.name, email: users.email, accountId: investorAccounts.id, planId: investorAccounts.planId, balanceCents: investorAccounts.balanceCents, principalCents: investorAccounts.principalCents, planName: plans.name, minRoiBps: plans.minRoiBps, maxRoiBps: plans.maxRoiBps }).from(users).where(eq(users.role, 'investor')).leftJoin(investorAccounts, eq(users.id, investorAccounts.investorId)).leftJoin(plans, eq(investorAccounts.planId, plans.id));
+      return NextResponse.json(rows);
+    } catch (queryErr) {
+      console.error('[investors] Query failed, trying simple query:', queryErr);
+      const rows = await db.select({ id: users.id, name: users.name, email: users.email }).from(users).where(eq(users.role, 'investor'));
+      return NextResponse.json(rows);
+    }
   } catch (err) {
     console.error('[investors] Failed to fetch investors:', err);
     const detail = err instanceof Error ? err.message : String(err);
