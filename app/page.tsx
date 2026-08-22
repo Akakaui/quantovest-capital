@@ -137,7 +137,7 @@ export default function Homepage() {
             <div className="p-6 bg-[#12161A] border border-[#202722] rounded-2xl">
               <p className="text-[10px] sm:text-xs uppercase font-mono text-[#A8ACB3] mb-2">Total AUM Managed</p>
               <h3 className="text-3xl sm:text-4xl font-mono font-normal text-white">
-                <CountUpNumber end={42850000} prefix="$" suffix="+" duration={2400} />
+                <CountUpNumber end={4000000000} prefix="$" suffix="+" duration={2400} />
               </h3>
               <div className="mt-4 flex justify-center"><SignalLine width={96} delay={200} /></div>
             </div>
@@ -151,7 +151,7 @@ export default function Homepage() {
             <div className="p-6 bg-[#12161A] border border-[#202722] rounded-2xl">
               <p className="text-[10px] sm:text-xs uppercase font-mono text-[#A8ACB3] mb-2">Active Investors</p>
               <h3 className="text-3xl sm:text-4xl font-mono font-normal text-white">
-                <CountUpNumber end={14820} prefix="" suffix="+" duration={2200} />
+                <CountUpNumber end={3000000} prefix="" suffix="+" duration={2200} />
               </h3>
               <div className="mt-4 flex justify-center"><SignalLine width={96} delay={600} /></div>
             </div>

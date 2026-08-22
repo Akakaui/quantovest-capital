@@ -39,7 +39,7 @@ export default function AboutPage() {
             className="grid grid-cols-2 sm:grid-cols-3 gap-6 pt-6 border-t border-[#DEE1E6] text-center font-mono"
           >
             <div>
-              <p className="text-3xl font-semibold text-[#0A0D0C]">$42M+</p>
+              <p className="text-3xl font-semibold text-[#0A0D0C]">$4B+</p>
               <p className="text-xs text-[#5B616E] font-sans">Managed AUM</p>
             </div>
             <div>
