@@ -14,7 +14,7 @@ export async function GET() {
     if (!db) {
       return NextResponse.json({ error: 'Database connection unavailable' }, { status: 503 });
     }
-    const rows = await db.select({ id: users.id, name: users.name, email: users.email, accountId: investorAccounts.id, planId: investorAccounts.planId, balanceCents: investorAccounts.balanceCents, principalCents: investorAccounts.principalCents, planName: plans.name, minRoiBps: plans.minRoiBps, maxRoiBps: plans.maxRoiBps }).from(users).where(eq(users.role, 'investor')).leftJoin(investorAccounts, eq(users.id, investorAccounts.investorId)).leftJoin(plans, eq(investorAccounts.planId, plans.id));
+    const rows = await db.select({ id: users.id, name: users.name, email: users.email, accountId: investorAccounts.id, planId: investorAccounts.planId, balanceCents: investorAccounts.balanceCents, principalCents: investorAccounts.principalCents, planName: plans.name, minRoiBps: plans.minRoiBps, maxRoiBps: plans.maxRoiBps }).from(users).leftJoin(investorAccounts, eq(users.id, investorAccounts.investorId)).leftJoin(plans, eq(investorAccounts.planId, plans.id)).where(eq(users.role, 'investor'));
     return NextResponse.json(rows);
   } catch (err) {
     console.error('[investors] Full error:', JSON.stringify(err, Object.getOwnPropertyNames(err)));

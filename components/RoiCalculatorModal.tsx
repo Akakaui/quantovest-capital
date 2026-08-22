@@ -21,6 +21,7 @@ function getPlanForDeposit(amount: number) {
 
 export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorModalProps) {
   const [deposit, setDeposit] = useState<number>(7500);
+  const [inputValue, setInputValue] = useState<string>('7500');
   const [months, setMonths] = useState<number>(6);
 
   if (!isOpen) return null;
@@ -71,8 +72,21 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
                 type="number"
                 min="1500"
                 max="1000000"
-                value={deposit}
-                onChange={e => setDeposit(Math.max(1500, Number(e.target.value)))}
+                value={inputValue}
+                onChange={e => {
+                  setInputValue(e.target.value);
+                  const val = Number(e.target.value);
+                  if (!isNaN(val) && val > 0) {
+                    setDeposit(val);
+                  }
+                }}
+                onBlur={() => {
+                  let val = Number(inputValue);
+                  if (isNaN(val) || val < 1500) val = 1500;
+                  if (val > 1000000) val = 1000000;
+                  setDeposit(val);
+                  setInputValue(val.toString());
+                }}
                 className="bg-[#1A2528] border border-[#263437] rounded-xl px-4 py-2.5 text-sm font-mono text-white w-full focus:outline-none focus:border-[#22C55E] font-semibold mb-2"
               />
               <input
@@ -81,7 +95,11 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
                 max="50000"
                 step="500"
                 value={Math.min(deposit, 50000)}
-                onChange={e => setDeposit(Number(e.target.value))}
+                onChange={e => {
+                  const val = Number(e.target.value);
+                  setDeposit(val);
+                  setInputValue(val.toString());
+                }}
                 className="w-full accent-[#22C55E] bg-[#263437] h-2 rounded-lg cursor-pointer"
               />
               <div className="flex justify-between text-[10px] text-[#A8ACB3] mt-1 font-mono">

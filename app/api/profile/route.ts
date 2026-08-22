@@ -22,6 +22,7 @@ export async function GET() {
       notificationPrefs: users.notificationPrefs,
       onboardingCompleted: users.onboardingCompleted,
       onboardingAnswers: users.onboardingAnswers,
+      role: users.role,
     }).from(users).where(eq(users.id, actor.id)).limit(1);
 
     const profile = rows[0] ?? null;

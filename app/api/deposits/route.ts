@@ -26,10 +26,10 @@ export async function POST(request: Request) {
   if (!actor) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const db = getDb();
   if (!db) return NextResponse.json({ error: 'Database is not configured' }, { status: 503 });
-  const body = await request.json().catch(() => null) as { amountCents?: number; method?: 'bank' | 'crypto'; proofPath?: string; planId?: number } | null;
-  if (!body?.amountCents || !Number.isInteger(body.amountCents) || body.amountCents < 50000 || (body.method !== 'bank' && body.method !== 'crypto') || !body.proofPath?.trim()) return NextResponse.json({ error: 'Minimum deposit is $500. Select a bank or crypto method and upload proof.' }, { status: 400 });
+  const body = await request.json().catch(() => null) as { amountCents?: number; method?: string; proofPath?: string; planId?: number } | null;
+  if (!body?.amountCents || !Number.isInteger(body.amountCents) || body.amountCents < 50000 || !['usdt-trc20', 'usdt-erc20', 'btc', 'eth'].includes(body.method || '') || !body.proofPath?.trim()) return NextResponse.json({ error: 'Minimum deposit is $500. Select a valid cryptocurrency and upload proof.' }, { status: 400 });
   const id = crypto.randomUUID();
-  await db.insert(deposits).values({ id, investorId: actor.id, amountCents: body.amountCents, method: body.method, proofPath: body.proofPath.trim(), planId: body.planId ?? null, status: 'pending' });
+  await db.insert(deposits).values({ id, investorId: actor.id, amountCents: body.amountCents, method: body.method!, proofPath: body.proofPath.trim(), planId: body.planId ?? null, status: 'pending' });
   await notifyAdmins('deposit_submitted', 'New deposit awaiting verification', `Investor ${actor.id} submitted a ${(body.amountCents / 100).toFixed(2)} deposit via ${body.method}.`);
   if (actor.email) {
     try {

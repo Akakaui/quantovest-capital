@@ -186,7 +186,13 @@ export default function InvestorDashboard() {
         kycRes.ok ? kycRes.json() : Promise.resolve([] as KycRow[]),
       ]) as [Profile | null, DepositRow[], WithdrawalRow[], KycRow[]];
 
-      if (profileData) setProfile(profileData);
+      if (profileData) {
+        if (profileData.role === 'admin') {
+          window.location.href = '/admin';
+          return;
+        }
+        setProfile(profileData);
+      }
       setDeposits(depositsData);
       setWithdrawals(withdrawalsData);
       setKycData(kycDataRes);

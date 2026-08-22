@@ -91,6 +91,13 @@ export default function Verify2FAPage() {
   return (
     <div className="min-h-screen bg-[#0A0D0C] text-white flex flex-col justify-center items-center p-4 font-sans relative overflow-hidden">
       <div className="w-full max-w-md bg-[#12161A] border border-[#202722] rounded-2xl p-6 sm:p-8 shadow-2xl relative z-10 space-y-6">
+        <button
+          onClick={() => router.push('/login')}
+          className="absolute top-4 right-4 text-[#A8ACB3] hover:text-white p-1"
+          aria-label="Close"
+        >
+          <Icon icon="solar:close-circle-bold" className="w-6 h-6" />
+        </button>
         <div className="text-center space-y-2">
           <Link href="/" className="inline-block mb-2">
             <span className="text-xl tracking-tight font-medium text-white">QUANTOVEST</span>

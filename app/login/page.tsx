@@ -34,6 +34,11 @@ export default function LoginPage() {
             setLoading(false);
             return;
           }
+          if (profile.role === 'admin') {
+            router.push('/admin');
+            setLoading(false);
+            return;
+          }
         }
       } catch { /* ignore — fall through to dashboard */ }
       router.push('/dashboard');
