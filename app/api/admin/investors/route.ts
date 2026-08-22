@@ -12,7 +12,7 @@ export async function GET() {
     if (error) return error;
     const db = getDb();
     if (!db) return NextResponse.json([]);
-    const rows = await db.select({ id: users.id, name: users.name, email: users.email, accountId: investorAccounts.id, planId: investorAccounts.planId, balanceCents: investorAccounts.balanceCents, principalCents: investorAccounts.principalCents, planName: plans.name, minRoiBps: plans.minRoiBps, maxRoiBps: plans.maxRoiBps }).from(users).leftJoin(investorAccounts, eq(users.id, investorAccounts.investorId)).leftJoin(plans, eq(investorAccounts.planId, plans.id));
+    const rows = await db.select({ id: users.id, name: users.name, email: users.email, accountId: investorAccounts.id, planId: investorAccounts.planId, balanceCents: investorAccounts.balanceCents, principalCents: investorAccounts.principalCents, planName: plans.name, minRoiBps: plans.minRoiBps, maxRoiBps: plans.maxRoiBps }).from(users).where(eq(users.role, 'investor')).leftJoin(investorAccounts, eq(users.id, investorAccounts.investorId)).leftJoin(plans, eq(investorAccounts.planId, plans.id));
     return NextResponse.json(rows);
   } catch (err) {
     console.error('[investors]', err);

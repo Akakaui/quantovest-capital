@@ -44,6 +44,7 @@ export default function AdminInvestorsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -54,11 +55,15 @@ export default function AdminInvestorsPage() {
           fetch('/api/admin/kyc', opts),
           fetch('/api/admin/withdrawals', opts),
         ]);
-        if (invRes.ok) setInvestors(await invRes.json());
+        if (invRes.ok) {
+          setInvestors(await invRes.json());
+        } else {
+          setErrorMsg(`Failed to load investors (HTTP ${invRes.status}). Check that your admin user exists in the users table with role='admin'.`);
+        }
         if (kycRes.ok) setKycApps(await kycRes.json());
         if (wdRes.ok) setWithdrawals(await wdRes.json());
       } catch {
-        console.error('Failed to load investor data');
+        setErrorMsg('Failed to connect to the server.');
       } finally {
         setLoading(false);
       }
@@ -97,6 +102,10 @@ export default function AdminInvestorsPage() {
           <h1 className="text-2xl font-normal text-[#E8EFEB]">Investor Accounts</h1>
           <p className="text-xs text-[#93A09A]">Search, view, and manage investor accounts and activity.</p>
         </div>
+
+        {errorMsg && (
+          <div className="p-4 rounded-xl border border-rose-500/40 bg-rose-500/10 text-xs text-rose-300">{errorMsg}</div>
+        )}
 
         {/* Search */}
         <div className="max-w-md">
