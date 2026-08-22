@@ -153,7 +153,7 @@ export default function SettingsPage() {
   }
 
   async function handleVerify2FA() {
-    if (verifyTOTP(pendingSecret, verifyCode)) {
+    if (await verifyTOTP(pendingSecret, verifyCode)) {
       const res = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -173,7 +173,7 @@ export default function SettingsPage() {
   }
 
   async function handleDisable2FA() {
-    if (profile.twoFactorSecret && verifyTOTP(profile.twoFactorSecret, disableCode)) {
+    if (profile.twoFactorSecret && await verifyTOTP(profile.twoFactorSecret, disableCode)) {
       await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },

@@ -58,7 +58,9 @@ export default function AdminInvestorsPage() {
         if (invRes.ok) {
           setInvestors(await invRes.json());
         } else {
-          setErrorMsg(`Failed to load investors (HTTP ${invRes.status}). Check that your admin user exists in the users table with role='admin'.`);
+          const body = await invRes.json().catch(() => null);
+          const msg = body?.error || `Failed to load investors (HTTP ${invRes.status}).`;
+          setErrorMsg(`${msg} Check that your admin user exists in the users table with role='admin'.`);
         }
         if (kycRes.ok) setKycApps(await kycRes.json());
         if (wdRes.ok) setWithdrawals(await wdRes.json());

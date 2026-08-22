@@ -270,6 +270,14 @@ CREATE TABLE IF NOT EXISTS "pushSubscriptions" (
 	"createdAt" timestamp with time zone DEFAULT now() NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS "recoveryCodes" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "userId" varchar(191) NOT NULL,
+  "codeHash" varchar(64) NOT NULL,
+  "usedAt" timestamp with time zone,
+  "createdAt" timestamp with time zone DEFAULT now() NOT NULL
+);
+
 -- ── Indexes ────────────────────────────────────────────────────
 
 CREATE INDEX IF NOT EXISTS "accounts_user_idx" ON "accounts" USING btree ("userId");
@@ -302,6 +310,8 @@ CREATE INDEX IF NOT EXISTS "swap_transactions_investor_idx" ON "swapTransactions
 CREATE UNIQUE INDEX IF NOT EXISTS "swap_config_pair_unique" ON "swapConfig" USING btree ("fromAsset","toAsset");
 CREATE INDEX IF NOT EXISTS "push_subscriptions_user_idx" ON "pushSubscriptions" USING btree ("userId");
 CREATE UNIQUE INDEX IF NOT EXISTS "push_subscriptions_endpoint_unique" ON "pushSubscriptions" USING btree ("endpoint");
+CREATE INDEX IF NOT EXISTS "recovery_codes_user_idx" ON "recoveryCodes" USING btree ("userId");
+CREATE UNIQUE INDEX IF NOT EXISTS "recovery_codes_hash_unique" ON "recoveryCodes" USING btree ("codeHash");
 
 -- ── Seed Plans ─────────────────────────────────────────────────
 

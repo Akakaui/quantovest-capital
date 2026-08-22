@@ -54,7 +54,7 @@ export default function Verify2FAPage() {
     setMessage('');
 
     if (mode === 'totp') {
-      if (secret && verifyTOTP(secret, code)) {
+      if (secret && await verifyTOTP(secret, code)) {
         router.replace('/dashboard');
         return;
       }

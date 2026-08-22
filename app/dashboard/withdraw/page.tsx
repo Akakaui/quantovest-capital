@@ -77,7 +77,7 @@ export default function WithdrawPage() {
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
-    if (profile?.twoFactorEnabled && !verifyTOTP(profile.twoFactorSecret, otpCode)) {
+    if (profile?.twoFactorEnabled && !await verifyTOTP(profile.twoFactorSecret, otpCode)) {
       setMessage('Invalid 2FA code. Please check your authenticator app.');
       return;
     }
