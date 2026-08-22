@@ -15,10 +15,16 @@ export async function GET(request: Request) {
       const db = getDb();
       if (db) {
         try {
-          const rows = await db.select({ twoFactorEnabled: users.twoFactorEnabled })
-            .from(users)
-            .where(eq(users.id, data.user.id))
-            .limit(1);
+          const existing = await db.select({ id: users.id }).from(users).where(eq(users.id, data.user.id)).limit(1);
+          if (existing.length === 0) {
+            await db.insert(users).values({
+              id: data.user.id,
+              email: data.user.email ?? '',
+              name: data.user.user_metadata?.name ?? data.user.user_metadata?.full_name ?? data.user.email?.split('@')[0] ?? 'User',
+              role: 'investor',
+            });
+          }
+          const rows = await db.select({ twoFactorEnabled: users.twoFactorEnabled }).from(users).where(eq(users.id, data.user.id)).limit(1);
           if (rows[0]?.twoFactorEnabled) {
             return NextResponse.redirect(new URL('/verify-2fa', requestUrl.origin));
           }
