@@ -17,7 +17,7 @@ export default function ThreeDPhoneHero() {
         <p className="mx-auto max-w-[560px] text-base leading-7 text-[#A8ACB3] sm:text-lg sm:leading-8">
           Access top-tier algorithmic FX, Crypto, and Stock strategy execution starting at <strong className="font-semibold text-white">$1,500</strong>. Track your portfolio growth live.
         </p>
-        <div className="flex flex-col gap-3 pt-1 items-center sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-3 pt-1 items-center justify-center sm:flex-row sm:items-center">
           <Link href="/signup" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#22C55E] px-6 text-sm font-semibold text-[#07110B] shadow-[0_12px_32px_rgba(34,197,94,0.18)] transition hover:bg-[#4ADE80] active:scale-[0.98]">
             <span>Get Started ($1,500 Min)</span><Icon icon="solar:alt-arrow-right-bold" className="h-5 w-5" />
           </Link>
