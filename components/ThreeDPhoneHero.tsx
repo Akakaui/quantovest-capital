@@ -15,11 +15,11 @@ export default function ThreeDPhoneHero() {
           <span>Institutional Investment Platform</span>
         </div>
         <div className="h-px w-full bg-[#202722]" />
-        <h1 className="max-w-[620px] text-[3.25rem] font-normal leading-[0.98] tracking-[-0.06em] text-white sm:text-[4.75rem] lg:text-[5.25rem]">
+        <h1 className="mx-auto max-w-[620px] text-[3.25rem] font-normal leading-[0.98] tracking-[-0.06em] text-white sm:text-[4.75rem] lg:text-[5.25rem]">
           Your Capital.<br />
           <span className="text-[#4ADE80]">Our Expertise.</span>
         </h1>
-        <p className="max-w-[560px] text-base leading-7 text-[#A8ACB3] sm:text-lg sm:leading-8">
+        <p className="mx-auto max-w-[560px] text-base leading-7 text-[#A8ACB3] sm:text-lg sm:leading-8">
           Access top-tier algorithmic FX, Crypto, and Stock strategy execution starting at <strong className="font-semibold text-white">$1,500</strong>. Track your portfolio growth live.
         </p>
         <div className="flex flex-col gap-3 pt-1 items-center sm:flex-row sm:items-center">
