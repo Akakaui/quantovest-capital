@@ -19,6 +19,7 @@ export async function GET() {
     return NextResponse.json(rows);
   } catch (err) {
     console.error('[investors] Failed to fetch investors:', err);
-    return NextResponse.json({ error: 'Failed to fetch investors' }, { status: 500 });
+    const detail = err instanceof Error ? err.message : String(err);
+    return NextResponse.json({ error: 'Failed to fetch investors', detail }, { status: 500 });
   }
 }

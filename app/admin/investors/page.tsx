@@ -60,7 +60,8 @@ export default function AdminInvestorsPage() {
         } else {
           const body = await invRes.json().catch(() => null);
           const msg = body?.error || `Failed to load investors (HTTP ${invRes.status}).`;
-          setErrorMsg(`${msg} Check that your admin user exists in the users table with role='admin'.`);
+          const detail = body?.detail ? ` — ${body.detail}` : '';
+          setErrorMsg(`${msg}${detail}`);
         }
         if (kycRes.ok) setKycApps(await kycRes.json());
         if (wdRes.ok) setWithdrawals(await wdRes.json());
