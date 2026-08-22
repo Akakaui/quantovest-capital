@@ -24,10 +24,10 @@ export async function POST(request: Request) {
     if (!isUploadPurpose(purpose)) return NextResponse.json({ error: "Invalid upload purpose." }, { status: 400 });
     const extension = file.type.split("/")[1].replace("jpeg", "jpg");
     const path = `${purpose}/${actor.id}/${crypto.randomUUID()}.${extension}`;
-    const storage = createClient(url, serviceKey).storage.from(process.env.SUPABASE_MEDIA_BUCKET ?? "media");
+    const storage = createClient(url, serviceKey).storage.from(process.env.SUPABASE_MEDIA_BUCKET ?? "quantovest");
     const upload = await storage.upload(path, Buffer.from(await file.arrayBuffer()), { contentType: file.type, upsert: false });
     if (upload.error) return NextResponse.json({ error: upload.error.message }, { status: 502 });
-    return NextResponse.json({ path, bucket: process.env.SUPABASE_MEDIA_BUCKET ?? "media" }, { status: 201 });
+    return NextResponse.json({ path, bucket: process.env.SUPABASE_MEDIA_BUCKET ?? "quantovest" }, { status: 201 });
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : "Upload failed." }, { status: 500 });
   }
