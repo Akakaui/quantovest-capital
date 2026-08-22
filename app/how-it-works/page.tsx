@@ -12,7 +12,7 @@ export default function HowItWorksPage() {
     {
       step: '01',
       title: 'Account Registration & Plan Selection',
-      desc: 'Select your capital allocation tier ($500 Starter, $5,000 Growth, or $15,000 Elite). Complete our 5-step investor questionnaire to align risk tolerance with your financial goals.',
+      desc: 'Select your capital allocation tier ($1,500 Starter, $7,500 Growth, or $45,000 Elite). Complete our 5-step investor questionnaire to align risk tolerance with your financial goals.',
       icon: 'solar:card-search-bold'
     },
     {
@@ -85,7 +85,7 @@ export default function HowItWorksPage() {
       <section className="py-16 bg-[#0A0D0C] text-white">
         <div className="max-w-[1200px] mx-auto px-4 sm:px-6 text-center space-y-6">
           <h2 className="text-3xl font-normal text-white">Ready to Start Investing?</h2>
-          <p className="text-xs text-[#A8ACB3]">Create an account in 2 minutes starting at $500.</p>
+          <p className="text-xs text-[#A8ACB3]">Create an account in 2 minutes starting at $1,500.</p>
           <Link href="/signup" className="inline-block px-8 py-3.5 rounded-full bg-[#22C55E] text-[#0A0D0C] font-semibold text-xs hover:bg-[#16A34A]">
             Get Started Now
           </Link>

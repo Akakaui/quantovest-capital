@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -10,6 +11,7 @@ export default function LoginPage() {
   const supabase = createClient();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -97,15 +99,24 @@ export default function LoginPage() {
                 Forgot password?
               </Link>
             </div>
-            <input
-              required
-              minLength={8}
-              type="password"
-              value={password}
-              onChange={event => setPassword(event.target.value)}
-              placeholder="••••••••••••"
-              className="w-full bg-[#0A0D0C] border border-[#202722] rounded-xl px-4 py-2.5 text-xs text-white placeholder-[#A8ACB3] focus:outline-none focus:border-[#22C55E]"
-            />
+            <div className="relative">
+              <input
+                required
+                minLength={8}
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={event => setPassword(event.target.value)}
+                placeholder="••••••••••••"
+                className="w-full bg-[#0A0D0C] border border-[#202722] rounded-xl px-4 py-2.5 text-xs text-white placeholder-[#A8ACB3] focus:outline-none focus:border-[#22C55E] pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#93A09A] hover:text-white transition-colors"
+              >
+                <Icon icon={showPassword ? 'solar:eye-closed-bold' : 'solar:eye-bold'} className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           <button

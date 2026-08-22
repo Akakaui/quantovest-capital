@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentIdentity } from "@/lib/supabase/identity";
 import { getDb } from "@/lib/db";
-import { investorAccounts, deposits, investorWithdrawals, kycApplications } from "@/db/schema";
+import { investorAccounts, deposits, investorWithdrawals, kycApplications, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -19,13 +19,12 @@ export async function GET() {
     try {
       await db.select().from(investorAccounts).limit(1);
 
-      let aumCents = 0;
-      let investorCount = 0;
-      const rows = await db.select({
-        balanceCents: investorAccounts.balanceCents,
-      }).from(investorAccounts);
-      aumCents = rows.reduce((sum, r) => sum + (r.balanceCents ?? 0), 0);
-      investorCount = rows.length;
+      const [aumResult, investorRows] = await Promise.all([
+        db.select({ balanceCents: investorAccounts.balanceCents }).from(investorAccounts),
+        db.select({ id: users.id }).from(users).where(eq(users.role, "investor")),
+      ]);
+      const aumCents = aumResult.reduce((sum, r) => sum + (r.balanceCents ?? 0), 0);
+      const investorCount = investorRows.length;
 
       const [depRows, wdrRows, kycRows] = await Promise.all([
         db.select({ id: deposits.id }).from(deposits).where(eq(deposits.status, "pending")),

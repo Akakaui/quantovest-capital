@@ -10,14 +10,14 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'rec
 const PLANS = [
   {
     name: 'Starter',
-    min: 500,
+    min: 1500,
     dailyRoi: 15,
     color: '#22C55E',
     features: ['FX & Top Crypto Asset Access', 'Daily ROI Dashboard Updates', '0% Management Fee (15% Perf Fee)'],
   },
   {
     name: 'Growth',
-    min: 5000,
+    min: 7500,
     dailyRoi: 25,
     color: '#22C55E',
     recommended: true,
@@ -25,7 +25,7 @@ const PLANS = [
   },
   {
     name: 'Elite',
-    min: 15000,
+    min: 45000,
     dailyRoi: 35,
     color: '#22C55E',
     features: ['Full Multi-Asset VIP Access', 'Custom Risk Controls', 'Direct Portfolio Manager Insights'],
@@ -34,7 +34,7 @@ const PLANS = [
 
 export default function PlansPage() {
   const [selectedPlan, setSelectedPlan] = useState<number>(1);
-  const [deposit, setDeposit] = useState(5000);
+  const [deposit, setDeposit] = useState(7500);
   const [months, setMonths] = useState(6);
 
   const plan = PLANS[selectedPlan];
@@ -173,7 +173,7 @@ export default function PlansPage() {
                     type="range"
                     min={plan.min}
                     max={Math.max(plan.min * 10, 50000)}
-                    step={plan.min <= 500 ? 100 : 500}
+                    step={500}
                     value={deposit}
                     onChange={e => setDeposit(Number(e.target.value))}
                     className="w-full accent-[#22C55E] mt-3"

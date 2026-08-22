@@ -3,7 +3,8 @@ import { and, asc, eq, isNull, lte, or } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { notifyAdmins, notifyUser } from '@/lib/notifications';
 import { getDb } from '@/lib/db';
-import { deposits, investorAccounts, plans, portfolioLedger } from '@/db/schema';
+import { deposits, investorAccounts, plans, portfolioLedger, users } from '@/db/schema';
+import { sendDepositApproved, sendDepositRejected } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +36,7 @@ export async function PATCH(request: Request) {
       const deposit = rows[0];
       if (body.action === 'reject') {
         await tx.update(deposits).set({ status: 'rejected', reviewedBy: identity.id, reviewNote: body.reviewNote?.trim() || null, updatedAt: new Date() }).where(eq(deposits.id, deposit.id));
-        return { investorId: deposit.investorId, status: 'rejected', planName: null };
+        return { investorId: deposit.investorId, status: 'rejected', planName: null, amountCents: deposit.amountCents };
       }
       const availablePlans = await tx.select().from(plans).where(eq(plans.active, 1)).orderBy(asc(plans.minimumDepositCents));
       const selectedPlan = (deposit.planId ? availablePlans.find(plan => plan.id === deposit.planId) : undefined) ?? [...availablePlans].reverse().find(plan => deposit.amountCents >= plan.minimumDepositCents && (plan.maximumDepositCents == null || deposit.amountCents <= plan.maximumDepositCents));
@@ -45,11 +46,18 @@ export async function PATCH(request: Request) {
       if (existing[0]) await tx.update(investorAccounts).set({ planId: selectedPlan.id, principalCents: existing[0].principalCents + deposit.amountCents, balanceCents: existing[0].balanceCents + deposit.amountCents, status: 'active', updatedAt: new Date() }).where(eq(investorAccounts.id, existing[0].id));
       else await tx.insert(investorAccounts).values({ id: crypto.randomUUID(), investorId: deposit.investorId, planId: selectedPlan.id, principalCents: deposit.amountCents, balanceCents: deposit.amountCents, status: 'active' });
       await tx.insert(portfolioLedger).values({ investorId: deposit.investorId, type: 'deposit', amountCents: deposit.amountCents, referenceId: deposit.id, description: `Deposit approved and assigned to ${selectedPlan.name} plan` });
-      return { investorId: deposit.investorId, status: 'completed', planName: selectedPlan.name };
+      return { investorId: deposit.investorId, status: 'completed', planName: selectedPlan.name, amountCents: deposit.amountCents };
     });
     if (result.status === 'completed') await notifyUser(result.investorId, 'deposit_approved', 'Deposit approved', `Your deposit was verified and your account is now on the ${result.planName} plan.`);
     else await notifyUser(result.investorId, 'deposit_rejected', 'Deposit requires attention', 'Your deposit proof was not approved. Review the admin note and submit corrected proof.');
     await notifyAdmins(`deposit_${result.status}`, `Deposit ${result.status}`, `The deposit review was marked ${result.status} for investor ${result.investorId}.`);
+    try {
+      const investor = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, result.investorId)).limit(1);
+      if (investor[0]?.email) {
+        if (result.status === 'completed') sendDepositApproved(investor[0].email, investor[0].name || 'Investor', `$${(result.amountCents / 100).toFixed(2)}`, result.planName!);
+        else sendDepositRejected(investor[0].email, investor[0].name || 'Investor', body.reviewNote?.trim() || 'Deposit proof did not meet requirements.');
+      }
+    } catch {}
     return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Deposit review failed.' }, { status: 400 });

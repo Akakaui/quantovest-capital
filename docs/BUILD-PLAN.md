@@ -58,7 +58,7 @@ Quantovest Capital is an institutional-grade copytrading platform for **FX, Cryp
 #### Page 2: How It Works (`/how-it-works`) (Light Mode)
 - *Headline*: "Algorithmic Precision Meets Master Trader Insight"
 - *Copy*: Comprehensive 4-step explanation:
-  1. *Account & Plan Selection*: Choose your capital tier ($500 Starter, $5,000 Growth, $15,000 Elite).
+  1. *Account & Plan Selection*: Choose your capital tier ($1,500 Starter, $7,500 Growth, $45,000 Elite).
   2. *Identity Verification*: Rapid 2-minute KYC onboarding for institutional compliance.
   3. *Fund & Copy*: Deposit funds via bank wire or crypto, then select master traders to copy.
   4. *Automated Allocation & Daily Returns*: Quantovest balances your exposure across FX, Crypto, and Stocks while daily performance updates directly to your dashboard.
@@ -76,17 +76,17 @@ Quantovest Capital is an institutional-grade copytrading platform for **FX, Cryp
 
 #### Page 5: Investment Plans (`/plans`) (Light Mode)
 - *Headline*: "Transparent Plans Built for Every Investor Tier"
-- **Starter Plan ($500 Min Deposit)**:
+- **Starter Plan ($1,500 Min Deposit)**:
   - Target ROI: 8% – 12% monthly
   - Market Focus: FX & Top Crypto Assets
   - Fee Structure: 0% Management Fee, 15% Performance Fee
   - CTA: "Select Starter Plan"
-- **Growth Plan ($5,000 Min Deposit)** *(Featured Tier)*:
+- **Growth Plan ($7,500 Min Deposit)** *(Featured Tier)*:
   - Target ROI: 14% – 18% monthly
   - Market Focus: FX, Crypto & US Equities
   - Priority Execution & Dedicated Account Manager
   - CTA: "Select Growth Plan"
-- **Elite Plan ($15,000 Min Deposit)**:
+- **Elite Plan ($45,000 Min Deposit)**:
   - Target ROI: 20% – 28% monthly
   - Market Focus: Full Multi-Asset Access + Custom Risk Controls
   - VIP Concierge & Direct Master Trader Insights
@@ -126,7 +126,7 @@ Upon registration/login, investor completes a 5-step modal wizard before reachin
 - **Step 1 — Experience**: "What is your trading experience?" (*Beginner / Intermediate / Pro*)
 - **Step 2 — Asset Interest**: "Which markets interest you most?" (*FX / Crypto / Stocks / Multi-Asset*)
 - **Step 3 — Capital Goal**: "What is your primary financial objective?" (*Capital Growth / Monthly Passive Income / High Yield*)
-- **Step 4 — Target Deposit**: "How much capital do you plan to start with?" (*$500 Starter / $5,000 Growth / $15,000+ Elite*)
+- **Step 4 — Target Deposit**: "How much capital do you plan to start with?" (*$1,500 Starter / $7,500 Growth / $45,000+ Elite*)
 - **Step 5 — Risk Tolerance**: "Select your preferred risk appetite:" (*Conservative / Balanced / Aggressive*)
 
 #### 3. Identity Verification (KYC) Pop-up System (Minimal 2-Document Requirement)

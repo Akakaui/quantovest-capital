@@ -12,7 +12,7 @@ export default function FaqPage() {
   const faqs = [
     {
       q: 'How does Quantovest work for non-traders?',
-      a: 'You choose an investment plan ($500 Starter, $5,000 Growth, or $15,000 Elite), deposit funds, and select verified strategy experts to follow. Our system automatically mirrors their trades onto your portfolio balance without requiring you to manually trade.'
+      a: 'You choose an investment plan ($1,500 Starter, $7,500 Growth, or $45,000 Elite), deposit funds, and select verified strategy experts to follow. Our system automatically mirrors their trades onto your portfolio balance without requiring you to manually trade.'
     },
     {
       q: 'What documents are required for KYC identity verification?',

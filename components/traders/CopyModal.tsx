@@ -12,7 +12,7 @@ interface CopyModalProps {
 }
 
 export default function CopyModal({ isOpen, traderId, traderName, onClose, onSuccess }: CopyModalProps) {
-  const [allocation, setAllocation] = useState('500');
+  const [allocation, setAllocation] = useState('1500');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -20,8 +20,8 @@ export default function CopyModal({ isOpen, traderId, traderName, onClose, onSuc
 
   const handleSubmit = async () => {
     const cents = Math.round(parseFloat(allocation) * 100);
-    if (isNaN(cents) || cents < 50000) {
-      setError('Minimum allocation is $500.');
+    if (isNaN(cents) || cents < 150000) {
+      setError('Minimum allocation is $1,500.');
       return;
     }
     setSubmitting(true);
@@ -56,7 +56,7 @@ export default function CopyModal({ isOpen, traderId, traderName, onClose, onSuc
         </div>
         <p className="text-xs text-[#93A09A]">
           Allocate funds to copy <span className="text-[#22C55E] font-semibold">{traderName}</span>&apos;s strategy.
-          Minimum allocation is $500.
+          Minimum allocation is $1,500.
         </p>
 
         {error && <p className="text-xs text-rose-400">{error}</p>}
@@ -67,7 +67,7 @@ export default function CopyModal({ isOpen, traderId, traderName, onClose, onSuc
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-[#93A09A]">$</span>
             <input
               type="number"
-              min="500"
+              min="1500"
               step="100"
               value={allocation}
               onChange={e => { setAllocation(e.target.value); setError(''); }}

@@ -11,7 +11,7 @@ export default function DepositPage() {
   const [instructions, setInstructions] = useState<Instruction[]>([]);
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [method, setMethod] = useState<'bank' | 'crypto'>('crypto');
-  const [amount, setAmount] = useState(500);
+  const [amount, setAmount] = useState(1500);
   const [proof, setProof] = useState<File | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [message, setMessage] = useState('');
@@ -94,7 +94,7 @@ export default function DepositPage() {
               )}
               <form onSubmit={submit} className="space-y-4">
                 <label className="block text-xs text-[#93A09A]">Amount ($)
-                  <input required min="500" type="number" value={amount} onChange={event => setAmount(Number(event.target.value))} className="mt-1 w-full rounded-xl border border-[#263437] bg-[#0A0F11] px-4 py-3 text-sm text-white" />
+                  <input required min="1500" type="number" value={amount} onChange={event => setAmount(Number(event.target.value))} className="mt-1 w-full rounded-xl border border-[#263437] bg-[#0A0F11] px-4 py-3 text-sm text-white" />
                 </label>
                 <label className="block text-xs text-[#93A09A]">Payment screenshot
                   <input required type="file" accept="image/jpeg,image/png,image/webp" onChange={event => setProof(event.target.files?.[0] ?? null)} className="mt-1 w-full text-xs" />

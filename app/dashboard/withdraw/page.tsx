@@ -16,11 +16,11 @@ type UserProfile = {
 
 type Withdrawal = { id: number; amountCents: number; destination: string; destinationType: string; status: string; createdAt: string };
 
-const PLAN_MINIMUMS: Record<string, number> = { Starter: 500, Growth: 5000, Elite: 15000 };
+const PLAN_MINIMUMS: Record<string, number> = { Starter: 1500, Growth: 7500, Elite: 45000 };
 
 export default function WithdrawPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [amount, setAmount] = useState(500);
+  const [amount, setAmount] = useState(1500);
   const [destinationType, setDestinationType] = useState<'bank' | 'crypto'>('bank');
   const [closeAccountMode, setCloseAccountMode] = useState(false);
   const [otpCode, setOtpCode] = useState('');
@@ -160,7 +160,7 @@ export default function WithdrawPage() {
                   Withdrawal Amount ($)
                   <input
                     type="number"
-                    min={closeAccountMode ? 0 : 500}
+                    min={closeAccountMode ? 0 : 1500}
                     step="0.01"
                     required
                     value={amount}

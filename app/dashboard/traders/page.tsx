@@ -193,7 +193,7 @@ export default function TradersPage() {
                     }`}
                   >
                     <Icon icon="solar:users-group-rounded-bold" className="w-4 h-4" />
-                    <span>{isCopying ? 'Strategy Active' : 'Follow Strategy ($500 Min)'}</span>
+                    <span>{isCopying ? 'Strategy Active' : 'Follow Strategy ($1,500 Min)'}</span>
                   </button>
                 </div>
               );

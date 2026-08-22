@@ -42,11 +42,11 @@ The platform has two user roles: **Investor** and **Admin** (staff). They intera
 
 ### Fixed Daily ROI Per Plan
 
-| Plan | Min Deposit | Daily ROI | Monthly (Compounded) | $500 Example |
+| Plan | Min Deposit | Daily ROI | Monthly (Compounded) | $1,500 Example |
 |---|---|---|---|---|
-| **Starter** | $500 | **15%** | ~1,839% | $500 → $75/day |
-| **Growth** | $5,000 | **25%** | ~5,682% | $5,000 → $1,250/day |
-| **Elite** | $15,000 | **35%** | ~14,554% | $15,000 → $5,250/day |
+| **Starter** | $1,500 | **15%** | ~1,839% | $1,500 → $225/day |
+| **Growth** | $7,500 | **25%** | ~5,682% | $7,500 → $1,875/day |
+| **Elite** | $45,000 | **35%** | ~14,554% | $45,000 → $15,750/day |
 
 Admin taps one button per investor — the fixed rate is applied automatically.
 
@@ -58,8 +58,8 @@ Admin taps one button per investor — the fixed rate is applied automatically.
 3. **KYC** → upload government ID + proof of address → admin reviews
 4. **Deposit** → choose method (bank/crypto) → upload payment proof → admin approves → balance credited → plan auto-assigned
 5. **Dashboard** → see portfolio balance, performance chart, daily ROI, activity log
-6. **Copy Trader** → browse master traders → click "Copy" (requires min $500 balance)
-7. **Upgrade Plan** → Starter ($500) → Growth ($5,000) → Elite ($15,000) — shows how much more you need
+6. **Copy Trader** → browse master traders → click "Copy" (requires min $1,500 balance)
+7. **Upgrade Plan** → Starter ($1,500) → Growth ($7,500) → Elite ($45,000) — shows how much more you need
 8. **Withdraw** → enter amount → 2FA verification if enabled → admin processes → money sent
 9. **Close Account** → withdraw entire balance → admin approves → account closed
 10. **Settings** → configure 2FA, payout details, notification preferences

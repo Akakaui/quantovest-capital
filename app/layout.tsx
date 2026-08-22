@@ -5,7 +5,7 @@ import TawkToWidget from '@/components/TawkToWidget';
 
 export const metadata: Metadata = {
   title: 'Quantovest Capital — Institutional Investment & Multi-Asset Management',
-  description: 'Access top-tier algorithmic FX, Crypto, and Stock investment strategies starting at $500. Track portfolio growth live.',
+  description: 'Access top-tier algorithmic FX, Crypto, and Stock investment strategies starting at $1,500. Track portfolio growth live.',
   keywords: ['investment management', 'FX trading', 'crypto portfolio', 'stock market', 'managed portfolio', 'quantovest capital'],
 };
 

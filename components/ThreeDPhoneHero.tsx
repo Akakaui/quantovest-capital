@@ -23,8 +23,8 @@ export default function ThreeDPhoneHero() {
     <div className="relative mx-auto flex min-h-[620px] w-full max-w-[1200px] items-center overflow-hidden px-4 py-14 sm:px-6 lg:min-h-[600px] lg:py-16">
       <div className="pointer-events-none absolute -left-24 top-[-15%] h-[720px] w-[360px] rounded-full border border-[#22C55E]/20 opacity-70 [transform:rotate(18deg)]" />
       <div className="pointer-events-none absolute right-[-15%] top-[-20%] h-[620px] w-[620px] rounded-full border border-[#22C55E]/10 opacity-70" />
-      <div className="relative z-10 w-full max-w-[620px] space-y-6 lg:max-w-[610px]">
-        <div className="flex items-center gap-3 text-[11px] font-mono font-semibold uppercase tracking-[0.16em] text-[#4ADE80]">
+      <div className="relative z-10 w-full max-w-[620px] space-y-6 text-center items-center md:text-left md:items-start lg:max-w-[610px]">
+        <div className="flex items-center justify-center md:justify-start gap-3 text-[11px] font-mono font-semibold uppercase tracking-[0.16em] text-[#4ADE80]">
           <span className="h-px w-10 bg-[#4ADE80]" />
           <span>Institutional Investment Platform</span>
         </div>
@@ -34,11 +34,11 @@ export default function ThreeDPhoneHero() {
           <span className="text-[#4ADE80]">Our Expertise.</span>
         </h1>
         <p className="max-w-[560px] text-base leading-7 text-[#A8ACB3] sm:text-lg sm:leading-8">
-          Access top-tier algorithmic FX, Crypto, and Stock strategy execution starting at <strong className="font-semibold text-white">$500</strong>. Track your portfolio growth live.
+          Access top-tier algorithmic FX, Crypto, and Stock strategy execution starting at <strong className="font-semibold text-white">$1,500</strong>. Track your portfolio growth live.
         </p>
-        <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-3 pt-1 items-center sm:flex-row sm:items-center">
           <Link href="/signup" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-[#22C55E] px-6 text-sm font-semibold text-[#07110B] shadow-[0_12px_32px_rgba(34,197,94,0.18)] transition hover:bg-[#4ADE80] active:scale-[0.98]">
-            <span>Get Started ($500 Min)</span><Icon icon="solar:alt-arrow-right-bold" className="h-5 w-5" />
+            <span>Get Started ($1,500 Min)</span><Icon icon="solar:alt-arrow-right-bold" className="h-5 w-5" />
           </Link>
           <Link href="/plans" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-[#39453F] bg-transparent px-6 text-sm font-medium text-white transition hover:border-[#4ADE80]/60 hover:bg-[#121A16] active:scale-[0.98]">
             <span>Explore Plans &amp; ROI</span>
@@ -46,7 +46,7 @@ export default function ThreeDPhoneHero() {
         </div>
       </div>
 
-      <div className="pointer-events-none absolute bottom-10 right-[-42px] z-10 h-[420px] w-[310px] sm:right-0 sm:h-[520px] sm:w-[380px] lg:bottom-4 lg:right-6 lg:h-[570px] lg:w-[430px]">
+      <div className="pointer-events-none absolute bottom-10 right-[-42px] z-10 h-[420px] w-[310px] hidden md:block sm:right-0 sm:h-[520px] sm:w-[380px] lg:bottom-4 lg:right-6 lg:h-[570px] lg:w-[430px]">
         <div className="absolute bottom-8 left-1/2 h-10 w-64 -translate-x-1/2 rounded-full bg-[#22C55E]/20 blur-3xl" />
         <div className="absolute left-1/2 top-[56%] h-[330px] w-[210px] -translate-x-1/2 -translate-y-1/2 rotate-[-10deg] rounded-[30px] bg-[#101816] shadow-[0_30px_70px_rgba(0,0,0,0.55)] sm:h-[420px] sm:w-[270px] lg:h-[470px] lg:w-[300px]">
           <div className="absolute inset-[12px] overflow-hidden rounded-[22px] bg-[#101714] p-4 sm:inset-[16px] sm:rounded-[26px] sm:p-5">

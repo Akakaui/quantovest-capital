@@ -22,7 +22,7 @@ export default function FundingWarningModal({ isOpen, onClose }: FundingWarningM
         </div>
         <h3 className="text-lg font-normal text-white mb-2">Account Funding Required</h3>
         <p className="text-xs text-[#A8ACB3] leading-relaxed mb-6">
-          To activate managed investment strategy execution, your account requires a minimum funded balance of <strong>$500</strong> (Starter Plan).
+          To activate managed investment strategy execution, your account requires a minimum funded balance of <strong>$1,500</strong> (Starter Plan).
         </p>
 
         <div className="space-y-3">
@@ -34,7 +34,7 @@ export default function FundingWarningModal({ isOpen, onClose }: FundingWarningM
             className="w-full py-3 rounded-full text-xs font-semibold bg-[#22C55E] text-[#0A0D0C] hover:bg-[#16A34A] transition-colors flex items-center justify-center gap-2"
           >
             <Icon icon="solar:wallet-bold" className="w-4 h-4" />
-            <span>Deposit Funds Now ($500 Min)</span>
+            <span>Deposit Funds Now ($1,500 Min)</span>
           </button>
           <button
             onClick={onClose}

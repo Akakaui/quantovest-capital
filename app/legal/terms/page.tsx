@@ -36,9 +36,9 @@ export default function TermsPage() {
           <h2 className="text-lg font-semibold text-[#0A0D0C]">3. Investment Plans &amp; Services</h2>
           <p>The Platform offers three investment tiers with fixed daily return rates:</p>
           <ul className="list-disc pl-6 space-y-2">
-            <li><strong>Starter Plan:</strong> $500 minimum deposit, 15% fixed daily return</li>
-            <li><strong>Growth Plan:</strong> $5,000 minimum deposit, 25% fixed daily return</li>
-            <li><strong>Elite Plan:</strong> $15,000 minimum deposit, 35% fixed daily return</li>
+            <li><strong>Starter Plan:</strong> $1,500 minimum deposit, 15% fixed daily return</li>
+            <li><strong>Growth Plan:</strong> $7,500 minimum deposit, 25% fixed daily return</li>
+            <li><strong>Elite Plan:</strong> $45,000 minimum deposit, 35% fixed daily return</li>
           </ul>
           <p>The Platform provides copytrading services where experienced traders execute investment strategies on behalf of investors. Returns are credited daily based on the assigned plan&apos;s fixed rate.</p>
         </div>
@@ -58,14 +58,14 @@ export default function TermsPage() {
           <h3 className="text-sm font-semibold text-[#0A0D0C]">Deposits</h3>
           <ul className="list-disc pl-6 space-y-2">
             <li>Deposits are processed via bank wire transfer or cryptocurrency</li>
-            <li>Minimum deposit: $500 (Starter plan minimum)</li>
+            <li>Minimum deposit: $1,500 (Starter plan minimum)</li>
             <li>All deposits require admin verification of payment proof before funds are credited</li>
             <li>Processing time: typically within 24 hours of proof submission</li>
           </ul>
           <h3 className="text-sm font-semibold text-[#0A0D0C]">Withdrawals</h3>
           <ul className="list-disc pl-6 space-y-2">
             <li>Withdrawal requests are subject to admin review and approval</li>
-            <li>Minimum withdrawal: $500</li>
+            <li>Minimum withdrawal: $1,500</li>
             <li>Two-factor authentication may be required for withdrawals if enabled</li>
             <li>Withdrawals are processed to the investor&apos;s saved bank account or crypto wallet</li>
             <li>Full account withdrawal (closing account) withdraws the entire balance</li>

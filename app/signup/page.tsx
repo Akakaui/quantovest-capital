@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
@@ -11,6 +12,8 @@ export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -54,7 +57,7 @@ export default function SignupPage() {
             <span className="text-[10px] tracking-widest text-[#22C55E] uppercase font-mono block -mt-0.5">CAPITAL</span>
           </Link>
           <h2 className="text-2xl font-normal text-white">Create Account</h2>
-          <p className="text-xs text-[#A8ACB3]">Start investing across FX, Crypto & Stocks from $500</p>
+          <p className="text-xs text-[#A8ACB3]">Start investing across FX, Crypto & Stocks from $1,500</p>
         </div>
 
         <button
@@ -107,28 +110,46 @@ export default function SignupPage() {
 
           <label className="text-xs text-[#A8ACB3] block mb-1.5">
             Password
-            <input
-              required
-              type="password"
-              minLength={8}
-              value={password}
-              onChange={event => setPassword(event.target.value)}
-              placeholder="Min. 8 characters"
-              className="mt-1 w-full bg-[#0A0D0C] border border-[#202722] rounded-xl px-4 py-2.5 text-xs text-white placeholder-[#A8ACB3] focus:outline-none focus:border-[#22C55E]"
-            />
+            <div className="relative mt-1">
+              <input
+                required
+                type={showPassword ? 'text' : 'password'}
+                minLength={8}
+                value={password}
+                onChange={event => setPassword(event.target.value)}
+                placeholder="Min. 8 characters"
+                className="w-full bg-[#0A0D0C] border border-[#202722] rounded-xl px-4 py-2.5 text-xs text-white placeholder-[#A8ACB3] focus:outline-none focus:border-[#22C55E] pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#93A09A] hover:text-white transition-colors"
+              >
+                <Icon icon={showPassword ? 'solar:eye-closed-bold' : 'solar:eye-bold'} className="w-4 h-4" />
+              </button>
+            </div>
           </label>
 
           <label className="text-xs text-[#A8ACB3] block mb-1.5">
             Confirm Password
-            <input
-              required
-              type="password"
-              minLength={8}
-              value={confirmPassword}
-              onChange={event => setConfirmPassword(event.target.value)}
-              placeholder="Re-enter your password"
-              className="mt-1 w-full bg-[#0A0D0C] border border-[#202722] rounded-xl px-4 py-2.5 text-xs text-white placeholder-[#A8ACB3] focus:outline-none focus:border-[#22C55E]"
-            />
+            <div className="relative mt-1">
+              <input
+                required
+                type={showConfirmPassword ? 'text' : 'password'}
+                minLength={8}
+                value={confirmPassword}
+                onChange={event => setConfirmPassword(event.target.value)}
+                placeholder="Re-enter your password"
+                className="w-full bg-[#0A0D0C] border border-[#202722] rounded-xl px-4 py-2.5 text-xs text-white placeholder-[#A8ACB3] focus:outline-none focus:border-[#22C55E] pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#93A09A] hover:text-white transition-colors"
+              >
+                <Icon icon={showConfirmPassword ? 'solar:eye-closed-bold' : 'solar:eye-bold'} className="w-4 h-4" />
+              </button>
+            </div>
           </label>
           {confirmPassword && password !== confirmPassword && (
             <p className="text-[10px] text-red-400 -mt-2">Passwords do not match</p>

@@ -22,10 +22,12 @@ export interface EmailTemplate {
 }
 
 type TemplateName =
+  | 'deposit_submitted'
   | 'deposit_approved'
   | 'deposit_rejected'
   | 'plan_updated'
   | 'roi_published'
+  | 'kyc_submitted'
   | 'kyc_approved'
   | 'kyc_declined'
   | 'withdrawal_submitted'
@@ -93,6 +95,18 @@ function renderTemplate(name: TemplateName, data: TemplateData): EmailTemplate {
   });
 
   switch (name) {
+    case 'deposit_submitted':
+      return baseLayout('Deposit Received', `
+        <h2>Deposit Received</h2>
+        <p>Hello ${data.investorName},</p>
+        <p>We&apos;ve received your deposit request and it&apos;s now being reviewed.</p>
+        <div class="highlight">
+          <div class="amount">${data.amount}</div>
+          <p style="margin:8px 0 0;font-size:14px;color:#f59e0b;font-weight:600">Pending Verification</p>
+        </div>
+        <p style="font-size:14px;color:#6b7280;">Our team will review your submission shortly. You&apos;ll receive an email once it&apos;s approved.</p>
+      `);
+
     case 'deposit_approved':
       return baseLayout('Deposit Approved', `
         <h2>Deposit Approved</h2>
@@ -144,6 +158,17 @@ function renderTemplate(name: TemplateName, data: TemplateData): EmailTemplate {
           <p style="margin:8px 0 0;font-size:14px;color:#16a34a;font-weight:600">+${data.profitAmount} added to balance</p>
         </div>
         <a href="${APP_URL}/dashboard" class="cta">View Dashboard</a>
+      `);
+
+    case 'kyc_submitted':
+      return baseLayout('KYC Documents Received', `
+        <h2>Documents Received</h2>
+        <p>Hello ${data.investorName},</p>
+        <p>We&apos;ve received your identity verification documents.</p>
+        <div style="text-align:center;padding:20px;">
+          <span style="display:inline-block;background:#fef3c7;color:#d97706;font-weight:700;font-size:16px;padding:8px 24px;border-radius:100px;">Under Review</span>
+        </div>
+        <p style="font-size:14px;color:#6b7280;">Our compliance team will review your documents within 24 hours.</p>
       `);
 
     case 'kyc_approved':
@@ -292,6 +317,10 @@ export async function sendEmail(
 
 // ─── Convenience Functions ───────────────────────────────────────────────────
 
+export async function sendDepositSubmitted(to: string, name: string, amount: string) {
+  return sendEmail(to, 'deposit_submitted', { investorName: name, amount });
+}
+
 export async function sendDepositApproved(to: string, name: string, amount: string, plan: string) {
   return sendEmail(to, 'deposit_approved', { investorName: name, amount, planName: plan });
 }
@@ -306,6 +335,10 @@ export async function sendPlanUpdated(to: string, name: string, prevPlan: string
 
 export async function sendRoiPublished(to: string, name: string, roiPercent: string, profit: string) {
   return sendEmail(to, 'roi_published', { investorName: name, roiPercent, profitAmount: profit });
+}
+
+export async function sendKycSubmitted(to: string, name: string) {
+  return sendEmail(to, 'kyc_submitted', { investorName: name });
 }
 
 export async function sendKycApproved(to: string, name: string) {

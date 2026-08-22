@@ -15,7 +15,6 @@ const adminLinks = [
   { label: 'Referral Payouts', href: '/admin/referrals', icon: 'solar:share-bold' },
   { label: 'KYC Queue', href: '/admin/kyc', icon: 'solar:shield-check-bold' },
   { label: 'Investors', href: '/admin/investors', icon: 'solar:user-bold' },
-  { label: 'Plans', href: '/admin/plans', icon: 'solar:layers-bold' },
   { label: 'Portfolio Managers', href: '/admin/traders', icon: 'solar:users-group-rounded-bold' },
   { label: 'Notifications', href: '/admin/notifications', icon: 'solar:bell-bold' },
   { label: 'Support', href: '/admin/support', icon: 'solar:chat-round-dots-bold' },

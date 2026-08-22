@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   const db = getDb();
   if (!db) return NextResponse.json({ error: 'Database is not configured' }, { status: 503 });
   const body = await request.json().catch(() => null) as { amountCents?: number; destinationType?: 'bank' | 'crypto'; destination?: string } | null;
-  if (!body?.amountCents || !Number.isInteger(body.amountCents) || body.amountCents < 50000 || (body.destinationType !== 'bank' && body.destinationType !== 'crypto') || !body.destination?.trim()) return NextResponse.json({ error: 'Minimum withdrawal is $500 and a valid bank or crypto destination is required.' }, { status: 400 });
+  if (!body?.amountCents || !Number.isInteger(body.amountCents) || body.amountCents < 150000 || (body.destinationType !== 'bank' && body.destinationType !== 'crypto') || !body.destination?.trim()) return NextResponse.json({ error: 'Minimum withdrawal is $1,500 and a valid bank or crypto destination is required.' }, { status: 400 });
   try {
     const withdrawalId = await db.transaction(async tx => {
       const accounts = await tx.select().from(investorAccounts).where(and(eq(investorAccounts.investorId, actor.id), eq(investorAccounts.status, 'active'))).limit(1);

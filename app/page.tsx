@@ -97,7 +97,7 @@ export default function Homepage() {
   }, []);
 
   const steps = [
-    { step: '01', title: 'Pick Your Plan', desc: 'Choose Starter ($500), Growth ($5k), or Elite ($15k) tier.', icon: 'solar:card-search-bold' },
+    { step: '01', title: 'Pick Your Plan', desc: 'Choose Starter ($1.5k), Growth ($7.5k), or Elite ($45k) tier.', icon: 'solar:card-search-bold' },
     { step: '02', title: '2-Doc KYC', desc: 'Upload Government ID & Proof of Address in 2 minutes.', icon: 'solar:shield-check-bold' },
     { step: '03', title: 'Fund Account', desc: 'Deposit via Crypto Wallet or Bank Wire Transfer.', icon: 'solar:wallet-bold' },
     { step: '04', title: 'Invest & Earn', desc: 'Select top strategy experts and track daily ROI live.', icon: 'solar:graph-up-bold' },
@@ -224,7 +224,7 @@ export default function Homepage() {
               <div>
                 <span className="text-xs font-mono text-[#A8ACB3]">TIER 1</span>
                 <h3 className="text-xl sm:text-2xl font-normal text-white mt-1">Starter Plan</h3>
-                <p className="text-2xl sm:text-3xl font-mono font-semibold text-[#22C55E] mt-3">$500 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
+                <p className="text-2xl sm:text-3xl font-mono font-semibold text-[#22C55E] mt-3">$1,500 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
               </div>
               <div className="p-4 bg-[#22C55E]/10 rounded-xl border border-[#22C55E]/30 space-y-1">
                 <p className="text-xs text-[#A8ACB3]">Fixed Daily Return</p>
@@ -237,7 +237,7 @@ export default function Homepage() {
                 <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> Standard Support Desk Access</li>
               </ul>
               <Link href="/signup" className="w-full block py-3.5 rounded-full text-center text-xs font-semibold bg-[#1A1F24] border border-[#202722] text-white hover:bg-[#202722] transition-colors">
-                Select Starter Plan ($500)
+                Select Starter Plan ($1,500)
               </Link>
             </div>
 
@@ -249,7 +249,7 @@ export default function Homepage() {
               <div>
                 <span className="text-xs font-mono text-[#22C55E]">TIER 2</span>
                 <h3 className="text-xl sm:text-2xl font-normal text-white mt-1">Growth Plan</h3>
-                <p className="text-2xl sm:text-3xl font-mono font-semibold text-[#22C55E] mt-3">$5,000 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
+                <p className="text-2xl sm:text-3xl font-mono font-semibold text-[#22C55E] mt-3">$7,500 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
               </div>
               <div className="p-4 bg-[#22C55E]/10 rounded-xl border border-[#22C55E]/30 space-y-1">
                 <p className="text-xs text-[#A8ACB3]">Fixed Daily Return</p>
@@ -262,7 +262,7 @@ export default function Homepage() {
                 <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> Priority Investment Execution</li>
               </ul>
               <Link href="/signup" className="w-full block py-3.5 rounded-full text-center text-xs font-semibold bg-[#22C55E] text-[#0A0D0C] hover:bg-[#16A34A] transition-colors shadow-lg">
-                Select Growth Plan ($5,000)
+                Select Growth Plan ($7,500)
               </Link>
             </div>
 
@@ -271,7 +271,7 @@ export default function Homepage() {
               <div>
                 <span className="text-xs font-mono text-[#A8ACB3]">TIER 3</span>
                 <h3 className="text-xl sm:text-2xl font-normal text-white mt-1">Elite Plan</h3>
-                <p className="text-2xl sm:text-3xl font-mono font-semibold text-[#22C55E] mt-3">$15,000 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
+                <p className="text-2xl sm:text-3xl font-mono font-semibold text-[#22C55E] mt-3">$45,000 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
               </div>
               <div className="p-4 bg-[#22C55E]/10 rounded-xl border border-[#22C55E]/30 space-y-1">
                 <p className="text-xs text-[#A8ACB3]">Fixed Daily Return</p>
@@ -284,7 +284,7 @@ export default function Homepage() {
                 <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> VIP Concierge & Direct Portfolio Manager Access</li>
               </ul>
               <Link href="/signup" className="w-full block py-3.5 rounded-full text-center text-xs font-semibold bg-[#1A1F24] border border-[#202722] text-white hover:bg-[#202722] transition-colors">
-                Select Elite Plan ($15,000)
+                Select Elite Plan ($45,000)
               </Link>
             </div>
           </div>

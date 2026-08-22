@@ -3,7 +3,8 @@ import { and, eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { notifyAdmins, notifyUser } from '@/lib/notifications';
 import { getDb } from '@/lib/db';
-import { investorAccounts, investorWithdrawals, portfolioLedger } from '@/db/schema';
+import { investorAccounts, investorWithdrawals, portfolioLedger, users } from '@/db/schema';
+import { sendWithdrawalApproved, sendWithdrawalRejected } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,6 +54,14 @@ export async function PATCH(request: Request) {
         await notifyUser(investorId, 'withdrawal_rejected', 'Withdrawal declined', `Your withdrawal of $${dollars} was declined. ${body.reviewNote?.trim() || ''}`.trim());
       }
       await notifyAdmins(`withdrawal_${body.action === 'approve' ? 'approved' : 'rejected'}`, `Withdrawal ${body.action}`, `Withdrawal #${body.withdrawalId} was ${body.action} by admin.`);
+      try {
+        const investor = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, investorId)).limit(1);
+        if (investor[0]?.email) {
+          const dollars = (amountCents / 100).toFixed(2);
+          if (body.action === 'approve') sendWithdrawalApproved(investor[0].email, investor[0].name || 'Investor', `$${dollars}`);
+          else sendWithdrawalRejected(investor[0].email, investor[0].name || 'Investor', body.reviewNote?.trim() || 'Withdrawal request was declined.');
+        }
+      } catch {}
     }
     return NextResponse.json({ updated: true });
   } catch (error) {

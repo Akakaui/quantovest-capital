@@ -3,7 +3,8 @@ import { eq } from 'drizzle-orm';
 import { getCurrentIdentity } from '@/lib/supabase/identity';
 import { notifyAdmins } from '@/lib/notifications';
 import { getDb } from '@/lib/db';
-import { deposits } from '@/db/schema';
+import { deposits, users } from '@/db/schema';
+import { sendDepositSubmitted } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,5 +31,11 @@ export async function POST(request: Request) {
   const id = crypto.randomUUID();
   await db.insert(deposits).values({ id, investorId: actor.id, amountCents: body.amountCents, method: body.method, proofPath: body.proofPath.trim(), planId: body.planId ?? null, status: 'pending' });
   await notifyAdmins('deposit_submitted', 'New deposit awaiting verification', `Investor ${actor.id} submitted a ${(body.amountCents / 100).toFixed(2)} deposit via ${body.method}.`);
+  if (actor.email) {
+    try {
+      const investor = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, actor.id)).limit(1);
+      if (investor[0]?.email) sendDepositSubmitted(investor[0].email, investor[0].name || 'Investor', `$${(body.amountCents / 100).toFixed(2)}`);
+    } catch {}
+  }
   return NextResponse.json({ id, status: 'pending' }, { status: 201 });
 }

@@ -3,7 +3,8 @@ import { desc, eq } from 'drizzle-orm';
 import { getCurrentIdentity } from '@/lib/supabase/identity';
 import { notifyAdmins } from '@/lib/notifications';
 import { getDb } from '@/lib/db';
-import { kycApplications } from '@/db/schema';
+import { kycApplications, users } from '@/db/schema';
+import { sendKycSubmitted } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,5 +30,11 @@ export async function POST(request: Request) {
   if (!body?.documentPath?.trim()) return NextResponse.json({ error: 'KYC document is required.' }, { status: 400 });
   const inserted = await db.insert(kycApplications).values({ investorId: actor.id, documentPath: body.documentPath.trim(), status: 'pending' }).returning({ id: kycApplications.id });
   await notifyAdmins('kyc_submitted', 'New KYC review required', `Investor ${actor.id} submitted identity documents.`);
+  if (actor.email) {
+    try {
+      const investor = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, actor.id)).limit(1);
+      if (investor[0]?.email) sendKycSubmitted(investor[0].email, investor[0].name || 'Investor');
+    } catch {}
+  }
   return NextResponse.json({ id: inserted[0].id, status: 'pending' }, { status: 201 });
 }

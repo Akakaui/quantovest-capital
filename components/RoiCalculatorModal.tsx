@@ -10,9 +10,9 @@ interface RoiCalculatorModalProps {
 }
 
 const PLAN_TIERS = [
-  { name: 'Starter', min: 500, max: 4999, dailyRoi: 15 },
-  { name: 'Growth', min: 5000, max: 14999, dailyRoi: 25 },
-  { name: 'Elite', min: 15000, max: Infinity, dailyRoi: 35 },
+  { name: 'Starter', min: 1500, max: 7499, dailyRoi: 15 },
+  { name: 'Growth', min: 7500, max: 44999, dailyRoi: 25 },
+  { name: 'Elite', min: 45000, max: Infinity, dailyRoi: 35 },
 ];
 
 function getPlanForDeposit(amount: number) {
@@ -20,7 +20,7 @@ function getPlanForDeposit(amount: number) {
 }
 
 export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorModalProps) {
-  const [deposit, setDeposit] = useState<number>(5000);
+  const [deposit, setDeposit] = useState<number>(7500);
   const [months, setMonths] = useState<number>(6);
 
   if (!isOpen) return null;
@@ -69,15 +69,15 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
               </label>
               <input
                 type="number"
-                min="500"
+                min="1500"
                 max="1000000"
                 value={deposit}
-                onChange={e => setDeposit(Math.max(500, Number(e.target.value)))}
+                onChange={e => setDeposit(Math.max(1500, Number(e.target.value)))}
                 className="bg-[#1A2528] border border-[#263437] rounded-xl px-4 py-2.5 text-sm font-mono text-white w-full focus:outline-none focus:border-[#22C55E] font-semibold mb-2"
               />
               <input
                 type="range"
-                min="500"
+                min="1500"
                 max="50000"
                 step="500"
                 value={Math.min(deposit, 50000)}
@@ -85,9 +85,9 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
                 className="w-full accent-[#22C55E] bg-[#263437] h-2 rounded-lg cursor-pointer"
               />
               <div className="flex justify-between text-[10px] text-[#A8ACB3] mt-1 font-mono">
-                <span>$500</span>
-                <span>$5,000</span>
-                <span>$15,000+</span>
+                <span>$1,500</span>
+                <span>$7,500</span>
+                <span>$45,000+</span>
               </div>
             </div>
 
@@ -190,7 +190,7 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
             <div className="p-3 bg-[#1A2528] border border-[#263437] rounded-xl">
               <p className="text-[10px] text-[#A8ACB3] uppercase font-mono mb-2">Daily Return</p>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-[#A8ACB3]">{dailyRoi}% of ${deposit.toLocaleString()}</span>
+                            <span className="text-xs text-[#A8ACB3]">{dailyRoi}% of ${deposit.toLocaleString()}</span>
                 <span className="text-sm font-mono font-bold text-[#22C55E]">=${(deposit * dailyRoi / 100).toLocaleString()}/day</span>
               </div>
             </div>

@@ -17,7 +17,7 @@ export default function ReferralsPage() {
   const [destinationType, setDestinationType] = useState<"bank" | "crypto">("bank");
   const [destination, setDestination] = useState("");
   const [destinationDetails, setDestinationDetails] = useState("");
-  const [amount, setAmount] = useState("500");
+  const [amount, setAmount] = useState("1500");
 
   const loadSummary = useCallback(async () => {
     setLoading(true);
@@ -115,12 +115,12 @@ export default function ReferralsPage() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-xl font-semibold text-[#F3F7F4]">Withdraw referral bonus</h2>
-                <p className="mt-1 text-sm text-[#93A09A]">Minimum request: $500. Requests remain pending until admin review.</p>
+                <p className="mt-1 text-sm text-[#93A09A]">Minimum request: $1,500. Requests remain pending until admin review.</p>
               </div>
-              <span className={`rounded-full px-3 py-1 text-xs font-mono ${canWithdraw ? "bg-[#22C55E]/15 text-[#22C55E] border border-[#22C55E]/30" : "bg-[#263437] text-[#93A09A] border border-[#263437]"}`}>{canWithdraw ? "Eligible" : "Locked below $500"}</span>
+              <span className={`rounded-full px-3 py-1 text-xs font-mono ${canWithdraw ? "bg-[#22C55E]/15 text-[#22C55E] border border-[#22C55E]/30" : "bg-[#263437] text-[#93A09A] border border-[#263437]"}`}>{canWithdraw ? "Eligible" : "Locked below $1,500"}</span>
             </div>
             <form onSubmit={submitWithdrawal} className="mt-5 grid gap-4 sm:grid-cols-2">
-              <label className="text-sm text-[#93A09A]">Amount (USD)<input value={amount} onChange={event => setAmount(event.target.value)} type="number" min="500" step="0.01" disabled={!canWithdraw} className="mt-2 w-full rounded-lg border border-[#263437] bg-[#0A0F11] px-3 py-3 text-[#F3F7F4] disabled:cursor-not-allowed disabled:opacity-40" /></label>
+              <label className="text-sm text-[#93A09A]">Amount (USD)<input value={amount} onChange={event => setAmount(event.target.value)} type="number" min="1500" step="0.01" disabled={!canWithdraw} className="mt-2 w-full rounded-lg border border-[#263437] bg-[#0A0F11] px-3 py-3 text-[#F3F7F4] disabled:cursor-not-allowed disabled:opacity-40" /></label>
               <label className="text-sm text-[#93A09A]">Payout rail<select value={destinationType} onChange={event => setDestinationType(event.target.value as "bank" | "crypto")} disabled={!canWithdraw} className="mt-2 w-full rounded-lg border border-[#263437] bg-[#0A0F11] px-3 py-3 text-[#F3F7F4] disabled:opacity-40"><option value="bank">Bank transfer</option><option value="crypto">Crypto wallet</option></select></label>
               <label className="text-sm text-[#93A09A]">{destinationType === "bank" ? "Account / bank reference" : "Wallet address"}<input value={destination} onChange={event => setDestination(event.target.value)} disabled={!canWithdraw} className="mt-2 w-full rounded-lg border border-[#263437] bg-[#0A0F11] px-3 py-3 text-[#F3F7F4] disabled:opacity-40" /></label>
               <label className="text-sm text-[#93A09A]">{destinationType === "bank" ? "Bank and account-holder details" : "Network (optional)"}<input value={destinationDetails} onChange={event => setDestinationDetails(event.target.value)} disabled={!canWithdraw} className="mt-2 w-full rounded-lg border border-[#263437] bg-[#0A0F11] px-3 py-3 text-[#F3F7F4] disabled:opacity-40" /></label>

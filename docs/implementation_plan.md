@@ -93,7 +93,7 @@ The platform will trigger the following notifications on state mutations:
 - Remove the destination input fields. Read details automatically from Settings based on the payout rail selected.
 - Add a checkbox/switch: **"Close Account & Withdraw Entire Balance"**.
   - If checked, disable the amount input and default it to their full balance.
-  - If unchecked, restrict the withdrawal amount so that the remaining balance doesn't fall below the active plan's minimum threshold (e.g. $500 for Starter, $5,000 for Growth). Display a warning if they try to withdraw past it.
+  - If unchecked, restrict the withdrawal amount so that the remaining balance doesn't fall below the active plan's minimum threshold (e.g. $1,500 for Starter, $7,500 for Growth). Display a warning if they try to withdraw past it.
 - **2FA Challenge Check:** If 2FA is enabled in settings, show a 6-digit 2FA OTP code input field on submission. Verification is required before the request is submitted.
 
 #### [MODIFY] [`app/dashboard/referrals/page.tsx`](file:///c:/Users/Owner/Documents/quantovest/app/dashboard/referrals/page.tsx)

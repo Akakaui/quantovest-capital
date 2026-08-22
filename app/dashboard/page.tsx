@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import InvestorSidebar from '@/components/InvestorSidebar';
-import OnboardingModal from '@/components/OnboardingModal';
 import KycModal from '@/components/KycModal';
 import { createClient } from '@/lib/supabase/client';
 import { PLAN_MINIMUMS, PLAN_ORDER } from '@/lib/constants';
@@ -157,7 +156,6 @@ export default function InvestorDashboard() {
   const [dailyLogs, setDailyLogs] = useState<ActivityLog[]>([]);
 
   const [isMasked, setIsMasked] = useState(false);
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isKycOpen, setIsKycOpen] = useState(false);
   const [isCalcOpen, setIsCalcOpen] = useState(false);
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
@@ -243,12 +241,11 @@ export default function InvestorDashboard() {
   }, [fetchAllData]);
 
   useEffect(() => {
-    if (!profile.onboardingCompleted) {
-      setIsOnboardingOpen(true);
-    } else if (profile.kycStatus !== 'approved') {
-      setIsKycOpen(true);
+    if (profile.kycStatus !== 'approved' && profile.onboardingCompleted) {
+      const timer = setTimeout(() => setIsKycOpen(true), 5000);
+      return () => clearTimeout(timer);
     }
-  }, [profile]);
+  }, [profile.kycStatus, profile.onboardingCompleted]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && profile.onboardingCompleted) {
@@ -442,7 +439,6 @@ export default function InvestorDashboard() {
       </main>
 
       {/* Modals */}
-      <OnboardingModal isOpen={isOnboardingOpen} onClose={() => setIsOnboardingOpen(false)} />
       <KycModal isOpen={isKycOpen} onClose={() => setIsKycOpen(false)} />
       <DynamicRoiCalculatorModal isOpen={isCalcOpen} onClose={() => setIsCalcOpen(false)} />
 
