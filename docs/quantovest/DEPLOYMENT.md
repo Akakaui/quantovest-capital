@@ -188,11 +188,12 @@ Or connect your GitHub repo:
 
 ## Step 12: Set Up Tawk.to (Live Chat — Optional)
 
-1. Go to **https://tawk.to** → Sign up (free)
-2. Create a property
-3. Copy your **Property ID**
-4. Update `components/TawkToWidget.tsx` with your property ID
-5. Download the Tawk.to mobile app to respond to chats on the go
+1. Go to **https://tawk.to** and sign in to the existing Quantovest Capital property.
+2. Confirm the property is active and configure the production domain restriction after the final domain is purchased.
+3. Open **Administration → Chat Widget** and confirm the property and widget IDs match the production property.
+4. Add `NEXT_PUBLIC_TAWK_PROPERTY_ID` and `NEXT_PUBLIC_TAWK_WIDGET_ID` to Vercel. Do not hardcode or commit these values in source files.
+5. The existing `components/TawkToWidget.tsx` loads the widget only on non-admin routes, prevents duplicate script injection, and applies mobile-safe sizing.
+6. Download the Tawk.to mobile app if staff need to respond while away from the dashboard.
 
 ---
 
@@ -215,6 +216,8 @@ Copy the output into your env vars.
 | `SUPABASE_SERVICE_ROLE_KEY` | ✅ | Supabase Settings → API |
 | `DATABASE_URL` | ✅ | Supabase Settings → Database → Connection string |
 | `APP_PUBLIC_URL` | ✅ | Your deployed URL |
+| `NEXT_PUBLIC_TAWK_PROPERTY_ID` | Optional | Tawk.to Administration → Property ID |
+| `NEXT_PUBLIC_TAWK_WIDGET_ID` | Optional | Tawk.to Administration → Chat Widget code |
 | `RESEND_API_KEY` | ✅ | resend.com → API Keys |
 | `EMAIL_FROM` | ✅ | Your verified domain email |
 | `GOOGLE_CLIENT_ID` | Optional | console.cloud.google.com |
@@ -241,4 +244,6 @@ Copy the output into your env vars.
 - [ ] Emails send (check Resend dashboard)
 - [ ] Password reset works
 - [ ] Mobile responsive
-- [ ] Live chat widget appears (if Tawk.to set up)
+- [ ] Live chat widget appears on intended public routes and is hidden on admin routes
+- [ ] Tawk.to property is restricted to the production domain
+- [ ] Tawk.to offline form and support mailbox work
