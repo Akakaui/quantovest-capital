@@ -12,7 +12,7 @@ Your job is to read the repository, inspect the confidential `.env.local` file a
 
 Read `README.md`, `docs/quantovest/DEPLOYMENT.md`, `.env.example`, `db/schema.ts`, `db/setup.sql`, all PostgreSQL migrations, `db/supabase/policies.sql`, `lib/db.ts`, `lib/supabase/*`, `lib/uploadRules.ts`, the relevant API routes under `app/api`, and the relevant admin/investor pages.
 
-Create a new branch named `fix/production-db-storage-and-qa`. Before modifying application code, record the current commit, run `pnpm install --frozen-lockfile`, run the existing build/lint checks, and capture the baseline failures.
+The implementation was delivered on the branch `fix/quantovest-supabase-workflows-ui`. If reproducing the work from a clean checkout, create or checkout that branch before reviewing the changes. Record the current commit, run `pnpm install --frozen-lockfile`, run the existing build/lint checks, and capture the baseline failures.
 
 Inspect `.env.local` safely. Confirm only the following non-secret facts:
 
