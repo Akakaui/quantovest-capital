@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { getClient } from "@/lib/db";
+import { databaseUnavailable } from "@/lib/api-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -22,8 +23,6 @@ export async function GET() {
     );
     return NextResponse.json(rows);
   } catch (err) {
-    console.error('[investors] Full error:', JSON.stringify(err, Object.getOwnPropertyNames(err)));
-    const detail = err instanceof Error ? `${err.message}\n${err.stack}` : String(err);
-    return NextResponse.json({ error: 'Failed to fetch investors', detail }, { status: 500 });
+    return databaseUnavailable("admin investors GET", err);
   }
 }

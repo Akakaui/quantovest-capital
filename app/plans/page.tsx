@@ -40,15 +40,16 @@ export default function PlansPage() {
   const plan = PLANS[selectedPlan];
   const dailyReturn = deposit * (plan.dailyRoi / 100);
   const tradingDays = 21;
-  const monthlyRoi = (Math.pow(1 + plan.dailyRoi / 100, tradingDays) - 1) * 100;
+  const monthlyRoi = plan.dailyRoi * tradingDays;
 
   const chartData = [];
-  let val = deposit;
   for (let i = 0; i <= months; i++) {
-    chartData.push({ month: i === 0 ? 'Now' : `M${i}`, value: Math.round(val) });
-    val = val * (1 + monthlyRoi / 100);
+    chartData.push({
+      month: i === 0 ? 'Now' : `M${i}`,
+      value: Math.round(deposit * (1 + (monthlyRoi / 100) * i)),
+    });
   }
-  const projected = Math.round(val);
+  const projected = Math.round(deposit * (1 + (monthlyRoi / 100) * months));
   const profit = projected - deposit;
 
   return (
@@ -63,7 +64,7 @@ export default function PlansPage() {
             Investment Plans
           </h1>
           <p className="text-sm sm:text-base text-[#5B616E] max-w-xl mx-auto">
-            Fixed daily returns. No hidden fees. Pick a tier and start earning.
+            Transparent scenario assumptions, clear fees, and risk-aware portfolio reporting.
           </p>
         </div>
       </section>
@@ -98,7 +99,7 @@ export default function PlansPage() {
 
                 <div className={`p-4 rounded-xl border ${selectedPlan === i ? 'bg-[#12161A] border-[#202722]' : 'bg-white border-[#DEE1E6]'}`}>
                   <p className={`text-[10px] uppercase font-mono ${selectedPlan === i ? 'text-[#A8ACB3]' : 'text-[#5B616E]'}`}>
-                    Fixed Daily Return
+                    Illustrative Daily Rate
                   </p>
                   <p className="text-2xl sm:text-4xl font-mono font-bold text-[#22C55E] mt-1 truncate">
                     {p.dailyRoi}%
@@ -214,7 +215,7 @@ export default function PlansPage() {
                     <span className="font-semibold text-[#22C55E]">{plan.name}</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-[#5B616E]">Daily Return</span>
+                    <span className="text-[#5B616E]">Illustrative Daily Rate</span>
                     <span className="font-mono font-bold text-[#22C55E]">{plan.dailyRoi}%</span>
                   </div>
                   <div className="flex justify-between text-xs">
@@ -222,7 +223,7 @@ export default function PlansPage() {
                     <span className="font-mono font-semibold text-[#0A0D0C]">${dailyReturn.toLocaleString(undefined, {maximumFractionDigits: 0})}/day</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-[#5B616E]">Monthly (Compounded)</span>
+                    <span className="text-[#5B616E]">Monthly Scenario</span>
                     <span className="font-mono font-semibold text-[#0A0D0C]">~{monthlyRoi.toFixed(0)}%</span>
                   </div>
                 </div>
@@ -273,7 +274,7 @@ export default function PlansPage() {
                   Start with {plan.name} Plan — ${deposit.toLocaleString()}
                 </Link>
                 <p className="text-[10px] text-[#5B616E] text-center">
-                  *Projected returns based on fixed daily ROI. Actual returns may vary.
+                  *Illustrative simple-return scenario using 21 trading days per month. Actual results may vary and are not guaranteed.
                 </p>
               </div>
             </div>

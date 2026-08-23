@@ -71,14 +71,23 @@ export default function KycModal({ isOpen, onClose }: KycModalProps) {
         })(),
       ]);
 
-      if (!idUpload.path || !addressUpload.path) {
-        setError('File upload failed. Please try again.');
+      if (
+        !idUpload.path ||
+        !addressUpload.path ||
+        idUpload.bucket !== 'quantovest-media' ||
+        addressUpload.bucket !== 'quantovest-media'
+      ) {
+        setError('One or more documents could not be uploaded. Please try again.');
         setUploading(false);
         return;
       }
 
-      // Submit KYC application with document paths
-      const docPath = JSON.stringify({ idDocument: idUpload.path, proofOfAddress: addressUpload.path });
+      // Submit KYC application with references to the private canonical bucket.
+      const docPath = JSON.stringify({
+        bucket: 'quantovest-media',
+        idDocument: idUpload.path,
+        proofOfAddress: addressUpload.path,
+      });
       const res = await fetch('/api/kyc', {
         method: 'POST',
         headers: { ...headers, 'Content-Type': 'application/json' },

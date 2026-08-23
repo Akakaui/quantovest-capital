@@ -19,6 +19,14 @@ function getPlanForDeposit(amount: number) {
   return PLAN_TIERS.find(t => amount >= t.min && amount <= t.max) ?? PLAN_TIERS[0];
 }
 
+function formatCurrency(value: number) {
+  if (!Number.isFinite(value)) return '—';
+  if (Math.abs(value) >= 1_000_000_000) {
+    return new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 2 }).format(value);
+  }
+  return value.toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+
 export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorModalProps) {
   const [deposit, setDeposit] = useState<number>(7500);
   const [inputValue, setInputValue] = useState<string>('7500');
@@ -29,18 +37,19 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
   const plan = getPlanForDeposit(deposit);
   const dailyRoi = plan.dailyRoi;
   const tradingDaysPerMonth = 21;
-  const monthlyRoi = (Math.pow(1 + dailyRoi / 100, tradingDaysPerMonth) - 1) * 100;
+  const monthlyRoi = dailyRoi * tradingDaysPerMonth;
 
-  // Compound projections
+  // Use a simple-return scenario to avoid presenting unrealistic exponential outcomes.
   const chartData = [];
-  let currentVal = deposit;
   for (let i = 0; i <= months; i++) {
-    chartData.push({ month: i === 0 ? 'Start' : `Month ${i}`, value: Math.round(currentVal) });
-    currentVal = currentVal * (1 + monthlyRoi / 100);
+    chartData.push({
+      month: i === 0 ? 'Start' : `Month ${i}`,
+      value: Math.round(deposit * (1 + (monthlyRoi / 100) * i)),
+    });
   }
 
-  const projectedProfit = Math.round(currentVal - deposit);
-  const totalProjected = Math.round(currentVal);
+  const totalProjected = Math.round(deposit * (1 + (monthlyRoi / 100) * months));
+  const projectedProfit = totalProjected - deposit;
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-md z-50 flex items-center justify-center p-4 font-sans text-white">
@@ -53,7 +62,7 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
             </div>
             <div>
               <h3 className="text-base font-semibold text-white">Investment Return Calculator</h3>
-              <p className="text-xs text-[#A8ACB3]">Compound projections based on fixed daily ROI per plan</p>
+              <p className="text-xs text-[#A8ACB3]">Illustrative scenario model — not a promise of returns</p>
             </div>
           </div>
           <button onClick={onClose} className="text-[#A8ACB3] hover:text-white p-1">
@@ -138,15 +147,15 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
                 <span className="text-xs font-semibold text-[#22C55E]">{plan.name} Plan</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-[#A8ACB3]">Fixed Daily ROI:</span>
+                <span className="text-xs text-[#A8ACB3]">Illustrative Daily Rate:</span>
                 <span className="text-xs font-mono font-bold text-[#22C55E]">{dailyRoi}%</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-[#A8ACB3]">Compounded Monthly:</span>
+                <span className="text-xs text-[#A8ACB3]">Modelled Monthly Scenario:</span>
                 <span className="text-xs font-mono font-semibold text-white">~{monthlyRoi.toFixed(1)}%</span>
               </div>
               <p className="text-[10px] text-[#A8ACB3] border-t border-[#263437] pt-2">
-                {plan.name} plan: ${plan.min.toLocaleString()} min deposit, {dailyRoi}% fixed daily return.
+                {plan.name} scenario: ${plan.min.toLocaleString()} minimum example, {dailyRoi}% illustrative daily rate.
               </p>
             </div>
 
@@ -171,13 +180,13 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
               <div className="p-3 bg-[#1A2528] border border-[#263437] rounded-xl">
                 <p className="text-[10px] text-[#A8ACB3] uppercase font-mono">Projected Profit</p>
                 <p className="text-base font-mono font-bold text-[#22C55E] mt-0.5">
-                  +${projectedProfit.toLocaleString()}
+                  +${formatCurrency(projectedProfit)}
                 </p>
               </div>
               <div className="p-3 bg-[#1A2528] border border-[#263437] rounded-xl">
                 <p className="text-[10px] text-[#A8ACB3] uppercase font-mono">Total Capital</p>
                 <p className="text-base font-mono font-bold text-white mt-0.5">
-                  ${totalProjected.toLocaleString()}
+                  ${formatCurrency(totalProjected)}
                 </p>
               </div>
             </div>
@@ -206,9 +215,9 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
 
             {/* Daily Breakdown */}
             <div className="p-3 bg-[#1A2528] border border-[#263437] rounded-xl">
-              <p className="text-[10px] text-[#A8ACB3] uppercase font-mono mb-2">Daily Return</p>
+              <p className="text-[10px] text-[#A8ACB3] uppercase font-mono mb-2">Illustrative Daily Scenario</p>
               <div className="flex items-center justify-between">
-                            <span className="text-xs text-[#A8ACB3]">{dailyRoi}% of ${deposit.toLocaleString()}</span>
+                <span className="text-xs text-[#A8ACB3]">{dailyRoi}% of ${deposit.toLocaleString()}</span>
                 <span className="text-sm font-mono font-bold text-[#22C55E]">=${(deposit * dailyRoi / 100).toLocaleString()}/day</span>
               </div>
             </div>
@@ -218,7 +227,7 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
         {/* Footer */}
         <div className="pt-6 mt-6 border-t border-[#263437] flex items-center justify-between">
           <p className="text-[11px] text-[#A8ACB3] max-w-xs">
-            *Projections are estimates based on fixed daily ROI rates. Actual returns may vary. Past performance does not guarantee future results.
+            Illustrative simple-return scenario using {tradingDaysPerMonth} trading days per month. It is not a guaranteed return, investment advice, or a forecast of actual performance.
           </p>
           <button
             onClick={onClose}

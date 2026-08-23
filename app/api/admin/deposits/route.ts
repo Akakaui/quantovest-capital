@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { and, asc, eq, isNull, lte, or } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { notifyAdmins, notifyUser } from '@/lib/notifications';
 import { getDb } from '@/lib/db';
 import { deposits, investorAccounts, plans, portfolioLedger, users } from '@/db/schema';
 import { sendDepositApproved, sendDepositRejected } from '@/lib/email';
+import { databaseUnavailable } from '@/lib/api-errors';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,11 +15,21 @@ export async function GET() {
     const { identity, error } = await requireAdmin();
     if (error) return error;
     const db = getDb();
-    if (!db) return NextResponse.json([]);
-    return NextResponse.json(await db.select().from(deposits).where(eq(deposits.status, 'pending')));
+    if (!db) return databaseUnavailable('admin deposits GET');
+    const rows = await db.select().from(deposits).where(eq(deposits.status, 'pending'));
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const bucket = process.env.SUPABASE_MEDIA_BUCKET?.trim();
+    if (!url || !serviceKey || bucket !== 'quantovest-media') return NextResponse.json(rows.map(row => ({ ...row, proofUrl: null })));
+    const storage = createClient(url, serviceKey).storage.from(bucket);
+    const enriched = await Promise.all(rows.map(async row => {
+      if (!row.proofPath) return { ...row, proofUrl: null };
+      const signed = await storage.createSignedUrl(row.proofPath, 300);
+      return { ...row, proofUrl: signed.data?.signedUrl ?? null };
+    }));
+    return NextResponse.json(enriched);
   } catch (err) {
-    console.error('[deposits]', err);
-    return NextResponse.json([], { status: 500 });
+    return databaseUnavailable('admin deposits GET', err);
   }
 }
 

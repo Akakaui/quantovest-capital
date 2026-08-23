@@ -6,9 +6,21 @@ import * as schema from "@/db/schema";
 let client: postgres.Sql | undefined;
 
 function getClient() {
-  const url = process.env.DATABASE_URL;
+  const url = process.env.DATABASE_URL?.trim();
   if (!url) return null;
-  client ??= postgres(url, { prepare: false, max: 10, idle_timeout: 20, connect_timeout: 10, ssl: url.includes('localhost') ? false : { rejectUnauthorized: false } });
+  try {
+    const parsed = new URL(url);
+    if (!['postgres:', 'postgresql:'].includes(parsed.protocol) || !parsed.hostname || !parsed.username || !parsed.password) return null;
+  } catch {
+    return null;
+  }
+  client ??= postgres(url, {
+    prepare: false,
+    max: 10,
+    idle_timeout: 20,
+    connect_timeout: 10,
+    ssl: url.includes('localhost') ? false : { rejectUnauthorized: false },
+  });
   return client;
 }
 

@@ -77,8 +77,8 @@ export default function DepositPage() {
 
       const upload = await fetch('/api/uploads', { method: 'POST', body: form });
       const uploadData = await upload.json().catch(() => ({}));
-      if (!upload.ok) {
-        setMessage(uploadData.error ?? 'Proof image upload failed.');
+      if (!upload.ok || !uploadData.path || uploadData.bucket !== 'quantovest-media') {
+        setMessage(uploadData.error ?? 'Proof image upload failed. Please try again.');
         setLoading(false);
         return;
       }

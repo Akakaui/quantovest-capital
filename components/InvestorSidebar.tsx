@@ -63,8 +63,9 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
 
   async function handleLogout() {
     const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/login');
+    await supabase.auth.signOut({ scope: 'global' });
+    router.replace('/login');
+    router.refresh();
   }
 
   return (

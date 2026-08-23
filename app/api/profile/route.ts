@@ -4,6 +4,7 @@ import { getCurrentIdentity } from "@/lib/supabase/identity";
 import { getDb } from "@/lib/db";
 import { users, recoveryCodes } from "@/db/schema";
 import { generateRecoveryCodes } from "@/lib/recovery-codes";
+import { databaseUnavailable } from "@/lib/api-errors";
 
 export const dynamic = "force-dynamic";
 
@@ -35,8 +36,7 @@ export async function GET() {
 
     return NextResponse.json(profile);
   } catch (err) {
-    console.error('[profile GET]', err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return databaseUnavailable("profile GET", err);
   }
 }
 
@@ -83,7 +83,6 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({ updated: true, recoveryCodes: recoveryCodesList });
   } catch (err) {
-    console.error('[profile PATCH]', err);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return databaseUnavailable("profile PATCH", err);
   }
 }

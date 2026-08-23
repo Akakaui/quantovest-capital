@@ -147,7 +147,7 @@ export default function InvestorDashboard() {
   const [profile, setProfile] = useState<Profile>({
     id: '', name: '', email: '', avatar: null, role: 'investor', balance: 0,
     totalInvested: 0, totalProfit: 0, dailyRoiPercent: 0, allTimeRoiPercent: 0,
-    plan: 'Starter', kycStatus: 'pending', onboardingCompleted: true,
+    plan: 'Starter', kycStatus: 'pending', onboardingCompleted: false,
   });
   const [deposits, setDeposits] = useState<DepositRow[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRow[]>([]);
@@ -254,13 +254,11 @@ export default function InvestorDashboard() {
   }, [profile.kycStatus, profile.onboardingCompleted]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && profile.onboardingCompleted) {
-      const tourDone = localStorage.getItem('quantovest_tour_completed');
-      if (!tourDone) {
-        setTourStep(0);
-      }
+    if (typeof window !== 'undefined' && profile.id && !profile.onboardingCompleted) {
+      const tourDone = localStorage.getItem(`quantovest_tour_completed_${profile.id}`);
+      if (!tourDone) setTourStep(0);
     }
-  }, [profile.onboardingCompleted]);
+  }, [profile.id, profile.onboardingCompleted]);
 
   const kycStatus = kycData.length > 0 ? kycData[0].status : profile.kycStatus;
 
@@ -525,7 +523,7 @@ export default function InvestorDashboard() {
               <button 
                 onClick={() => {
                   setTourStep(null);
-                  localStorage.setItem('quantovest_tour_completed', 'true');
+                  if (profile.id) localStorage.setItem(`quantovest_tour_completed_${profile.id}`, 'true');
                 }}
                 className="text-[#93A09A] hover:text-[#F3F7F4] text-xs font-semibold"
               >
@@ -593,7 +591,7 @@ export default function InvestorDashboard() {
                 onClick={() => {
                   if (tourStep === 3) {
                     setTourStep(null);
-                    localStorage.setItem('quantovest_tour_completed', 'true');
+                    if (profile.id) localStorage.setItem(`quantovest_tour_completed_${profile.id}`, 'true');
                   } else {
                     setTourStep(prev => prev !== null ? prev + 1 : null);
                   }

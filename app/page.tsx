@@ -214,7 +214,7 @@ export default function Homepage() {
               Transparent Capital Tiers
             </h2>
             <p className="text-sm sm:text-base text-[#A8ACB3]">
-              Every tier provides professional risk management and automated daily portfolio returns.
+              Every tier is presented with transparent assumptions, risk context, and portfolio reporting.
             </p>
           </div>
 
@@ -227,9 +227,9 @@ export default function Homepage() {
                 <p className="text-2xl sm:text-3xl font-mono font-semibold text-[#22C55E] mt-3">$1,500 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
               </div>
               <div className="p-4 bg-[#22C55E]/10 rounded-xl border border-[#22C55E]/30 space-y-1">
-                <p className="text-xs text-[#A8ACB3]">Fixed Daily Return</p>
+                <p className="text-xs text-[#A8ACB3]">Illustrative Daily Rate</p>
                 <p className="text-3xl font-mono text-[#22C55E] font-bold">15%</p>
-                <p className="text-xs text-[#A8ACB3]">Every single day, guaranteed rate</p>
+                <p className="text-xs text-[#A8ACB3]">Scenario rate; actual results may vary</p>
               </div>
               <ul className="space-y-3 text-xs text-[#A8ACB3]">
                 <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> FX & Top Crypto Asset Access</li>
@@ -252,9 +252,9 @@ export default function Homepage() {
                 <p className="text-2xl sm:text-3xl font-mono font-semibold text-[#22C55E] mt-3">$7,500 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
               </div>
               <div className="p-4 bg-[#22C55E]/10 rounded-xl border border-[#22C55E]/30 space-y-1">
-                <p className="text-xs text-[#A8ACB3]">Fixed Daily Return</p>
+                <p className="text-xs text-[#A8ACB3]">Illustrative Daily Rate</p>
                 <p className="text-3xl font-mono text-[#22C55E] font-bold">25%</p>
-                <p className="text-xs text-[#A8ACB3]">Every single day, guaranteed rate</p>
+                <p className="text-xs text-[#A8ACB3]">Scenario rate; actual results may vary</p>
               </div>
               <ul className="space-y-3 text-xs text-[#A8ACB3]">
                 <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> FX, Crypto & US Stock Equities</li>
@@ -274,9 +274,9 @@ export default function Homepage() {
                 <p className="text-2xl sm:text-3xl font-mono font-semibold text-[#22C55E] mt-3">$45,000 <span className="text-xs font-sans text-[#A8ACB3]">Min Deposit</span></p>
               </div>
               <div className="p-4 bg-[#22C55E]/10 rounded-xl border border-[#22C55E]/30 space-y-1">
-                <p className="text-xs text-[#A8ACB3]">Fixed Daily Return</p>
+                <p className="text-xs text-[#A8ACB3]">Illustrative Daily Rate</p>
                 <p className="text-3xl font-mono text-[#22C55E] font-bold">35%</p>
-                <p className="text-xs text-[#A8ACB3]">Every single day, guaranteed rate</p>
+                <p className="text-xs text-[#A8ACB3]">Scenario rate; actual results may vary</p>
               </div>
               <ul className="space-y-3 text-xs text-[#A8ACB3]">
                 <li className="flex items-center gap-2"><Icon icon="solar:check-circle-bold" className="w-4 h-4 text-[#22C55E]" /> Full Multi-Asset VIP Access</li>

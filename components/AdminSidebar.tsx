@@ -53,8 +53,9 @@ export default function AdminSidebar() {
   }, [drawerOpen]);
 
   async function handleLogout() {
-    await supabase.auth.signOut();
-    router.push('/login');
+    await supabase.auth.signOut({ scope: 'global' });
+    router.replace('/login');
+    router.refresh();
   }
 
   const displayName = user.name || 'Admin';

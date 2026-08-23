@@ -14,7 +14,11 @@ export async function POST(request: Request) {
   if (!actor) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !serviceKey) return NextResponse.json({ error: "Supabase Storage is not configured" }, { status: 503 });
+  const bucket = process.env.SUPABASE_MEDIA_BUCKET?.trim();
+  if (!url || !serviceKey || !bucket || bucket !== 'quantovest-media') {
+    console.error('[uploads] Canonical media bucket is not configured');
+    return NextResponse.json({ error: "Supabase Storage is temporarily unavailable." }, { status: 503 });
+  }
 
   try {
     const form = await request.formData();
@@ -24,11 +28,19 @@ export async function POST(request: Request) {
     if (!isUploadPurpose(purpose)) return NextResponse.json({ error: "Invalid upload purpose." }, { status: 400 });
     const extension = file.type.split("/")[1].replace("jpeg", "jpg");
     const path = `${purpose}/${actor.id}/${crypto.randomUUID()}.${extension}`;
-    const storage = createClient(url, serviceKey).storage.from(process.env.SUPABASE_MEDIA_BUCKET ?? "quantovest");
-    const upload = await storage.upload(path, Buffer.from(await file.arrayBuffer()), { contentType: file.type, upsert: false });
-    if (upload.error) return NextResponse.json({ error: upload.error.message }, { status: 502 });
-    return NextResponse.json({ path, bucket: process.env.SUPABASE_MEDIA_BUCKET ?? "quantovest" }, { status: 201 });
+    const storage = createClient(url, serviceKey).storage.from(bucket);
+    const upload = await storage.upload(path, Buffer.from(await file.arrayBuffer()), {
+      contentType: file.type,
+      cacheControl: "3600",
+      upsert: false,
+    });
+    if (upload.error) {
+      console.error("[uploads] Storage upload failed", { purpose, contentType: file.type, code: upload.error.name });
+      return NextResponse.json({ error: "The document could not be uploaded. Please try again." }, { status: 502 });
+    }
+    return NextResponse.json({ path, bucket }, { status: 201 });
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Upload failed." }, { status: 500 });
+    console.error("[uploads] Unexpected upload failure", err instanceof Error ? err.name : "unknown");
+    return NextResponse.json({ error: "The document could not be uploaded. Please try again." }, { status: 500 });
   }
 }

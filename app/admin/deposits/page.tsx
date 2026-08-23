@@ -10,6 +10,7 @@ type Deposit = {
   amountCents: number;
   method: string;
   proofPath: string | null;
+  proofUrl: string | null;
   status: string;
   createdAt: string;
 };
@@ -157,9 +158,9 @@ export default function AdminDepositsPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-3">
-                      {deposit.proofPath && (
+                      {deposit.proofUrl && (
                         <a
-                          href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/quantovest-media/${deposit.proofPath}`}
+                          href={deposit.proofUrl}
                           target="_blank"
                           rel="noreferrer"
                           className="rounded-xl border border-[#2B393F] px-3 py-2 text-xs text-[#A8B6AD] hover:bg-[#0D1215] transition-colors"
