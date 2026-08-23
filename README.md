@@ -87,7 +87,7 @@ Admin taps one button per investor — the fixed rate is applied automatically.
 | **2FA (TOTP)** | Optional. If enabled, withdrawals require a 6-digit authenticator code |
 | **Email System** | 12 templates (deposit, withdrawal, KYC, ROI, security, broadcast) via Resend |
 | **Notifications** | In-app bell icon + optional email. Security/financial emails are always-on |
-| **ROI Calculator** | Interactive compound projection using fixed plan rates |
+| **ROI Calculator** | Interactive simple-return projection with transparent assumptions and risk disclosure |
 | **Mobile Responsive** | Bottom nav on mobile, sidebar on desktop, drawer menus |
 | **Legal Pages** | Full Privacy Policy, Terms of Service, Risk Disclosure |
 
@@ -203,6 +203,12 @@ EMAIL_FROM=Quantovest Capital <notifications@yourdomain.com>
    UPDATE users SET role = 'admin' WHERE email = 'your-email@example.com';
    ```
 3. Log in at `/admin/login`
+
+---
+
+## Documentation
+
+All project handoff and QA documentation is consolidated in [`docs/quantovest/`](./docs/quantovest/), including the implementation handoff, sanitized environment patch, deployment notes, QA report, evidence log, UI direction, and calculator review asset.
 
 ---
 
