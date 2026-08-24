@@ -55,6 +55,7 @@ export async function PATCH(request: Request) {
       notificationPrefs?: Record<string, boolean>;
       onboardingCompleted?: boolean;
       onboardingAnswers?: Record<string, string>;
+      tourCompleted?: boolean;
     } | null;
     if (!body) return NextResponse.json({ error: "Request body is required." }, { status: 400 });
 
@@ -67,6 +68,13 @@ export async function PATCH(request: Request) {
     if (body.notificationPrefs) updates.notificationPrefs = JSON.stringify(body.notificationPrefs);
     if (body.onboardingCompleted !== undefined) updates.onboardingCompleted = body.onboardingCompleted;
     if (body.onboardingAnswers) updates.onboardingAnswers = JSON.stringify(body.onboardingAnswers);
+    if (body.tourCompleted !== undefined) {
+      const [current] = await db.select({ onboardingAnswers: users.onboardingAnswers }).from(users).where(eq(users.id, actor.id)).limit(1);
+      const currentAnswers = current?.onboardingAnswers && typeof current.onboardingAnswers === 'object'
+        ? current.onboardingAnswers as Record<string, unknown>
+        : {};
+      updates.onboardingAnswers = JSON.stringify({ ...currentAnswers, tourCompleted: body.tourCompleted });
+    }
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json({ error: "No valid fields to update." }, { status: 400 });

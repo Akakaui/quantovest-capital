@@ -29,6 +29,7 @@ interface Profile {
   plan: string;
   kycStatus: string;
   onboardingCompleted: boolean;
+  tourCompleted: boolean;
 }
 
 interface DepositRow {
@@ -147,7 +148,7 @@ export default function InvestorDashboard() {
   const [profile, setProfile] = useState<Profile>({
     id: '', name: '', email: '', avatar: null, role: 'investor', balance: 0,
     totalInvested: 0, totalProfit: 0, dailyRoiPercent: 0, allTimeRoiPercent: 0,
-    plan: 'Starter', kycStatus: 'pending', onboardingCompleted: false,
+    plan: 'Starter', kycStatus: 'pending', onboardingCompleted: false, tourCompleted: false,
   });
   const [deposits, setDeposits] = useState<DepositRow[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRow[]>([]);
@@ -160,6 +161,7 @@ export default function InvestorDashboard() {
   const [isCalcOpen, setIsCalcOpen] = useState(false);
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
   const [tourStep, setTourStep] = useState<number | null>(null);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   const fetchAllData = useCallback(async () => {
     try {
@@ -187,6 +189,7 @@ export default function InvestorDashboard() {
       ]) as [Profile | null, DepositRow[], WithdrawalRow[], KycRow[]];
 
       if (profileData) {
+        setProfileLoaded(true);
         if (profileData.role === 'admin') {
           window.location.href = '/admin';
           return;
@@ -253,12 +256,29 @@ export default function InvestorDashboard() {
     }
   }, [profile.kycStatus, profile.onboardingCompleted]);
 
+  const completeTour = useCallback(async () => {
+    setTourStep(null);
+    if (!profile.id) return;
+    localStorage.setItem(`quantovest_tour_completed_${profile.id}`, 'true');
+    try {
+      await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tourCompleted: true }),
+      });
+    } catch { /* local marker still prevents repeat on this device */ }
+  }, [profile.id]);
+
   useEffect(() => {
-    if (typeof window !== 'undefined' && profile.id && !profile.onboardingCompleted) {
+    if (typeof window !== 'undefined' && profileLoaded && profile.id && !profile.tourCompleted) {
       const tourDone = localStorage.getItem(`quantovest_tour_completed_${profile.id}`);
-      if (!tourDone) setTourStep(0);
+      if (tourDone) {
+        void completeTour();
+      } else if (!profile.onboardingCompleted) {
+        setTourStep(0);
+      }
     }
-  }, [profile.id, profile.onboardingCompleted]);
+  }, [completeTour, profile.id, profile.onboardingCompleted, profile.tourCompleted, profileLoaded]);
 
   const kycStatus = kycData.length > 0 ? kycData[0].status : profile.kycStatus;
 
@@ -522,8 +542,7 @@ export default function InvestorDashboard() {
               </span>
               <button 
                 onClick={() => {
-                  setTourStep(null);
-                  if (profile.id) localStorage.setItem(`quantovest_tour_completed_${profile.id}`, 'true');
+                  void completeTour();
                 }}
                 className="text-[#93A09A] hover:text-[#F3F7F4] text-xs font-semibold"
               >
@@ -590,8 +609,7 @@ export default function InvestorDashboard() {
               <button
                 onClick={() => {
                   if (tourStep === 3) {
-                    setTourStep(null);
-                    if (profile.id) localStorage.setItem(`quantovest_tour_completed_${profile.id}`, 'true');
+                    void completeTour();
                   } else {
                     setTourStep(prev => prev !== null ? prev + 1 : null);
                   }

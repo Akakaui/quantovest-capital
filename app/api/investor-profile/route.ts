@@ -20,6 +20,7 @@ const fallbackProfile = (actor: { id: string; email: string | null; role: string
   plan: 'None',
   kycStatus: 'unverified',
   onboardingCompleted: false,
+  tourCompleted: false,
 });
 
 export async function GET() {
@@ -79,6 +80,7 @@ export async function GET() {
         plan: planName ?? 'None',
         kycStatus: latestKyc?.status ?? 'unverified',
         onboardingCompleted: userRow.onboardingCompleted ?? false,
+        tourCompleted: Boolean(userRow.onboardingAnswers && typeof userRow.onboardingAnswers === 'object' && (userRow.onboardingAnswers as Record<string, unknown>).tourCompleted === true),
       });
     } catch (dbErr) {
       console.error('[investor-profile] DB error, returning fallback', dbErr);
