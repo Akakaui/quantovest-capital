@@ -39,6 +39,7 @@ export default function PortfolioPage() {
   const [holdings, setHoldings] = useState<Holding[]>([]);
   const [allocation, setAllocation] = useState<AllocationData[]>([]);
   const [prices, setPrices] = useState<PriceData>({});
+  const [accountBalance, setAccountBalance] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeAsset, setActiveAsset] = useState(0);
@@ -48,10 +49,16 @@ export default function PortfolioPage() {
       setLoading(true);
       setError(null);
       try {
-        const [holdingsRes, allocRes] = await Promise.all([
-          fetch('/api/portfolio/holdings'),
-          fetch('/api/portfolio/allocation'),
+        const [holdingsRes, allocRes, profileRes] = await Promise.all([
+          fetch('/api/portfolio/holdings', { cache: 'no-store' }),
+          fetch('/api/portfolio/allocation', { cache: 'no-store' }),
+          fetch('/api/investor-profile', { cache: 'no-store' }),
         ]);
+
+        if (profileRes.ok) {
+          const profile = await profileRes.json();
+          setAccountBalance(Number(profile.balance ?? 0));
+        }
 
         if (holdingsRes.ok) setHoldings(await holdingsRes.json());
         if (allocRes.ok) {
@@ -72,12 +79,13 @@ export default function PortfolioPage() {
     void load();
   }, []);
 
-  const totalValue = holdings.reduce((sum, h) => {
+  const holdingsValue = holdings.reduce((sum, h) => {
     const price = prices[h.assetSymbol.toLowerCase()]?.usd ?? (h.currentPriceCents / 100);
     return sum + parseFloat(h.quantity) * price;
   }, 0);
-
-  const totalCost = holdings.reduce((sum, h) => sum + h.costBasisCents, 0) / 100;
+  const holdingsCost = holdings.reduce((sum, h) => sum + h.costBasisCents, 0) / 100;
+  const totalValue = holdings.length > 0 ? holdingsValue : accountBalance;
+  const totalCost = holdings.length > 0 ? holdingsCost : accountBalance;
   const totalPnl = totalValue - totalCost;
   const totalPnlPercent = totalCost > 0 ? ((totalPnl / totalCost) * 100) : 0;
 

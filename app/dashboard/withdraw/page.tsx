@@ -37,8 +37,9 @@ export default function WithdrawPage() {
       const res = await fetch('/api/investor-profile', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
-        setProfile({
-          balance: (data.balanceCents ?? 0) / 100,
+                  setProfile({
+          balance: data.balanceCents != null ? data.balanceCents / 100 : Number(data.balance ?? 0),
+
           plan: data.plan ?? 'None',
           twoFactorEnabled: data.twoFactorEnabled ?? false,
           twoFactorSecret: data.twoFactorSecret ?? '',
