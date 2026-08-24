@@ -38,12 +38,18 @@ export default function DepositPage() {
   const [loading, setLoading] = useState(false);
 
   async function load() {
-    const [instructionRes, depositRes] = await Promise.all([
+    const [instructionResult, depositResult] = await Promise.allSettled([
       fetch('/api/deposit-instructions', { cache: 'no-store' }),
       fetch('/api/deposits', { cache: 'no-store' }),
     ]);
-    if (instructionRes.ok) setInstructions(await instructionRes.json());
-    if (depositRes.ok) setDeposits(await depositRes.json());
+
+    if (instructionResult.status === 'fulfilled' && instructionResult.value.ok) {
+      setInstructions(await instructionResult.value.json());
+    }
+
+    if (depositResult.status === 'fulfilled' && depositResult.value.ok) {
+      setDeposits(await depositResult.value.json());
+    }
   }
 
   useEffect(() => {
