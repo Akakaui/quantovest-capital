@@ -83,7 +83,7 @@ export async function GET() {
 
     try {
       const [userRow] = await db.select().from(users).where(eq(users.id, actor.id)).limit(1);
-      if (!userRow) return NextResponse.json(fallbackProfile(actor));
+      if (!userRow) return NextResponse.json(await readSupabaseProfile(actor), { headers: { 'Cache-Control': 'no-store' } });
 
       let account: typeof investorAccounts.$inferSelect | undefined;
       let latestRoi: any[] = [];
@@ -161,8 +161,8 @@ export async function GET() {
         tourCompleted: Boolean(userRow.onboardingAnswers && typeof userRow.onboardingAnswers === 'object' && (userRow.onboardingAnswers as Record<string, unknown>).tourCompleted === true),
       });
     } catch (dbErr) {
-      console.error('[investor-profile] DB error, returning fallback', dbErr);
-      return NextResponse.json(fallbackProfile(actor));
+      console.error('[investor-profile] Drizzle read failed; using Supabase fallback', dbErr);
+      return NextResponse.json(await readSupabaseProfile(actor), { headers: { 'Cache-Control': 'no-store' } });
     }
   } catch (err) {
     console.error('[investor-profile]', err);
