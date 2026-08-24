@@ -260,14 +260,14 @@ export default function DepositPage() {
                     </div>
                     <span
                       className={`rounded-full px-2.5 py-0.5 text-[10px] font-semibold ${
-                        deposit.status === 'approved'
+                        (deposit.status === 'approved' || deposit.status === 'completed')
                           ? 'bg-[#22C55E]/10 text-[#22C55E]'
                           : deposit.status === 'rejected'
                           ? 'bg-rose-500/10 text-rose-400'
                           : 'bg-amber-500/10 text-amber-300'
                       }`}
                     >
-                      {deposit.status.toUpperCase()}
+                      {(deposit.status === 'completed' ? 'approved' : deposit.status).toUpperCase()}
                     </span>
                   </div>
                 ))}
