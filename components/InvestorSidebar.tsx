@@ -166,7 +166,7 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
             <div className="w-9 h-9 rounded-xl bg-[#151D20] border border-[#2C393C] flex items-center justify-center text-[#4ADE80]"><Icon icon="solar:chart-square-bold" className="w-5 h-5" /></div>
             <div><span className="text-[#F4F7F3] text-base tracking-tight">QUANTOVEST</span></div>
           </Link>
-          <NotificationCenter />
+          <NotificationCenter align="left" />
         </div>
         <div className="m-4 p-4 bg-[#151D20] border border-[#263437] rounded-xl flex items-center gap-3">
           <img src={avatarSrc} alt={displayName} className="w-9 h-9 rounded-full object-cover border border-[#4ADE80]/40" />
