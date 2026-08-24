@@ -45,9 +45,9 @@ export async function POST(request: Request) {
       eq(copyAllocations.investorId, identity.id)
     );
 
-    const activeCopy = existing.find(c => c.status === "active" && c.traderId === body.traderId);
+    const activeCopy = existing.find(c => c.status === "active");
     if (activeCopy) {
-      return NextResponse.json({ error: "Already copying this trader." }, { status: 409 });
+      return NextResponse.json({ error: "You can copy only one trader at a time. Stop your current strategy before selecting another." }, { status: 409 });
     }
 
     const inserted = await db.insert(copyAllocations).values({
