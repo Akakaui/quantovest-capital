@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import InvestorSidebar from '@/components/InvestorSidebar';
 import KycModal from '@/components/KycModal';
 import { createClient } from '@/lib/supabase/client';
@@ -162,6 +162,7 @@ export default function InvestorDashboard() {
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
   const [tourStep, setTourStep] = useState<number | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const managerRedirected = useRef(false);
 
   const fetchAllData = useCallback(async () => {
     try {
@@ -174,19 +175,21 @@ export default function InvestorDashboard() {
 
       const headers = { Authorization: `Bearer ${session.access_token}` };
 
-      const [profileRes, depositsRes, withdrawalsRes, kycRes] = await Promise.all([
+      const [profileRes, depositsRes, withdrawalsRes, kycRes, allocationsRes] = await Promise.all([
         fetch('/api/investor-profile', { headers }),
         fetch('/api/deposits', { headers }),
         fetch('/api/withdrawals', { headers }),
         fetch('/api/kyc', { headers }),
+        fetch('/api/traders/my', { headers }),
       ]);
 
-      const [profileData, depositsData, withdrawalsData, kycDataRes] = await Promise.all([
+      const [profileData, depositsData, withdrawalsData, kycDataRes, allocationsData] = await Promise.all([
         profileRes.ok ? profileRes.json() : Promise.resolve(null),
         depositsRes.ok ? depositsRes.json() : Promise.resolve([] as DepositRow[]),
         withdrawalsRes.ok ? withdrawalsRes.json() : Promise.resolve([] as WithdrawalRow[]),
         kycRes.ok ? kycRes.json() : Promise.resolve([] as KycRow[]),
-      ]) as [Profile | null, DepositRow[], WithdrawalRow[], KycRow[]];
+        allocationsRes.ok ? allocationsRes.json() : Promise.resolve([] as Array<{ status?: string }>),
+      ]) as [Profile | null, DepositRow[], WithdrawalRow[], KycRow[], Array<{ status?: string }>];
 
       if (profileData) {
         setProfileLoaded(true);
@@ -202,6 +205,20 @@ export default function InvestorDashboard() {
 
       const approvedDeposits = depositsData.filter(d => d.status === 'approved' || d.status === 'completed');
       const approvedWithdrawals = withdrawalsData.filter(w => w.status === 'approved');
+      const hasActiveManager = allocationsData.some(allocation => allocation.status === 'active');
+
+      if (
+        profileData &&
+        profileData.kycStatus === 'approved' &&
+        approvedDeposits.length > 0 &&
+        !hasActiveManager &&
+        !managerRedirected.current &&
+        window.location.pathname === '/dashboard'
+      ) {
+        managerRedirected.current = true;
+        window.location.replace('/dashboard/traders?funded=1');
+        return;
+      }
 
       if (profileData && approvedDeposits.length > 0) {
         let cumulative = 0;

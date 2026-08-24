@@ -21,9 +21,11 @@ export default function SwapPage() {
   const [quote, setQuote] = useState<Quote | null>(null);
   const [success, setSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState<'swap' | 'history'>('swap');
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
 
   function handleSwapSuccess() {
     setQuote(null);
+    setHistoryRefreshKey(key => key + 1);
     setSuccess(true);
     setTimeout(() => setSuccess(false), 4000);
   }
@@ -84,7 +86,7 @@ export default function SwapPage() {
             </div>
           </div>
         ) : (
-          <SwapHistory />
+          <SwapHistory refreshKey={historyRefreshKey} />
         )}
       </main>
     </div>
