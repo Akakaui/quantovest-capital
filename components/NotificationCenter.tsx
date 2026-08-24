@@ -26,7 +26,7 @@ function typeIcon(type: string): string {
   return 'solar:bell-bold';
 }
 
-export default function NotificationCenter() {
+export default function NotificationCenter({ align = 'right' }: { align?: 'left' | 'right' }) {
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Notice[]>([]);
   const [unread, setUnread] = useState(0);
@@ -74,8 +74,9 @@ export default function NotificationCenter() {
     <div className="relative">
       <button
         aria-label="Notifications"
+        aria-expanded={open}
         onClick={() => setOpen(value => !value)}
-        className="relative rounded-full border border-white/10 bg-white/[.04] p-2 text-[#d8e5dd] hover:bg-white/[.08]"
+        className="relative rounded-full border border-white/10 bg-white/[.04] p-2 text-[#d8e5dd] transition-colors hover:bg-white/[.08] focus:outline-none focus:ring-2 focus:ring-[#d6a85c]/60"
       >
         <Icon icon="solar:bell-bold" className="w-4 h-4" />
         {unread > 0 && (
@@ -86,10 +87,28 @@ export default function NotificationCenter() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-12 z-50 w-[min(380px,calc(100vw-2rem))] rounded-2xl border border-white/10 bg-[#101714] shadow-2xl overflow-hidden">
+        <div
+          role="dialog"
+          aria-label="Notification center"
+          className={`${align === 'left' ? 'left-0' : 'right-0'} absolute top-12 z-50 w-[min(380px,calc(100vw-1rem))] overflow-hidden rounded-2xl border border-white/10 bg-[#101714]/[.98] shadow-[0_24px_80px_rgba(0,0,0,.45)] backdrop-blur-xl`}
+        >
           {/* Header */}
-          <div className="flex items-center justify-between px-4 pt-4 pb-2">
-            <p className="text-xs font-semibold text-white">Notifications</p>
+          <div className="flex items-start justify-between border-b border-white/[.06] px-4 py-4">
+            <div>
+              <p className="text-sm font-semibold tracking-tight text-white">Notifications</p>
+              <p className="mt-0.5 text-[10px] text-[#7f9185]">Account activity and platform updates</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {unread > 0 && (
+                <span className="rounded-full bg-[#d6a85c]/15 px-2 py-1 text-[9px] font-semibold text-[#d6a85c]">{unread} unread</span>
+              )}
+              <button aria-label="Close notifications" onClick={() => setOpen(false)} className="rounded-lg p-1.5 text-[#7f9185] hover:bg-white/[.06] hover:text-white">
+                <Icon icon="solar:close-circle-bold" className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center justify-between px-4 pt-3 pb-2">
+            <p className="text-[10px] font-mono uppercase tracking-[.16em] text-[#7f9185]">Inbox</p>
             {unread > 0 && (
               <button onClick={() => void mark()} className="text-[10px] text-[#d6a85c] hover:underline">
                 Mark all read
