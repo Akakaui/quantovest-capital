@@ -18,7 +18,7 @@ const TIMEZONES = [
   'Australia/Sydney',
 ];
 
-const CURRENCIES = ['USD', 'BTC', 'ETH', 'USDT'] as const;
+const CURRENCIES = ['USD', 'BTC', 'USDT'] as const;
 
 interface PlatformSettings {
   platformName: string;
