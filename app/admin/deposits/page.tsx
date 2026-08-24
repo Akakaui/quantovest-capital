@@ -60,34 +60,16 @@ export default function AdminDepositsPage() {
 
   async function saveInstruction(event: React.FormEvent<HTMLFormElement>, method: string) {
     event.preventDefault();
+    setMessage('');
     const form = new FormData(event.currentTarget);
-    let qrPath = String(form.get('qrPath') ?? '').trim();
-    const qrFile = form.get('qrFile');
-    if (qrFile instanceof File && qrFile.size > 0) {
-      const uploadForm = new FormData();
-      uploadForm.append('file', qrFile);
-      uploadForm.append('purpose', 'deposit-qr');
-      const uploadResponse = await fetch('/api/uploads', { method: 'POST', body: uploadForm });
-      const uploadData = await uploadResponse.json().catch(() => ({}));
-      if (!uploadResponse.ok || !uploadData.path || uploadData.bucket !== 'quantovest-media') {
-        setMessage(uploadData.error ?? 'QR image upload failed.');
-        return;
-      }
-      qrPath = uploadData.path;
-    }
+    form.set('method', method);
     const response = await fetch('/api/admin/deposit-instructions', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        method,
-        label: form.get('label'),
-        details: form.get('details'),
-        qrPath,
-      }),
+      method: 'POST',
+      body: form,
     });
     const data = await response.json().catch(() => ({}));
     setMessage(response.ok ? `Instructions for ${method.toUpperCase()} saved.` : data.error ?? 'Instruction save failed.');
-    await load();
+    if (response.ok) await load();
   }
 
   return (
@@ -115,6 +97,9 @@ export default function AdminDepositsPage() {
               return (
                 <form
                   key={coin.value}
+                  action="/api/admin/deposit-instructions"
+                  method="post"
+                  encType="multipart/form-data"
                   onSubmit={event => void saveInstruction(event, coin.value)}
                   className="rounded-2xl border border-[#2B393F] bg-[#151E23] p-5 space-y-3"
                 >
@@ -140,6 +125,7 @@ export default function AdminDepositsPage() {
                     accept="image/jpeg,image/png,image/webp"
                     className="w-full text-xs text-[#93A09A] file:mr-4 file:rounded-full file:border-0 file:bg-[#22C55E]/10 file:px-3 file:py-2 file:text-xs file:font-semibold file:text-[#22C55E]"
                   />
+                  <input type="hidden" name="method" value={coin.value} />
                   <input type="hidden" name="qrPath" value={current?.qrPath ?? ''} />
                   <p className="text-[10px] text-[#93A09A]">Upload a cropped QR code image. Leave empty to keep the existing QR code.</p>
                   <button className="w-full rounded-full bg-[#F4B860] py-2.5 text-xs font-semibold text-[#111714] hover:bg-[#e0a44b] transition-colors">
