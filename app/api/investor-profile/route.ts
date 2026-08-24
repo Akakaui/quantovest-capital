@@ -6,11 +6,11 @@ import { users, investorAccounts, plans, roiEntries, kycApplications } from '@/d
 
 export const dynamic = 'force-dynamic';
 
-const fallbackProfile = (actor: { id: string; email: string | null; role: string }) => ({
+const fallbackProfile = (actor: { id: string; name?: string | null; email: string | null; avatar?: string | null; role: string }) => ({
   id: actor.id,
-  name: null,
+  name: actor.name ?? null,
   email: actor.email,
-  avatar: null,
+  avatar: actor.avatar ?? null,
   role: actor.role,
   balance: 0,
   totalInvested: 0,
@@ -39,16 +39,17 @@ export async function GET() {
       let latestRoi: any[] = [];
       let latestKyc: typeof kycApplications.$inferSelect | undefined;
 
-      try {
-        const [[acct], roi, [kyc]] = await Promise.all([
-          db.select().from(investorAccounts).where(eq(investorAccounts.investorId, actor.id)).limit(1),
-          db.select().from(roiEntries).where(eq(roiEntries.investorId, actor.id)).orderBy(desc(roiEntries.entryDate)).limit(1),
-          db.select().from(kycApplications).where(eq(kycApplications.investorId, actor.id)).orderBy(desc(kycApplications.createdAt)).limit(1),
-        ]);
-        account = acct;
-        latestRoi = roi;
-        latestKyc = kyc;
-      } catch {}
+      const [accountResult, roiResult, kycResult] = await Promise.allSettled([
+        db.select().from(investorAccounts).where(eq(investorAccounts.investorId, actor.id)).limit(1),
+        db.select().from(roiEntries).where(eq(roiEntries.investorId, actor.id)).orderBy(desc(roiEntries.entryDate)).limit(1),
+        db.select().from(kycApplications).where(eq(kycApplications.investorId, actor.id)).orderBy(desc(kycApplications.createdAt)).limit(1),
+      ]);
+      if (accountResult.status === 'fulfilled') account = accountResult.value[0];
+      if (roiResult.status === 'fulfilled') latestRoi = roiResult.value;
+      if (kycResult.status === 'fulfilled') latestKyc = kycResult.value[0];
+      if (accountResult.status === 'rejected') console.error('[investor-profile] account query failed', accountResult.reason);
+      if (roiResult.status === 'rejected') console.error('[investor-profile] ROI query failed', roiResult.reason);
+      if (kycResult.status === 'rejected') console.error('[investor-profile] KYC query failed', kycResult.reason);
 
       let planName: string | null = null;
       if (account?.planId) {
@@ -68,9 +69,9 @@ export async function GET() {
 
       return NextResponse.json({
         id: userRow.id,
-        name: userRow.name,
-        email: userRow.email,
-        avatar: userRow.image,
+        name: userRow.name || actor.name,
+        email: userRow.email || actor.email,
+        avatar: userRow.image || actor.avatar || null,
         role: actor.role,
         balance,
         totalInvested,

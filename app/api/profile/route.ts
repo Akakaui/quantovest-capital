@@ -26,7 +26,7 @@ export async function GET() {
       role: users.role,
     }).from(users).where(eq(users.id, actor.id)).limit(1);
 
-    const profile = rows[0] ?? null;
+    const profile = rows[0] ? { ...rows[0], image: rows[0].image || actor.avatar || null } : null;
     if (profile?.twoFactorEnabled) {
       const unusedCodes = await db.select({ id: recoveryCodes.id })
         .from(recoveryCodes)

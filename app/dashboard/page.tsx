@@ -200,7 +200,7 @@ export default function InvestorDashboard() {
       setWithdrawals(withdrawalsData);
       setKycData(kycDataRes);
 
-      const approvedDeposits = depositsData.filter(d => d.status === 'approved');
+      const approvedDeposits = depositsData.filter(d => d.status === 'approved' || d.status === 'completed');
       const approvedWithdrawals = withdrawalsData.filter(w => w.status === 'approved');
 
       if (profileData && approvedDeposits.length > 0) {
