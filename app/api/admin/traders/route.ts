@@ -46,15 +46,15 @@ export async function POST(request: Request) {
     if (!db) return NextResponse.json({ error: "Database is not configured" }, { status: 503 });
     const body = await request.json().catch(() => null) as { name?: string; specialty?: string; imagePath?: string; imageUrl?: string; winRateBps?: number; thirtyDayReturnBps?: number; riskLevel?: number; bio?: string } | null;
     const riskLevel = Number(body?.riskLevel);
-    if (!body?.name?.trim() || !body.specialty?.trim() || !body.imagePath?.trim() || !Number.isInteger(riskLevel) || riskLevel < 1 || riskLevel > 5) {
-      return NextResponse.json({ error: "Name, profile image, specialty, and risk level are required." }, { status: 400 });
+    if (!body?.name?.trim() || !body.specialty?.trim() || (!body.imagePath?.trim() && !body.imageUrl?.trim()) || !Number.isInteger(riskLevel) || riskLevel < 1 || riskLevel > 5) {
+      return NextResponse.json({ error: "Name, profile image or image URL, specialty, and risk level are required." }, { status: 400 });
     }
     const id = crypto.randomUUID();
     await db.insert(traders).values({
       id,
       name: body.name.trim(),
       specialty: body.specialty.trim(),
-      imagePath: body.imagePath.trim(),
+      imagePath: body.imagePath?.trim() || null,
       imageUrl: body.imageUrl?.trim() || null,
       winRateBps: body.winRateBps ?? 0,
       thirtyDayReturnBps: body.thirtyDayReturnBps ?? 0,
