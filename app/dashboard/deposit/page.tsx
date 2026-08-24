@@ -10,6 +10,7 @@ type Instruction = {
   label: string;
   details: string;
   qrPath: string | null;
+  qrUrl: string | null;
 };
 
 type Deposit = {
@@ -23,9 +24,7 @@ type Deposit = {
 
 const CRYPTO_COINS = [
   { value: 'usdt-trc20', label: 'USDT (TRC-20)', icon: 'cryptocurrency:usdt' },
-  { value: 'usdt-erc20', label: 'USDT (ERC-20)', icon: 'cryptocurrency:usdt' },
   { value: 'btc', label: 'Bitcoin (BTC)', icon: 'cryptocurrency:btc' },
-  { value: 'eth', label: 'Ethereum (ETH)', icon: 'cryptocurrency:eth' },
 ] as const;
 
 export default function DepositPage() {
@@ -117,7 +116,7 @@ export default function DepositPage() {
         <div className="border-b border-[#263437] pb-6 space-y-1">
           <h1 className="text-2xl font-normal">Deposit Funds</h1>
           <p className="text-xs text-[#93A09A]">
-            Select a cryptocurrency, transfer the funds to the wallet address below, and upload proof of payment.
+            Select BTC or USDT (TRC-20), transfer the funds to the matching wallet address, and upload proof of payment.
           </p>
         </div>
 
@@ -186,11 +185,11 @@ export default function DepositPage() {
                   <p className="select-all break-all font-mono text-xs text-white bg-[#141C1F] p-3 rounded-lg border border-[#263437]">
                     {activeInstruction.details}
                   </p>
-                  {activeInstruction.qrPath && (
+                  {activeInstruction.qrUrl && (
                     <div className="flex flex-col items-center justify-center border-t border-[#263437]/60 pt-4">
                       <p className="text-[10px] text-[#93A09A] mb-2 font-mono">Scan QR Code to pay:</p>
                       <img
-                        src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/quantovest-media/${activeInstruction.qrPath}`}
+                        src={activeInstruction.qrUrl}
                         alt="Deposit QR code"
                         className="h-36 w-36 rounded-lg bg-white p-2 object-contain shadow-lg"
                       />

@@ -12,13 +12,16 @@ This folder contains the reviewed implementation handoff, deployment configurati
 | [`EVIDENCE_LOG.md`](./EVIDENCE_LOG.md) | Detailed request, browser, database, storage, and local-build evidence log. |
 | [`UI_DIRECTION.md`](./UI_DIRECTION.md) | Institutional trading-firm UI direction and calculator recommendations. |
 | [`DOMAIN_TAWK_ZOHO_SETUP_GUIDE.md`](./DOMAIN_TAWK_ZOHO_SETUP_GUIDE.md) | Setup guide for Namecheap, Vercel, Tawk.to, and Zoho Mail. |
+| [`PRODUCTION_CONFIGURATION_GUIDE.md`](./PRODUCTION_CONFIGURATION_GUIDE.md) | Business email, OAuth branding, session expiry, Tawk mobile, and approved deposit configuration. |
+| [`PRODUCTION_QA_TEST_PLAN.md`](./PRODUCTION_QA_TEST_PLAN.md) | Comprehensive human-style investor/admin regression plan and release gates. |
+| [`DOCUMENTATION_CATALOG.md`](./DOCUMENTATION_CATALOG.md) | Source-of-truth, archival, and temporary-file map. |
 | [`DEPLOYMENT.md`](./DEPLOYMENT.md) | Existing project deployment notes. |
 | [`DESIGN.md`](./DESIGN.md) | Existing project design notes. |
 | [`assets/roi-calculator-ui-review.webp`](./assets/roi-calculator-ui-review.webp) | Screenshot of the updated calculator/plans presentation for visual review. |
 
 ## Current implementation branch
 
-The reviewed source changes are on the GitHub branch `fix/quantovest-supabase-workflows-ui` at commit `bc5b432`. The branch has been pushed but not merged.
+The reviewed source changes are on the GitHub branch `fix/quantovest-supabase-workflows-ui`. All current work in this task is being made on that branch only; `master` and `develop` are not modified.
 
 ## Recommended handoff order
 
