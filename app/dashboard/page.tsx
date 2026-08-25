@@ -428,14 +428,14 @@ export default function InvestorDashboard() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-normal text-[#F3F7F4] flex items-center gap-2">
-                Portfolio Signal Growth Line
+                Portfolio Performance
                 <span className="w-2 h-2 rounded-full bg-[#22C55E]"></span>
               </h3>
-              <p className="text-xs text-[#93A09A]">Dynamic daily updates driven by trading firm strategy execution</p>
+              <p className="text-xs text-[#93A09A]">Account value over time based on recorded strategy performance updates</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono text-[#22C55E] bg-[#22C55E]/10 border border-[#22C55E]/30 px-3 py-1 rounded-full">
-                Live Dynamic Sync
+                Performance history
               </span>
             </div>
           </div>
@@ -448,7 +448,7 @@ export default function InvestorDashboard() {
 
         {/* Daily Strategy Activity Log */}
         <div className="dashboard-activity-card p-6 rounded-2xl bg-[#141C1F] border border-[#263437] space-y-4">
-          <h3 className="text-base font-normal text-[#F3F7F4]">Daily ROI Strategy Activity Log</h3>
+          <h3 className="text-base font-normal text-[#F3F7F4]">Strategy Performance Activity</h3>
           <div className="space-y-3">
             {dailyLogs.length === 0 ? (
               <div className="p-8 text-center">

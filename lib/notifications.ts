@@ -16,16 +16,17 @@ function readPrefs(value: unknown): NotificationPrefs {
 async function maybeEmailUser(user: { email: string | null; name: string | null; notificationPrefs: unknown } | undefined, type: string, title: string, body: string) {
   if (!user?.email) return;
   const prefs = readPrefs(user.notificationPrefs);
-  const optedIn = type === 'roi_published'
+  const isPerformance = type === 'roi_published' || type === 'strategy_performance';
+  const optedIn = isPerformance
     ? prefs.notifyDailyRoi === true
     : type === 'strategy_alert' || type === 'strategy_update'
       ? prefs.notifyStrategyAlerts === true
       : false;
   if (!optedIn) return;
-  if (type === 'roi_published') {
+  if (isPerformance) {
     await sendEmail(user.email, 'roi_published', {
       investorName: user.name || 'Investor',
-      roiPercent: title.match(/\d+(?:\.\d+)?/)?.[0],
+      roiPercent: body.match(/\d+(?:\.\d+)?%/)?.[0]?.replace('%', ''),
       profitAmount: body.match(/\$[\d,.]+/)?.[0],
       message: body,
     });
