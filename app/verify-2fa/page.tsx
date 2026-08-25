@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { verifyTOTP } from '@/lib/totp';
 import { Icon } from '@iconify/react';
 
 export default function Verify2FAPage() {
@@ -54,11 +53,21 @@ export default function Verify2FAPage() {
     setMessage('');
 
     if (mode === 'totp') {
-      if (secret && await verifyTOTP(secret, code)) {
-        router.replace('/dashboard');
-        return;
+      try {
+        const res = await fetch('/api/auth/2fa', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'verify', code }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          router.replace('/dashboard');
+          return;
+        }
+        setMessage(data.error ?? 'Invalid TOTP code. Please try again.');
+      } catch {
+        setMessage('Unable to verify the authenticator code.');
       }
-      setMessage('Invalid TOTP code. Please try again.');
       setLoading(false);
     } else {
       try {

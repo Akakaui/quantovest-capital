@@ -30,6 +30,7 @@ export default function LoginPage() {
         if (res.ok) {
           const profile = await res.json();
           if (profile.twoFactorEnabled) {
+            await fetch('/api/auth/2fa', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'challenge' }) });
             router.push('/verify-2fa');
             setLoading(false);
             return;

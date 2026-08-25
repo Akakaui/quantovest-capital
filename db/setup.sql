@@ -278,6 +278,14 @@ CREATE TABLE IF NOT EXISTS "recoveryCodes" (
   "createdAt" timestamp with time zone DEFAULT now() NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS "platformSettings" (
+  "id" serial PRIMARY KEY NOT NULL,
+  "settingKey" varchar(64) NOT NULL,
+  "settingValue" json NOT NULL,
+  "updatedBy" varchar(191) NOT NULL,
+  "updatedAt" timestamp with time zone DEFAULT now() NOT NULL
+);
+
 -- ── Indexes ────────────────────────────────────────────────────
 
 CREATE INDEX IF NOT EXISTS "accounts_user_idx" ON "accounts" USING btree ("userId");
@@ -312,6 +320,7 @@ CREATE INDEX IF NOT EXISTS "push_subscriptions_user_idx" ON "pushSubscriptions" 
 CREATE UNIQUE INDEX IF NOT EXISTS "push_subscriptions_endpoint_unique" ON "pushSubscriptions" USING btree ("endpoint");
 CREATE INDEX IF NOT EXISTS "recovery_codes_user_idx" ON "recoveryCodes" USING btree ("userId");
 CREATE UNIQUE INDEX IF NOT EXISTS "recovery_codes_hash_unique" ON "recoveryCodes" USING btree ("codeHash");
+CREATE UNIQUE INDEX IF NOT EXISTS "platform_settings_key_unique" ON "platformSettings" USING btree ("settingKey");
 
 -- ── Seed Plans ─────────────────────────────────────────────────
 
