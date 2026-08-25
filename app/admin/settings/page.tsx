@@ -44,10 +44,17 @@ export default function AdminSettingsPage() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('quantovest_platform_settings');
-      if (stored) setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(stored) });
-    } catch {}
+    let cancelled = false;
+    async function loadSettings() {
+      try {
+        const response = await fetch('/api/admin/settings', { cache: 'no-store' });
+        if (!response.ok) return;
+        const data = await response.json();
+        if (!cancelled) setSettings({ ...DEFAULT_SETTINGS, ...data });
+      } catch {}
+    }
+    void loadSettings();
+    return () => { cancelled = true; };
   }, []);
 
   function handleChange(field: keyof PlatformSettings, value: unknown) {
@@ -66,11 +73,21 @@ export default function AdminSettingsPage() {
     setSaved(false);
   }
 
-  function handleSave() {
+  async function handleSave() {
     setSaving(true);
+    setSaved(false);
     try {
-      localStorage.setItem('quantovest_platform_settings', JSON.stringify(settings));
+      const response = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
+      if (!response.ok) throw new Error('save failed');
+      const data = await response.json();
+      setSettings({ ...DEFAULT_SETTINGS, ...data });
       setSaved(true);
+    } catch {
+      setSaved(false);
     } finally {
       setSaving(false);
     }

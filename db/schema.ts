@@ -58,6 +58,7 @@ export const swapConfig = pgTable("swapConfig", { id: serial("id").primaryKey(),
 export const pushSubscriptions = pgTable("pushSubscriptions", { id: serial("id").primaryKey(), userId: varchar("userId", { length: 191 }).notNull(), endpoint: text("endpoint").notNull(), p256dh: text("p256dh").notNull(), auth: text("auth").notNull(), userAgent: varchar("userAgent", { length: 255 }), createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull() }, table => ({ userIndex: index("push_subscriptions_user_idx").on(table.userId), endpointUnique: uniqueIndex("push_subscriptions_endpoint_unique").on(table.endpoint) }));
 
 export const recoveryCodes = pgTable("recoveryCodes", { id: serial("id").primaryKey(), userId: varchar("userId", { length: 191 }).notNull(), codeHash: varchar("codeHash", { length: 64 }).notNull(), usedAt: timestamp("usedAt", { withTimezone: true }), createdAt: timestamp("createdAt", { withTimezone: true }).defaultNow().notNull() }, table => ({ userIndex: index("recovery_codes_user_idx").on(table.userId), hashUnique: uniqueIndex("recovery_codes_hash_unique").on(table.codeHash) }));
+export const platformSettings = pgTable("platformSettings", { id: serial("id").primaryKey(), settingKey: varchar("settingKey", { length: 64 }).notNull(), settingValue: json("settingValue").notNull(), updatedBy: varchar("updatedBy", { length: 191 }).notNull(), updatedAt: timestamp("updatedAt", { withTimezone: true }).defaultNow().notNull() }, table => ({ keyUnique: uniqueIndex("platform_settings_key_unique").on(table.settingKey) }));
 
 export type User = typeof users.$inferSelect;
 export type RecoveryCode = typeof recoveryCodes.$inferSelect;
@@ -66,4 +67,4 @@ export type ReferralReward = typeof referralRewards.$inferSelect;
 export type ReferralWithdrawal = typeof referralWithdrawals.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type SwapTransaction = typeof swapTransactions.$inferSelect;
-export const schema = { users, accounts, sessions, verificationTokens, deposits, depositInstructions, kycApplications, referralLinks, referralAttributions, referralRewards, referralWithdrawals, investorWithdrawals, plans, investorAccounts, traders, roiEntries, portfolioLedger, portfolioHoldings, copyAllocations, notifications, swapTransactions, swapConfig, pushSubscriptions, recoveryCodes };
+export const schema = { users, accounts, sessions, verificationTokens, deposits, depositInstructions, kycApplications, referralLinks, referralAttributions, referralRewards, referralWithdrawals, investorWithdrawals, plans, investorAccounts, traders, roiEntries, portfolioLedger, portfolioHoldings, copyAllocations, notifications, swapTransactions, swapConfig, pushSubscriptions, recoveryCodes, platformSettings };

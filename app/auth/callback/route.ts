@@ -34,7 +34,9 @@ export async function GET(request: Request) {
           }
           const rows = await db.select({ twoFactorEnabled: users.twoFactorEnabled }).from(users).where(eq(users.id, data.user.id)).limit(1);
           if (rows[0]?.twoFactorEnabled) {
-            return NextResponse.redirect(new URL('/verify-2fa', requestUrl.origin));
+            const response = NextResponse.redirect(new URL('/verify-2fa', requestUrl.origin));
+            response.cookies.set('qv_2fa_pending', '1', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 600, path: '/' });
+            return response;
           }
         } catch { /* fall through */ }
       }
