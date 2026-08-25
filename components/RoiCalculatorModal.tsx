@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Icon } from '@iconify/react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 
@@ -32,6 +32,15 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
   const [inputValue, setInputValue] = useState<string>('7500');
   const [months, setMonths] = useState<number>(6);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const plan = getPlanForDeposit(deposit);
@@ -52,8 +61,20 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
   const projectedProfit = totalProjected - deposit;
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-md z-50 flex items-center justify-center p-4 font-sans text-white">
-      <div className="bg-[#12161A] border border-[#263437] rounded-2xl max-w-2xl w-full p-6 sm:p-8 relative shadow-2xl animate-in zoom-in-95 duration-200">
+    <div
+      className="fixed inset-0 bg-black/50 backdrop-blur-md z-50 flex items-center justify-center p-4 font-sans text-white"
+      role="presentation"
+      onMouseDown={event => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="bg-[#12161A] border border-[#263437] rounded-2xl max-w-2xl w-full p-6 sm:p-8 relative shadow-2xl animate-in zoom-in-95 duration-200"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="roi-calculator-title"
+        onMouseDown={event => event.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between mb-6 border-b border-[#263437] pb-4">
           <div className="flex items-center gap-3">
@@ -61,12 +82,18 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
               <Icon icon="solar:calculator-bold" className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="text-base font-semibold text-white">Investment Return Calculator</h3>
+              <h3 id="roi-calculator-title" className="text-base font-semibold text-white">Investment Return Calculator</h3>
               <p className="text-xs text-[#A8ACB3]">Illustrative scenario model — not a promise of returns</p>
             </div>
           </div>
-          <button onClick={onClose} className="text-[#A8ACB3] hover:text-white p-1">
-            <Icon icon="solar:close-circle-bold" className="w-6 h-6" />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close calculator"
+            title="Close calculator"
+            className="w-10 h-10 shrink-0 rounded-full border border-[#34443A] bg-[#1A2528] text-[#A8ACB3] hover:border-[#22C55E]/60 hover:bg-[#22C55E]/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-[#22C55E]/60 flex items-center justify-center transition-colors"
+          >
+            <Icon icon="solar:close-circle-bold" className="w-6 h-6" aria-hidden="true" />
           </button>
         </div>
 
@@ -230,8 +257,9 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
             Illustrative simple-return scenario using {tradingDaysPerMonth} trading days per month. It is not a guaranteed return, investment advice, or a forecast of actual performance.
           </p>
           <button
+            type="button"
             onClick={onClose}
-            className="px-6 py-2.5 rounded-full text-xs font-semibold bg-[#22C55E] text-[#0A0D0C] hover:bg-[#16A34A]"
+            className="px-6 py-2.5 rounded-full text-xs font-semibold bg-[#22C55E] text-[#0A0D0C] hover:bg-[#16A34A] focus:outline-none focus:ring-2 focus:ring-[#22C55E]/60"
           >
             Done
           </button>
