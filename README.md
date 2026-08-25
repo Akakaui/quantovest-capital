@@ -58,8 +58,8 @@ Admin taps one button per investor — the fixed rate is applied automatically.
 3. **KYC** → upload government ID + proof of address → admin reviews
 4. **Deposit** → choose method (bank/crypto) → upload payment proof → admin approves → balance credited → plan auto-assigned
 5. **Dashboard** → see portfolio balance, performance chart, daily ROI, activity log
-6. **Copy Trader** → browse master traders → click "Copy" (requires min $1,500 balance)
-7. **Upgrade Plan** → Starter ($1,500) → Growth ($7,500) → Elite ($45,000) — shows how much more you need
+6. **Copy Trader** → after approved funding and KYC, browse portfolio managers and select one active manager (requires min $1,500 balance)
+7. **Upgrade Plan** → Starter ($1,500) → Growth ($7,500) → Elite ($45,000) — upgrades when the account balance qualifies and records a plan-transition audit entry
 8. **Withdraw** → enter amount → 2FA verification if enabled → admin processes → money sent
 9. **Close Account** → withdraw entire balance → admin approves → account closed
 10. **Settings** → configure 2FA, payout details, notification preferences
@@ -70,7 +70,7 @@ Admin taps one button per investor — the fixed rate is applied automatically.
 3. **Deposits** → review proof screenshots → approve (credits balance + assigns plan) or reject
 4. **Withdrawals** → review requests → approve (processes payout) or reject (reverses balance)
 5. **KYC** → review uploaded documents → approve or decline with reason
-6. **Performance** → select investor → tap "Publish 15%/25%/35% ROI" button → done
+6. **Performance** → select investor → add a market note → apply the fixed plan performance credit → investor balance, ledger, activity, and notifications update
 7. **Traders** → create/edit master trader profiles with images and stats
 8. **Notifications** → send broadcasts (all users, specific users, or plan-targeted)
 9. **Plans** → manage Starter/Growth/Elite tiers
@@ -82,7 +82,7 @@ Admin taps one button per investor — the fixed rate is applied automatically.
 | Feature | How It Works |
 |---|---|
 | **Single Active Plan** | Each investor has one plan at a time. Upgrade when balance meets the minimum. |
-| **Fixed Daily ROI** | Starter=15%, Growth=25%, Elite=35% — one-click publish from admin |
+| **Manual Performance Credit** | Starter=15%, Growth=25%, Elite=35% — admin applies the plan’s fixed rate per investor |
 | **Close Account** | Withdraw entire balance + close account in one action |
 | **2FA (TOTP)** | Optional. If enabled, withdrawals require a 6-digit authenticator code |
 | **Email System** | 12 templates (deposit, withdrawal, KYC, ROI, security, broadcast) via Resend |
@@ -166,15 +166,21 @@ npm install
 cp .env.example .env.local
 # Fill in your Supabase URL, anon key, and service role key
 
-# Run database migrations
-# Apply db/migrations-pg/*.sql in your Supabase SQL editor
-# Then run db/seed-plans.sql to seed the 3 plans
+# Set up a new database in one run
+# Paste db/quantovest-install.sql into a new Supabase SQL Editor query and run it
+# For an existing production database, apply only the numbered db/migrations-pg/*.sql files
 
 # Start dev server
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
+
+### One-Click Portability
+
+For a new owner or a new Supabase project, use [`docs/quantovest/ONE_CLICK_PORTABILITY.md`](./docs/quantovest/ONE_CLICK_PORTABILITY.md) and run [`db/quantovest-install.sql`](./db/quantovest-install.sql) once. The bootstrap creates the application tables, indexes, seed plans, private `quantovest-media` bucket, and guarded security policies. It does not copy customer data or secrets and does not configure external providers such as Resend, Zoho, Vercel, OAuth, or Tawk.to.
+
+For an existing database, do not rerun the full bootstrap blindly; use the numbered migrations and verify the target environment first.
 
 ### Environment Variables
 
@@ -302,8 +308,9 @@ lib/
     └── identity.ts             # Get current user + role
 
 db/
-├── schema.ts                   # Drizzle table definitions (16 tables)
-├── seed-plans.sql              # Seed 3 plans with fixed ROI
-├── migrations-pg/              # PostgreSQL migrations
-└── supabase/policies.sql       # Row-level security policies
+├── schema.ts                   # Drizzle table definitions
+├── quantovest-install.sql      # Canonical one-click bootstrap for new projects
+├── seed-plans.sql              # Seed plan reference
+├── migrations-pg/              # Incremental PostgreSQL migrations
+└── supabase/policies.sql       # Policy source reference
 ```
