@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { notifyAdmins, notifyUser } from "@/lib/notifications";
 import { getDb } from "@/lib/db";
-import { portfolioLedger, referralRewards, referralWithdrawals } from "@/db/schema";
+import { portfolioLedger, referralRewards, referralWithdrawals, users } from "@/db/schema";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +13,11 @@ export async function GET() {
     if (error) return error;
     const db = getDb();
     if (!db) return NextResponse.json([]);
-    return NextResponse.json(await db.select().from(referralWithdrawals));
+    const rows = await db.select({ withdrawal: referralWithdrawals, investorName: users.name, investorEmail: users.email })
+      .from(referralWithdrawals)
+      .leftJoin(users, eq(referralWithdrawals.investorId, users.id))
+      .orderBy(desc(referralWithdrawals.createdAt));
+    return NextResponse.json(rows.map(row => ({ ...row.withdrawal, investorName: row.investorName, investorEmail: row.investorEmail })));
   } catch (err) {
     console.error('[referrals/withdrawals]', err);
     return NextResponse.json([], { status: 500 });
