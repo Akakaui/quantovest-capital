@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { verifyTwoFactorToken } from '@/lib/2fa-session';
 
 function isPublicRoute(pathname: string): boolean {
   if (
@@ -76,6 +77,14 @@ export async function middleware(request: NextRequest) {
 
   const role = user?.app_metadata?.role ?? user?.user_metadata?.role ?? 'investor';
   const isAdmin = role === 'admin';
+  const pendingTwoFactor = request.cookies.get('qv_2fa_pending')?.value === '1';
+  if (isAuthenticated && pendingTwoFactor && pathname !== '/verify-2fa' && !pathname.startsWith('/api/auth/2fa')) {
+    const verified = await verifyTwoFactorToken(request.cookies.get('qv_2fa_verified')?.value, user.id).catch(() => false);
+    if (!verified) {
+      if (pathname.startsWith('/api/')) return NextResponse.json({ error: 'Two-factor verification required.' }, { status: 403 });
+      return NextResponse.redirect(new URL('/verify-2fa', request.url));
+    }
+  }
 
   if (isPublicRoute(pathname)) {
     if (isAuthenticated && (pathname === '/login' || pathname === '/signup')) {
