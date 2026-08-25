@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import InvestorSidebar from '@/components/InvestorSidebar';
-import { generateSecret, getQRCodeUrl, verifyTOTP } from '@/lib/totp';
+import { generateSecret, getQRCodeUrl } from '@/lib/totp';
 import { Icon } from '@iconify/react';
 import { createClient } from '@/lib/supabase/client';
 
@@ -153,39 +153,44 @@ export default function SettingsPage() {
   }
 
   async function handleVerify2FA() {
-    if (await verifyTOTP(pendingSecret, verifyCode)) {
-      const res = await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ twoFactorEnabled: true, twoFactorSecret: pendingSecret }),
-      });
-      const data = await res.json().catch(() => ({}));
-      setProfile(p => ({ ...p, twoFactorEnabled: true, twoFactorSecret: pendingSecret }));
-      setShow2faModal(false);
-      if (data.recoveryCodes && data.recoveryCodes.length > 0) {
-        setRecoveryCodes(data.recoveryCodes);
-        setShowRecoveryModal(true);
-      }
-      setMessage('Two-factor authentication enabled successfully.');
-    } else {
-      setMessage('Invalid verification code. Please try again.');
+    setSaving(true);
+    const res = await fetch('/api/auth/2fa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'enable', secret: pendingSecret, code: verifyCode }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setSaving(false);
+    if (!res.ok) {
+      setMessage(data.error ?? 'Invalid verification code. Please try again.');
+      return;
     }
+    setProfile(p => ({ ...p, twoFactorEnabled: true, twoFactorSecret: pendingSecret }));
+    setShow2faModal(false);
+    if (data.recoveryCodes?.length) {
+      setRecoveryCodes(data.recoveryCodes);
+      setShowRecoveryModal(true);
+    }
+    setMessage('Two-factor authentication enabled successfully.');
   }
 
   async function handleDisable2FA() {
-    if (profile.twoFactorSecret && await verifyTOTP(profile.twoFactorSecret, disableCode)) {
-      await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ twoFactorEnabled: false, twoFactorSecret: '' }),
-      });
-      setProfile(p => ({ ...p, twoFactorEnabled: false, twoFactorSecret: '' }));
-      setShowDisable(false);
-      setDisableCode('');
-      setMessage('Two-factor authentication disabled.');
-    } else {
-      setMessage('Invalid code. Cannot disable 2FA.');
+    setSaving(true);
+    const res = await fetch('/api/auth/2fa', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'disable', code: disableCode }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setSaving(false);
+    if (!res.ok) {
+      setMessage(data.error ?? 'Invalid code. Cannot disable 2FA.');
+      return;
     }
+    setProfile(p => ({ ...p, twoFactorEnabled: false, twoFactorSecret: '' }));
+    setShowDisable(false);
+    setDisableCode('');
+    setMessage('Two-factor authentication disabled.');
   }
 
   async function handleSavePayout() {

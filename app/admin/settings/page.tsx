@@ -34,8 +34,8 @@ const DEFAULT_SETTINGS: PlatformSettings = {
   supportEmail: 'support@quantovest.com',
   defaultTimezone: 'UTC',
   maintenanceMode: false,
-  minimumDepositCents: 500000,
-  supportedCurrencies: ['USD'],
+  minimumDepositCents: 150000,
+  supportedCurrencies: ['USD', 'BTC', 'USDT'],
 };
 
 export default function AdminSettingsPage() {
