@@ -31,6 +31,30 @@ interface WithdrawalRow {
   status: string;
   destinationType: string;
   createdAt: string;
+  updatedAt?: string;
+  reviewNote?: string | null;
+}
+
+interface DepositRow {
+  id: string;
+  investorId: string;
+  amountCents: number;
+  method: string;
+  status: string;
+  createdAt: string;
+  updatedAt?: string;
+  reviewNote?: string | null;
+}
+
+interface PerformanceRow {
+  id: number;
+  investorId: string;
+  percentageBps: number;
+  profitCents: number;
+  marketNote: string;
+  entryDate: string;
+  publishedBy: string;
+  planName: string | null;
 }
 
 function formatCents(cents: number): string {
@@ -41,6 +65,8 @@ export default function AdminInvestorsPage() {
   const [investors, setInvestors] = useState<InvestorRow[]>([]);
   const [kycApps, setKycApps] = useState<KycRow[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRow[]>([]);
+  const [deposits, setDeposits] = useState<DepositRow[]>([]);
+  const [performance, setPerformance] = useState<PerformanceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -50,10 +76,12 @@ export default function AdminInvestorsPage() {
     async function fetchData() {
       try {
         const opts = { credentials: 'include' as const };
-        const [invRes, kycRes, wdRes] = await Promise.all([
+        const [invRes, kycRes, wdRes, depRes, perfRes] = await Promise.all([
           fetch('/api/admin/investors', opts),
-          fetch('/api/admin/kyc', opts),
+          fetch('/api/admin/kyc?status=all', opts),
           fetch('/api/admin/withdrawals', opts),
+          fetch('/api/admin/deposits?status=all', opts),
+          fetch('/api/admin/roi', opts),
         ]);
         if (invRes.ok) {
           setInvestors(await invRes.json());
@@ -65,6 +93,8 @@ export default function AdminInvestorsPage() {
         }
         if (kycRes.ok) setKycApps(await kycRes.json());
         if (wdRes.ok) setWithdrawals(await wdRes.json());
+        if (depRes.ok) setDeposits(await depRes.json());
+        if (perfRes.ok) setPerformance(await perfRes.json());
       } catch {
         setErrorMsg('Failed to connect to the server.');
       } finally {
@@ -85,6 +115,14 @@ export default function AdminInvestorsPage() {
 
   function getWithdrawalsForInvestor(investorId: string): WithdrawalRow[] {
     return withdrawals.filter(w => w.investorId === investorId);
+  }
+
+  function getDepositsForInvestor(investorId: string): DepositRow[] {
+    return deposits.filter(d => d.investorId === investorId);
+  }
+
+  function getPerformanceForInvestor(investorId: string): PerformanceRow[] {
+    return performance.filter(p => p.investorId === investorId);
   }
 
   function getLatestKycStatus(investorId: string): string | null {
@@ -138,7 +176,15 @@ export default function AdminInvestorsPage() {
               const isExpanded = expandedId === inv.id;
               const kycStatus = getLatestKycStatus(inv.id);
               const investorWithdrawals = getWithdrawalsForInvestor(inv.id);
+              const investorDeposits = getDepositsForInvestor(inv.id);
+              const investorPerformance = getPerformanceForInvestor(inv.id);
               const investorKyc = getKycForInvestor(inv.id);
+              const timeline = [
+                ...investorDeposits.map(row => ({ type: 'Deposit', status: row.status, amount: row.amountCents, date: row.createdAt, note: row.reviewNote })),
+                ...investorPerformance.map(row => ({ type: 'Performance', status: 'credited', amount: row.profitCents, date: row.entryDate, note: row.marketNote })),
+                ...investorKyc.map(row => ({ type: 'KYC', status: row.status, amount: null, date: row.createdAt, note: null })),
+                ...investorWithdrawals.map(row => ({ type: 'Withdrawal', status: row.status, amount: -row.amountCents, date: row.createdAt, note: row.reviewNote })),
+              ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
               return (
                 <div key={inv.id} className="bg-[#151E23] border border-[#2B393F] rounded-2xl overflow-hidden">
@@ -248,6 +294,12 @@ export default function AdminInvestorsPage() {
                             ))}
                           </div>
                         )}
+                      </div>
+
+                      {/* Unified Timeline */}
+                      <div>
+                        <div className="flex items-center justify-between gap-3 mb-2"><h4 className="text-xs font-semibold text-[#E8EFEB]">Account Timeline</h4><span className="text-[10px] font-mono text-[#7F8C86]">{timeline.length} events</span></div>
+                        {timeline.length === 0 ? <p className="text-[10px] text-[#7F8C86]">No account activity recorded.</p> : <div className="space-y-2">{timeline.slice(0, 12).map((event, index) => <div key={`${event.type}-${event.date}-${index}`} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 rounded-xl bg-[#0D1215] border border-[#2B393F] p-3 text-[10px] font-mono"><span className="w-2 h-2 rounded-full bg-[#22C55E] shrink-0" /><span className="text-white font-semibold">{event.type}</span><span className="capitalize text-[#93A09A]">{event.status}</span>{event.amount !== null && <span className={event.amount >= 0 ? 'text-[#22C55E]' : 'text-rose-300'}>{event.amount >= 0 ? '+' : ''}{formatCents(event.amount)}</span>}<span className="text-[#7F8C86] sm:ml-auto">{new Date(event.date).toLocaleString()}</span>{event.note && <span className="text-[#7F8C86] truncate max-w-full sm:max-w-[240px]" title={event.note}>{event.note}</span>}</div>)}</div>}
                       </div>
                     </div>
                   )}

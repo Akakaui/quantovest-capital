@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { createClient } from '@supabase/supabase-js';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { notifyAdmins, notifyUser } from '@/lib/notifications';
@@ -21,19 +21,25 @@ function documentPaths(raw: string) {
   return [];
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const { error } = await requireAdmin();
     if (error) return error;
     const db = getDb();
     if (!db) return databaseUnavailable('admin kyc GET');
-    const rows = await db.select().from(kycApplications).where(eq(kycApplications.status, 'pending'));
+    const status = new URL(request.url).searchParams.get('status') ?? 'pending';
+    const rows = await db.select({ application: kycApplications, investorName: users.name, investorEmail: users.email })
+      .from(kycApplications)
+      .leftJoin(users, eq(kycApplications.investorId, users.id))
+      .where(status === 'all' ? undefined : eq(kycApplications.status, status))
+      .orderBy(desc(kycApplications.createdAt));
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const bucket = process.env.SUPABASE_MEDIA_BUCKET?.trim();
-    if (!url || !serviceKey || bucket !== 'quantovest-media') return NextResponse.json(rows.map(row => ({ ...row, documentUrls: [] })));
+    const flattened = rows.map(row => ({ ...row.application, investorName: row.investorName, investorEmail: row.investorEmail }));
+    if (!url || !serviceKey || bucket !== 'quantovest-media') return NextResponse.json(flattened.map(row => ({ ...row, documentUrls: [] })));
     const storage = createClient(url, serviceKey).storage.from(bucket);
-    const enriched = await Promise.all(rows.map(async row => {
+    const enriched = await Promise.all(flattened.map(async row => {
       const paths = documentPaths(row.documentPath);
       const documentUrls = (await Promise.all(paths.map(async path => (await storage.createSignedUrl(path, 300)).data?.signedUrl ?? null))).filter(Boolean);
       return { ...row, documentUrls };

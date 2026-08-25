@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { and, asc, eq, isNull, lte, or } from 'drizzle-orm';
+import { and, asc, desc, eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { notifyAdmins, notifyUser } from '@/lib/notifications';
 import { getDb } from '@/lib/db';
@@ -10,19 +10,25 @@ import { databaseUnavailable } from '@/lib/api-errors';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const { identity, error } = await requireAdmin();
     if (error) return error;
     const db = getDb();
     if (!db) return databaseUnavailable('admin deposits GET');
-    const rows = await db.select().from(deposits).where(eq(deposits.status, 'pending'));
+    const status = new URL(request.url).searchParams.get('status') ?? 'pending';
+    const rows = await db.select({ deposit: deposits, investorName: users.name, investorEmail: users.email })
+      .from(deposits)
+      .leftJoin(users, eq(deposits.investorId, users.id))
+      .where(status === 'all' ? undefined : eq(deposits.status, status))
+      .orderBy(desc(deposits.createdAt));
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
     const bucket = process.env.SUPABASE_MEDIA_BUCKET?.trim();
-    if (!url || !serviceKey || bucket !== 'quantovest-media') return NextResponse.json(rows.map(row => ({ ...row, proofUrl: null })));
+    const flattened = rows.map(row => ({ ...row.deposit, investorName: row.investorName, investorEmail: row.investorEmail }));
+    if (!url || !serviceKey || bucket !== 'quantovest-media') return NextResponse.json(flattened.map(row => ({ ...row, proofUrl: null })));
     const storage = createClient(url, serviceKey).storage.from(bucket);
-    const enriched = await Promise.all(rows.map(async row => {
+    const enriched = await Promise.all(flattened.map(async row => {
       if (!row.proofPath) return { ...row, proofUrl: null };
       const signed = await storage.createSignedUrl(row.proofPath, 300);
       return { ...row, proofUrl: signed.data?.signedUrl ?? null };

@@ -122,9 +122,9 @@ export default function AdminDashboard() {
             <div className="w-10 h-10 rounded-xl bg-[#22C55E]/10 border border-[#22C55E]/30 text-[#22C55E] flex items-center justify-center">
               <Icon icon="solar:graph-bold" className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-normal text-[#E8EFEB]">Publish Daily ROI Percentage</h3>
+            <h3 className="text-base font-normal text-[#E8EFEB]">Apply Strategy Performance</h3>
             <p className="text-xs text-[#93A09A]">
-              Enter today&apos;s performance % (e.g., +1.35%). Automatically updates all investor balances and animates their dashboard growth charts.
+              Select an investor, review the last credit, and apply one fixed plan performance credit per UTC day.
             </p>
           </Link>
 
