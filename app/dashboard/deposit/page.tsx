@@ -36,8 +36,12 @@ export default function DepositPage() {
   const [submitted, setSubmitted] = useState(false);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [instructionsLoading, setInstructionsLoading] = useState(true);
+  const [instructionsError, setInstructionsError] = useState(false);
 
   async function load() {
+    setInstructionsLoading(true);
+    setInstructionsError(false);
     const [instructionResult, depositResult] = await Promise.allSettled([
       fetch('/api/deposit-instructions', { cache: 'no-store' }),
       fetch('/api/deposits', { cache: 'no-store' }),
@@ -45,11 +49,14 @@ export default function DepositPage() {
 
     if (instructionResult.status === 'fulfilled' && instructionResult.value.ok) {
       setInstructions(await instructionResult.value.json());
+    } else {
+      setInstructionsError(true);
     }
 
     if (depositResult.status === 'fulfilled' && depositResult.value.ok) {
       setDeposits(await depositResult.value.json());
     }
+    setInstructionsLoading(false);
   }
 
   useEffect(() => {
@@ -171,7 +178,12 @@ export default function DepositPage() {
                 </div>
               </div>
 
-              {activeInstruction ? (
+              {instructionsLoading ? (
+                <div className="rounded-xl border border-[#263437] bg-[#0A0F11] p-8 text-center text-xs text-[#93A09A] flex flex-col items-center justify-center gap-3" aria-live="polite">
+                  <Icon icon="solar:refresh-circle-bold" className="h-8 w-8 animate-spin text-[#22C55E]" aria-hidden="true" />
+                  <p>Loading payment instructions…</p>
+                </div>
+              ) : activeInstruction ? (
                 <div className="rounded-xl border border-[#263437] bg-[#0A0F11] p-4 space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
@@ -203,9 +215,18 @@ export default function DepositPage() {
                   )}
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-[#263437] p-8 text-center text-xs text-[#93A09A] flex flex-col items-center justify-center gap-2">
-                  <Icon icon="solar:shield-warning-bold" className="w-8 h-8 text-amber-500" />
-                  <p>Payment address for this option is currently being updated. Please choose another crypto method or check back in a few minutes.</p>
+                <div className="rounded-xl border border-dashed border-[#263437] p-8 text-center text-xs text-[#93A09A] flex flex-col items-center justify-center gap-3" role={instructionsError ? 'alert' : undefined}>
+                  <Icon icon={instructionsError ? 'solar:danger-triangle-bold' : 'solar:shield-warning-bold'} className="w-8 h-8 text-amber-500" aria-hidden="true" />
+                  <p>{instructionsError ? 'We couldn’t load payment instructions. Please try again.' : 'This payment method is temporarily unavailable. Please choose another method.'}</p>
+                  {instructionsError && (
+                    <button
+                      type="button"
+                      onClick={() => void load()}
+                      className="rounded-full border border-[#22C55E]/40 px-4 py-2 text-[11px] font-semibold text-[#22C55E] hover:bg-[#22C55E]/10 transition-colors"
+                    >
+                      Retry
+                    </button>
+                  )}
                 </div>
               )}
 
