@@ -16,7 +16,11 @@ interface SwapRow {
   createdAt: string;
 }
 
-export default function SwapHistory() {
+interface SwapHistoryProps {
+  refreshKey?: number;
+}
+
+export default function SwapHistory({ refreshKey = 0 }: SwapHistoryProps) {
   const [swaps, setSwaps] = useState<SwapRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -29,7 +33,7 @@ export default function SwapHistory() {
       setLoading(false);
     }
     void load();
-  }, []);
+  }, [refreshKey]);
 
   if (loading) {
     return (

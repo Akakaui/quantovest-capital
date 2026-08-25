@@ -1,11 +1,49 @@
 import { eq } from 'drizzle-orm';
 import { getDb } from '@/lib/db';
 import { notifications, users } from '@/db/schema';
+import { sendEmail } from '@/lib/email';
+
+type NotificationPrefs = { notifyDailyRoi?: boolean; notifyStrategyAlerts?: boolean };
+
+function readPrefs(value: unknown): NotificationPrefs {
+  if (!value) return {};
+  if (typeof value === 'string') {
+    try { return JSON.parse(value) as NotificationPrefs; } catch { return {}; }
+  }
+  return typeof value === 'object' ? value as NotificationPrefs : {};
+}
+
+async function maybeEmailUser(user: { email: string | null; name: string | null; notificationPrefs: unknown } | undefined, type: string, title: string, body: string) {
+  if (!user?.email) return;
+  const prefs = readPrefs(user.notificationPrefs);
+  const isPerformance = type === 'roi_published' || type === 'strategy_performance';
+  const optedIn = isPerformance
+    ? prefs.notifyDailyRoi === true
+    : type === 'strategy_alert' || type === 'strategy_update'
+      ? prefs.notifyStrategyAlerts === true
+      : false;
+  if (!optedIn) return;
+  if (isPerformance) {
+    await sendEmail(user.email, 'roi_published', {
+      investorName: user.name || 'Investor',
+      roiPercent: body.match(/\d+(?:\.\d+)?%/)?.[0]?.replace('%', ''),
+      profitAmount: body.match(/\$[\d,.]+/)?.[0],
+      message: body,
+    });
+  } else {
+    await sendEmail(user.email, 'admin_broadcast', {
+      investorName: user.name || 'Investor',
+      message: body,
+    });
+  }
+}
 
 export async function notifyUser(userId: string, type: string, title: string, body: string, relatedRewardId?: number) {
   const db = getDb();
   if (!db) return;
+  const [user] = await db.select({ email: users.email, name: users.name, notificationPrefs: users.notificationPrefs }).from(users).where(eq(users.id, userId)).limit(1);
   await db.insert(notifications).values({ userId, type, title, body, relatedRewardId: relatedRewardId ?? null, isRead: 0 });
+  try { await maybeEmailUser(user, type, title, body); } catch (error) { console.error('[notifications email]', error); }
 }
 
 export async function notifyAdmins(type: string, title: string, body: string) {

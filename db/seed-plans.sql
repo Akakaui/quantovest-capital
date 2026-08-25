@@ -3,7 +3,7 @@
 
 INSERT INTO "plans" ("name", "minimumDepositCents", "maximumDepositCents", "minRoiBps", "maxRoiBps", "active")
 VALUES
-  ('Starter', 50000, 4999999, 1500, 1500, 1),
-  ('Growth', 500000, 14999999, 2500, 2500, 1),
-  ('Elite', 1500000, NULL, 3500, 3500, 1)
+  ('Starter', 150000, 749999, 1500, 1500, 1),
+  ('Growth', 750000, 4499999, 2500, 2500, 1),
+  ('Elite', 4500000, NULL, 3500, 3500, 1)
 ON CONFLICT DO NOTHING;

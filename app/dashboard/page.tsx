@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import InvestorSidebar from '@/components/InvestorSidebar';
 import KycModal from '@/components/KycModal';
 import { createClient } from '@/lib/supabase/client';
@@ -162,6 +162,7 @@ export default function InvestorDashboard() {
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
   const [tourStep, setTourStep] = useState<number | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const managerRedirected = useRef(false);
 
   const fetchAllData = useCallback(async () => {
     try {
@@ -174,19 +175,21 @@ export default function InvestorDashboard() {
 
       const headers = { Authorization: `Bearer ${session.access_token}` };
 
-      const [profileRes, depositsRes, withdrawalsRes, kycRes] = await Promise.all([
+      const [profileRes, depositsRes, withdrawalsRes, kycRes, allocationsRes] = await Promise.all([
         fetch('/api/investor-profile', { headers }),
         fetch('/api/deposits', { headers }),
         fetch('/api/withdrawals', { headers }),
         fetch('/api/kyc', { headers }),
+        fetch('/api/traders/my', { headers }),
       ]);
 
-      const [profileData, depositsData, withdrawalsData, kycDataRes] = await Promise.all([
+      const [profileData, depositsData, withdrawalsData, kycDataRes, allocationsData] = await Promise.all([
         profileRes.ok ? profileRes.json() : Promise.resolve(null),
         depositsRes.ok ? depositsRes.json() : Promise.resolve([] as DepositRow[]),
         withdrawalsRes.ok ? withdrawalsRes.json() : Promise.resolve([] as WithdrawalRow[]),
         kycRes.ok ? kycRes.json() : Promise.resolve([] as KycRow[]),
-      ]) as [Profile | null, DepositRow[], WithdrawalRow[], KycRow[]];
+        allocationsRes.ok ? allocationsRes.json() : Promise.resolve([] as Array<{ status?: string }>),
+      ]) as [Profile | null, DepositRow[], WithdrawalRow[], KycRow[], Array<{ status?: string }>];
 
       if (profileData) {
         setProfileLoaded(true);
@@ -202,6 +205,20 @@ export default function InvestorDashboard() {
 
       const approvedDeposits = depositsData.filter(d => d.status === 'approved' || d.status === 'completed');
       const approvedWithdrawals = withdrawalsData.filter(w => w.status === 'approved');
+      const hasActiveManager = allocationsData.some(allocation => allocation.status === 'active');
+
+      if (
+        profileData &&
+        profileData.kycStatus === 'approved' &&
+        approvedDeposits.length > 0 &&
+        !hasActiveManager &&
+        !managerRedirected.current &&
+        window.location.pathname === '/dashboard'
+      ) {
+        managerRedirected.current = true;
+        window.location.replace('/dashboard/traders?funded=1');
+        return;
+      }
 
       if (profileData && approvedDeposits.length > 0) {
         let cumulative = 0;
@@ -411,14 +428,14 @@ export default function InvestorDashboard() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-normal text-[#F3F7F4] flex items-center gap-2">
-                Portfolio Signal Growth Line
+                Portfolio Performance
                 <span className="w-2 h-2 rounded-full bg-[#22C55E]"></span>
               </h3>
-              <p className="text-xs text-[#93A09A]">Dynamic daily updates driven by trading firm strategy execution</p>
+              <p className="text-xs text-[#93A09A]">Account value over time based on recorded strategy performance updates</p>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono text-[#22C55E] bg-[#22C55E]/10 border border-[#22C55E]/30 px-3 py-1 rounded-full">
-                Live Dynamic Sync
+                Performance history
               </span>
             </div>
           </div>
@@ -431,7 +448,7 @@ export default function InvestorDashboard() {
 
         {/* Daily Strategy Activity Log */}
         <div className="dashboard-activity-card p-6 rounded-2xl bg-[#141C1F] border border-[#263437] space-y-4">
-          <h3 className="text-base font-normal text-[#F3F7F4]">Daily ROI Strategy Activity Log</h3>
+          <h3 className="text-base font-normal text-[#F3F7F4]">Strategy Performance Activity</h3>
           <div className="space-y-3">
             {dailyLogs.length === 0 ? (
               <div className="p-8 text-center">

@@ -80,8 +80,8 @@ export async function POST(request: Request) {
 
       const profitDollars = (result.profitCents / 100).toFixed(2);
       const roiPercent = (result.percentageBps / 100).toFixed(0);
-      await notifyUser(result.investorId, 'roi_published', 'ROI published', `ROI of ${roiPercent}% published. $${profitDollars} added to your balance.`);
-      await notifyAdmins('roi_published', 'ROI published', `ROI of ${roiPercent}% published for investor ${result.investorId}.`);
+      await notifyUser(result.investorId, 'strategy_performance', 'Strategy performance update', `A ${roiPercent}% performance credit of $${profitDollars} has been applied to your account balance.`);
+      await notifyAdmins('strategy_performance', 'Investor performance credited', `A ${roiPercent}% performance credit of $${profitDollars} was applied for investor ${result.investorId}.`);
       return NextResponse.json({ created: true, ...result }, { status: 201 });
     } catch (error) {
       return NextResponse.json({ error: error instanceof Error ? error.message : "ROI publication failed." }, { status: 400 });

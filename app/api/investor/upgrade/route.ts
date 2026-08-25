@@ -2,15 +2,12 @@ import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { getCurrentIdentity } from '@/lib/supabase/identity';
 import { getDb } from '@/lib/db';
-import { investorAccounts, plans } from '@/db/schema';
+import { investorAccounts, plans, portfolioLedger } from '@/db/schema';
+import { PLAN_MINIMUMS_CENTS } from '@/lib/constants';
+import { notifyUser } from '@/lib/notifications';
+import { sendPlanUpdated } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
-
-const PLAN_MINIMUMS_CENTS: Record<string, number> = {
-  Starter: 50000,
-  Growth: 500000,
-  Elite: 1500000,
-};
 
 export async function POST(request: Request) {
   const actor = await getCurrentIdentity();
@@ -48,8 +45,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Plan "${planName}" not found in database.` }, { status: 404 });
     }
 
-    await db.update(investorAccounts).set({ planId: targetPlan.id }).where(eq(investorAccounts.id, account.id));
+    if (account.planId === targetPlan.id) {
+      return NextResponse.json({ success: true, plan: planName, unchanged: true });
+    }
 
+    const previousPlan = await db.select({ name: plans.name }).from(plans).where(eq(plans.id, account.planId)).limit(1);
+    await db.transaction(async tx => {
+      await tx.update(investorAccounts).set({ planId: targetPlan.id, updatedAt: new Date() }).where(eq(investorAccounts.id, account.id));
+      await tx.insert(portfolioLedger).values({
+        investorId: actor.id,
+        type: 'plan_upgrade',
+        amountCents: 0,
+        referenceId: `plan-upgrade:${account.id}:${account.planId}:${targetPlan.id}`,
+        description: `Plan changed from ${previousPlan[0]?.name ?? 'previous plan'} to ${targetPlan.name}`,
+      });
+    });
+
+    await notifyUser(actor.id, 'plan_updated', 'Investment plan updated', `Your investment plan is now ${targetPlan.name}.`);
+    if (actor.email) {
+      try { await sendPlanUpdated(actor.email, actor.name || 'Investor', previousPlan[0]?.name ?? 'Previous plan', targetPlan.name); } catch {}
+    }
     return NextResponse.json({ success: true, plan: planName });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Upgrade failed.' }, { status: 500 });

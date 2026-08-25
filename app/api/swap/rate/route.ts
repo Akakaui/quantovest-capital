@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth-helpers";
 import { getDb } from "@/lib/db";
 import { swapConfig } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +45,7 @@ export async function GET(request: Request) {
     const db = getDb();
     if (db) {
       const [config] = await db.select().from(swapConfig).where(
-        eq(swapConfig.fromAsset, from)
+        and(eq(swapConfig.fromAsset, from), eq(swapConfig.toAsset, to))
       ).limit(1);
       if (config && config.active) {
         rate *= parseFloat(config.rateMultiplier);
