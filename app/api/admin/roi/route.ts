@@ -93,9 +93,15 @@ export async function POST(request: Request) {
       });
       const profitDollars = (result.profitCents / 100).toFixed(2);
       const roiPercent = (result.percentageBps / 100).toFixed(0);
-      await notifyUser(result.investorId, "strategy_performance", "Strategy performance update", `A ${roiPercent}% performance credit of $${profitDollars} has been applied to your account balance.`);
-      await notifyAdmins("strategy_performance", "Investor performance credited", `A ${roiPercent}% performance credit of $${profitDollars} was applied for investor ${result.investorId}.`);
-      return NextResponse.json({ created: true, ...result }, { status: 201 });
+      try {
+        await notifyUser(result.investorId, "strategy_performance", "Strategy performance update", `A ${roiPercent}% performance credit of $${profitDollars} has been applied to your account balance.`);
+        await notifyAdmins("strategy_performance", "Investor performance credited", `A ${roiPercent}% performance credit of $${profitDollars} was applied for investor ${result.investorId}.`);
+      } catch (notificationError) {
+        // The account transaction is already committed. A notification provider
+        // or preference-schema failure must not report a false credit failure.
+        console.error("[roi notification delivery]", notificationError);
+      }
+      return NextResponse.json({ created: true, notifications: "queued", ...result }, { status: 201 });
     } catch (error) {
       const duplicate = error instanceof Error && error.message.includes("already been credited");
       return NextResponse.json({ error: error instanceof Error ? error.message : "Performance credit failed." }, { status: duplicate ? 409 : 400 });

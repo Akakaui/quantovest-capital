@@ -41,8 +41,26 @@ async function maybeEmailUser(user: { email: string | null; name: string | null;
 export async function notifyUser(userId: string, type: string, title: string, body: string, relatedRewardId?: number) {
   const db = getDb();
   if (!db) return;
-  const [user] = await db.select({ email: users.email, name: users.name, notificationPrefs: users.notificationPrefs }).from(users).where(eq(users.id, userId)).limit(1);
-  await db.insert(notifications).values({ userId, type, title, body, relatedRewardId: relatedRewardId ?? null, isRead: 0 });
+  let user: { email: string | null; name: string | null; notificationPrefs: unknown } | undefined;
+  try {
+    const [row] = await db.select({ email: users.email, name: users.name, notificationPrefs: users.notificationPrefs }).from(users).where(eq(users.id, userId)).limit(1);
+    user = row;
+  } catch (error) {
+    // Keep in-app notifications and the financial operation alive if an older
+    // production database has not yet received the notificationPrefs column.
+    console.error('[notifications preference lookup]', error instanceof Error ? error.message : error);
+    try {
+      const [row] = await db.select({ email: users.email, name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
+      user = row ? { ...row, notificationPrefs: null } : undefined;
+    } catch (fallbackError) {
+      console.error('[notifications user lookup]', fallbackError instanceof Error ? fallbackError.message : fallbackError);
+    }
+  }
+  try {
+    await db.insert(notifications).values({ userId, type, title, body, relatedRewardId: relatedRewardId ?? null, isRead: 0 });
+  } catch (error) {
+    console.error('[notifications in-app insert]', error instanceof Error ? error.message : error);
+  }
   try { await maybeEmailUser(user, type, title, body); } catch (error) { console.error('[notifications email]', error); }
 }
 
