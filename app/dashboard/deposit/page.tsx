@@ -24,14 +24,16 @@ type Deposit = {
 
 const CRYPTO_COINS = [
   { value: 'usdt-trc20', label: 'USDT (TRC-20)', icon: 'cryptocurrency:usdt' },
+  { value: 'usdt-erc20', label: 'USDT (ERC-20)', icon: 'cryptocurrency:usdt' },
   { value: 'btc', label: 'Bitcoin (BTC)', icon: 'cryptocurrency:btc' },
+  { value: 'eth', label: 'Ethereum (ETH)', icon: 'cryptocurrency:eth' },
 ] as const;
 
 export default function DepositPage() {
   const [instructions, setInstructions] = useState<Instruction[]>([]);
   const [deposits, setDeposits] = useState<Deposit[]>([]);
   const [method, setMethod] = useState<string>('usdt-trc20');
-  const [amount, setAmount] = useState(1500);
+  const [amount, setAmount] = useState(50);
   const [proof, setProof] = useState<File | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [message, setMessage] = useState('');
@@ -129,8 +131,19 @@ export default function DepositPage() {
         <div className="border-b border-[#263437] pb-6 space-y-1">
           <h1 className="text-2xl font-normal">Deposit Funds</h1>
           <p className="text-xs text-[#93A09A]">
-            Select BTC or USDT (TRC-20), transfer the funds to the matching wallet address, and upload proof of payment.
+            Select your preferred cryptocurrency, transfer the funds to the matching wallet address, and upload proof of payment.
           </p>
+          <div className="mt-4 p-4 rounded-xl border border-[#263437] bg-[#141C1F] space-y-2">
+            <div className="flex flex-wrap gap-4 text-xs font-mono text-[#93A09A]">
+              <span>Minimum: <strong className="text-white">$50</strong></span>
+              <span>Recommended Starting: <strong className="text-white">$500</strong></span>
+              <span>Starter Plan threshold: <strong className="text-white">$1,500</strong></span>
+            </div>
+            <div className="flex flex-wrap gap-4 text-xs font-mono text-[#93A09A]">
+              <span>Duration: <strong className="text-white">7 days</strong></span>
+              <span>ROI: <strong className="text-white">15% after 7 days</strong></span>
+            </div>
+          </div>
         </div>
 
         {message && (
@@ -235,7 +248,7 @@ export default function DepositPage() {
                   Deposit Amount ($ USD)
                   <input
                     required
-                    min="1500"
+                    min="50"
                     type="number"
                     value={amount}
                     onChange={event => setAmount(Number(event.target.value))}

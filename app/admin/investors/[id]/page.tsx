@@ -109,14 +109,14 @@ export default function AdminInvestorProfilePage() {
                 </div>
                 <div>
                   <p className="text-[10px] uppercase font-mono text-[#93A09A]">Plan</p>
-                  <p className="text-xs text-[#E8EFEB]">{profile.planName ?? 'None'}</p>
+                  <p className="text-xs text-[#E8EFEB]">{profile.planName ?? '—'}</p>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase font-mono text-[#93A09A]">KYC Status</p>
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
                     profile.kycStatus === 'approved' ? 'bg-[#22C55E]/10 text-[#22C55E]' :
                     profile.kycStatus === 'pending' ? 'bg-amber-500/10 text-amber-400' : 'bg-rose-500/10 text-rose-400'
-                  }`}>{profile.kycStatus ?? 'unverified'}</span>
+                  }`}>{profile.kycStatus === 'approved' ? 'VERIFIED' : (profile.kycStatus ?? 'unverified').toUpperCase()}</span>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase font-mono text-[#93A09A]">Balance</p>

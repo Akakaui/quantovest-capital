@@ -113,8 +113,8 @@ export default function TradersPage() {
                   </div>
                 </div>
                 <div className="h-3 w-full bg-[#263437] rounded" />
-                <div className="grid grid-cols-3 gap-2 p-3 bg-[#0A0F11] border border-[#263437] rounded-xl">
-                  {[1, 2, 3].map((j) => (
+                <div className="grid grid-cols-2 gap-2 p-3 bg-[#0A0F11] border border-[#263437] rounded-xl">
+                  {[1, 2].map((j) => (
                     <div key={j} className="text-center space-y-1">
                       <div className="h-2 w-12 bg-[#263437] rounded mx-auto" />
                       <div className="h-3 w-10 bg-[#263437] rounded mx-auto" />
@@ -175,7 +175,7 @@ export default function TradersPage() {
                   <p className="text-xs text-[#93A09A] leading-relaxed">{trader.bio}</p>
 
                   {/* Metrics */}
-                  <div className="grid grid-cols-3 gap-2 p-3 bg-[#0A0F11] border border-[#263437] rounded-xl text-center">
+                  <div className="grid grid-cols-2 gap-2 p-3 bg-[#0A0F11] border border-[#263437] rounded-xl text-center">
                     <div>
                       <p className="text-[10px] text-[#93A09A] font-mono">Win Rate</p>
                       <p className="text-sm font-mono font-semibold text-[#22C55E]">{bpsToPercent(trader.winRateBps)}%</p>
@@ -183,10 +183,6 @@ export default function TradersPage() {
                     <div>
                       <p className="text-[10px] text-[#93A09A] font-mono">30D Return</p>
                       <p className="text-sm font-mono font-semibold text-[#22C55E]">+{bpsToPercent(trader.thirtyDayReturnBps)}%</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] text-[#93A09A] font-mono">Risk Level</p>
-                      <p className="text-sm font-mono font-semibold text-[#F3F7F4]">{trader.riskLevel} / 5</p>
                     </div>
                   </div>
 

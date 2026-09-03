@@ -40,7 +40,7 @@ export default function WithdrawPage() {
                   setProfile({
           balance: data.balanceCents != null ? data.balanceCents / 100 : Number(data.balance ?? 0),
 
-          plan: data.plan ?? 'None',
+          plan: data.plan ?? '',
           twoFactorEnabled: data.twoFactorEnabled ?? false,
           twoFactorSecret: data.twoFactorSecret ?? '',
           payoutDetails: data.payoutDetails ?? { cryptoAddress: '', cryptoNetwork: '', bankName: '', bankAccountName: '', bankAccountNumber: '' },

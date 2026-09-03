@@ -57,6 +57,15 @@ interface PerformanceRow {
   planName: string | null;
 }
 
+interface PlanRow {
+  id: number;
+  name: string;
+  minimumDepositCents: number;
+  maximumDepositCents: number | null;
+  minRoiBps: number;
+  maxRoiBps: number;
+}
+
 function formatCents(cents: number): string {
   return '$' + (cents / 100).toLocaleString('en-US');
 }
@@ -67,21 +76,47 @@ export default function AdminInvestorsPage() {
   const [withdrawals, setWithdrawals] = useState<WithdrawalRow[]>([]);
   const [deposits, setDeposits] = useState<DepositRow[]>([]);
   const [performance, setPerformance] = useState<PerformanceRow[]>([]);
+  const [plans, setPlans] = useState<PlanRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const [balanceModalOpen, setBalanceModalOpen] = useState(false);
+  const [balanceInvestorId, setBalanceInvestorId] = useState('');
+  const [balanceAmount, setBalanceAmount] = useState('');
+  const [balanceReason, setBalanceReason] = useState('');
+  const [balanceLoading, setBalanceLoading] = useState(false);
+  const [balanceSuccess, setBalanceSuccess] = useState<string | null>(null);
+  const [balanceError, setBalanceError] = useState<string | null>(null);
+
+  const [planModalOpen, setPlanModalOpen] = useState(false);
+  const [planInvestorId, setPlanInvestorId] = useState('');
+  const [planName, setPlanName] = useState('');
+  const [planLoading, setPlanLoading] = useState(false);
+  const [planSuccess, setPlanSuccess] = useState<string | null>(null);
+  const [planError, setPlanError] = useState<string | null>(null);
+
+  const [roiModalOpen, setRoiModalOpen] = useState(false);
+  const [roiInvestorId, setRoiInvestorId] = useState('');
+  const [roiAmount, setRoiAmount] = useState('');
+  const [roiMessageTemplate, setRoiMessageTemplate] = useState('');
+  const [roiCustomMessage, setRoiCustomMessage] = useState('');
+  const [roiLoading, setRoiLoading] = useState(false);
+  const [roiSuccess, setRoiSuccess] = useState<string | null>(null);
+  const [roiError, setRoiError] = useState<string | null>(null);
+
   useEffect(() => {
     async function fetchData() {
       try {
         const opts = { credentials: 'include' as const };
-        const [invRes, kycRes, wdRes, depRes, perfRes] = await Promise.all([
+        const [invRes, kycRes, wdRes, depRes, perfRes, plansRes] = await Promise.all([
           fetch('/api/admin/investors', opts),
           fetch('/api/admin/kyc?status=all', opts),
           fetch('/api/admin/withdrawals', opts),
           fetch('/api/admin/deposits?status=all', opts),
           fetch('/api/admin/roi', opts),
+          fetch('/api/admin/plans', opts),
         ]);
         if (invRes.ok) {
           setInvestors(await invRes.json());
@@ -95,6 +130,7 @@ export default function AdminInvestorsPage() {
         if (wdRes.ok) setWithdrawals(await wdRes.json());
         if (depRes.ok) setDeposits(await depRes.json());
         if (perfRes.ok) setPerformance(await perfRes.json());
+        if (plansRes.ok) setPlans(await plansRes.json());
       } catch {
         setErrorMsg('Failed to connect to the server.');
       } finally {
@@ -200,7 +236,7 @@ export default function AdminInvestorsPage() {
                       </div>
                       <div>
                         <p className="text-[10px] uppercase font-mono text-[#93A09A]">Plan</p>
-                        <p className="text-sm text-[#E8EFEB]">{inv.planName ?? 'None'}</p>
+                        <p className="text-sm text-[#E8EFEB]">{inv.planName ?? '—'}</p>
                       </div>
                       <div>
                         <p className="text-[10px] uppercase font-mono text-[#93A09A]">Balance</p>
@@ -251,6 +287,51 @@ export default function AdminInvestorsPage() {
                           <p className="text-[10px] uppercase font-mono text-[#93A09A] mb-1">Account ID</p>
                           <p className="text-[10px] font-mono text-[#93A09A] break-all">{inv.accountId ?? 'No account'}</p>
                         </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          onClick={() => {
+                            setBalanceInvestorId(inv.id);
+                            setBalanceAmount('');
+                            setBalanceReason('');
+                            setBalanceSuccess(null);
+                            setBalanceError(null);
+                            setBalanceModalOpen(true);
+                          }}
+                          className="flex items-center gap-1.5 text-[10px] font-mono px-3 py-1.5 rounded-lg bg-[#22C55E]/10 text-[#22C55E] border border-[#22C55E]/30 hover:bg-[#22C55E]/20 transition-colors"
+                        >
+                          <Icon icon="solar:wallet-bold" className="w-3.5 h-3.5" />
+                          Add Balance
+                        </button>
+                        <button
+                          onClick={() => {
+                            setRoiInvestorId(inv.id);
+                            setRoiAmount('');
+                            setRoiMessageTemplate('');
+                            setRoiCustomMessage('');
+                            setRoiSuccess(null);
+                            setRoiError(null);
+                            setRoiModalOpen(true);
+                          }}
+                          className="flex items-center gap-1.5 text-[10px] font-mono px-3 py-1.5 rounded-lg bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30 hover:bg-[#F59E0B]/20 transition-colors"
+                        >
+                          <Icon icon="solar:graph-up-bold" className="w-3.5 h-3.5" />
+                          Add ROI
+                        </button>
+                        <button
+                          onClick={() => {
+                            setPlanInvestorId(inv.id);
+                            setPlanName('');
+                            setPlanSuccess(null);
+                            setPlanError(null);
+                            setPlanModalOpen(true);
+                          }}
+                          className="flex items-center gap-1.5 text-[10px] font-mono px-3 py-1.5 rounded-lg bg-[#3B82F6]/10 text-[#3B82F6] border border-[#3B82F6]/30 hover:bg-[#3B82F6]/20 transition-colors"
+                        >
+                          <Icon icon="solar:layer-bold" className="w-3.5 h-3.5" />
+                          Assign Plan
+                        </button>
                       </div>
 
                       {/* KYC History */}
@@ -309,6 +390,240 @@ export default function AdminInvestorsPage() {
           </div>
         )}
       </main>
+
+      {/* Add Balance Modal */}
+      {balanceModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setBalanceModalOpen(false)}>
+          <div className="bg-[#151E23] border border-[#2B393F] rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm font-semibold text-[#E8EFEB] mb-4">Add Balance (Credit Account)</h3>
+
+            {balanceSuccess && <div className="mb-3 p-3 rounded-lg bg-[#22C55E]/10 border border-[#22C55E]/30 text-[10px] font-mono text-[#22C55E]">{balanceSuccess}</div>}
+            {balanceError && <div className="mb-3 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-[10px] font-mono text-rose-300">{balanceError}</div>}
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[10px] uppercase font-mono text-[#93A09A] mb-1">Amount (USD)</label>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={balanceAmount}
+                  onChange={e => setBalanceAmount(e.target.value)}
+                  placeholder="e.g. 150.00"
+                  className="w-full rounded-xl border border-[#2B393F] bg-[#0D1215] px-4 py-2.5 text-sm text-white placeholder-[#7F8C86] font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase font-mono text-[#93A09A] mb-1">Reason (optional)</label>
+                <input
+                  type="text"
+                  value={balanceReason}
+                  onChange={e => setBalanceReason(e.target.value)}
+                  placeholder="e.g. VIP bonus"
+                  className="w-full rounded-xl border border-[#2B393F] bg-[#0D1215] px-4 py-2.5 text-sm text-white placeholder-[#7F8C86]"
+                />
+              </div>
+              <button
+                disabled={balanceLoading || !balanceAmount || Number(balanceAmount) <= 0}
+                onClick={async () => {
+                  setBalanceLoading(true);
+                  setBalanceError(null);
+                  setBalanceSuccess(null);
+                  try {
+                    const res = await fetch('/api/admin/balance', {
+                      method: 'POST',
+                      credentials: 'include',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        investorId: balanceInvestorId,
+                        amountCents: Math.round(Number(balanceAmount) * 100),
+                        reason: balanceReason.trim() || undefined,
+                      }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Failed to add balance');
+                    setBalanceSuccess(`$${Number(balanceAmount).toFixed(2)} credited as profit.`);
+                    setInvestors(prev => prev.map(inv =>
+                      inv.id === balanceInvestorId ? { ...inv, balanceCents: inv.balanceCents + Math.round(Number(balanceAmount) * 100) } : inv
+                    ));
+                    setTimeout(() => setBalanceModalOpen(false), 1500);
+                  } catch (err: any) {
+                    setBalanceError(err.message);
+                  } finally {
+                    setBalanceLoading(false);
+                  }
+                }}
+                className="w-full py-2.5 rounded-xl bg-[#22C55E] text-black text-sm font-semibold hover:bg-[#16A34A] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {balanceLoading ? 'Processing...' : 'Add Balance'}
+              </button>
+            </div>
+
+            <button onClick={() => setBalanceModalOpen(false)} className="mt-3 w-full py-2 rounded-xl border border-[#2B393F] text-[#93A09A] text-xs hover:bg-[#1A252C] transition-colors">Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Add ROI Modal */}
+      {roiModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setRoiModalOpen(false)}>
+          <div className="bg-[#151E23] border border-[#2B393F] rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm font-semibold text-[#E8EFEB] mb-4">Add ROI / Profit</h3>
+
+            {roiSuccess && <div className="mb-3 p-3 rounded-lg bg-[#22C55E]/10 border border-[#22C55E]/30 text-[10px] font-mono text-[#22C55E]">{roiSuccess}</div>}
+            {roiError && <div className="mb-3 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-[10px] font-mono text-rose-300">{roiError}</div>}
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[10px] uppercase font-mono text-[#93A09A] mb-1">Amount (USD)</label>
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={roiAmount}
+                  onChange={e => setRoiAmount(e.target.value)}
+                  placeholder="e.g. 50.00"
+                  className="w-full rounded-xl border border-[#2B393F] bg-[#0D1215] px-4 py-2.5 text-sm text-white placeholder-[#7F8C86] font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase font-mono text-[#93A09A] mb-1">Message Template</label>
+                <select
+                  value={roiMessageTemplate}
+                  onChange={e => setRoiMessageTemplate(e.target.value)}
+                  className="w-full rounded-xl border border-[#2B393F] bg-[#0D1215] px-4 py-2.5 text-sm text-white focus:outline-none"
+                >
+                  <option value="" disabled>Select a message...</option>
+                  <option value="BTC market gains">BTC market gains</option>
+                  <option value="ETH portfolio performance">ETH portfolio performance</option>
+                  <option value="USDT yield return">USDT yield return</option>
+                  <option value="Forex market gains">Forex market gains</option>
+                  <option value="Custom">Custom message...</option>
+                </select>
+              </div>
+              
+              {roiMessageTemplate === 'Custom' && (
+                <div>
+                  <label className="block text-[10px] uppercase font-mono text-[#93A09A] mb-1">Custom Message</label>
+                  <input
+                    type="text"
+                    value={roiCustomMessage}
+                    onChange={e => setRoiCustomMessage(e.target.value)}
+                    placeholder="Enter custom message"
+                    className="w-full rounded-xl border border-[#2B393F] bg-[#0D1215] px-4 py-2.5 text-sm text-white placeholder-[#7F8C86]"
+                  />
+                </div>
+              )}
+
+              <button
+                disabled={roiLoading || !roiAmount || Number(roiAmount) <= 0 || !roiMessageTemplate || (roiMessageTemplate === 'Custom' && !roiCustomMessage)}
+                onClick={async () => {
+                  setRoiLoading(true);
+                  setRoiError(null);
+                  setRoiSuccess(null);
+                  try {
+                    const message = roiMessageTemplate === 'Custom' ? roiCustomMessage : roiMessageTemplate;
+                    const res = await fetch('/api/admin/roi', {
+                      method: 'POST',
+                      credentials: 'include',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        investorId: roiInvestorId,
+                        amountCents: Math.round(Number(roiAmount) * 100),
+                        message,
+                      }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Failed to add ROI');
+                    setRoiSuccess(`$${Number(roiAmount).toFixed(2)} ROI credited.`);
+                    setInvestors(prev => prev.map(inv =>
+                      inv.id === roiInvestorId ? { ...inv, balanceCents: inv.balanceCents + Math.round(Number(roiAmount) * 100) } : inv
+                    ));
+                    setTimeout(() => setRoiModalOpen(false), 1500);
+                  } catch (err: any) {
+                    setRoiError(err.message);
+                  } finally {
+                    setRoiLoading(false);
+                  }
+                }}
+                className="w-full py-2.5 rounded-xl bg-[#F59E0B] text-black text-sm font-semibold hover:bg-[#D97706] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {roiLoading ? 'Processing...' : 'Add ROI / Profit'}
+              </button>
+            </div>
+
+            <button onClick={() => setRoiModalOpen(false)} className="mt-3 w-full py-2 rounded-xl border border-[#2B393F] text-[#93A09A] text-xs hover:bg-[#1A252C] transition-colors">Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Plan Modal */}
+      {planModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setPlanModalOpen(false)}>
+          <div className="bg-[#151E23] border border-[#2B393F] rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
+            <h3 className="text-sm font-semibold text-[#E8EFEB] mb-4">Assign Plan</h3>
+
+            {planSuccess && <div className="mb-3 p-3 rounded-lg bg-[#22C55E]/10 border border-[#22C55E]/30 text-[10px] font-mono text-[#22C55E]">{planSuccess}</div>}
+            {planError && <div className="mb-3 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-[10px] font-mono text-rose-300">{planError}</div>}
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[10px] uppercase font-mono text-[#93A09A] mb-1">Select Plan</label>
+                <div className="space-y-1.5">
+                  {plans.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => setPlanName(p.name)}
+                      className={`w-full text-left px-4 py-2.5 rounded-xl border text-sm transition-colors ${
+                        planName === p.name
+                          ? 'bg-[#3B82F6]/10 border-[#3B82F6]/50 text-[#3B82F6]'
+                          : 'border-[#2B393F] bg-[#0D1215] text-[#93A09A] hover:border-[#3B82F6]/30'
+                      }`}
+                    >
+                      <span className="font-semibold">{p.name}</span>
+                      <span className="ml-2 text-[10px] font-mono opacity-60">
+                        Min ${(p.minimumDepositCents / 100).toLocaleString()} · ROI {(p.minRoiBps / 100).toFixed(1)}%–{(p.maxRoiBps / 100).toFixed(1)}%
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <button
+                disabled={planLoading || !planName}
+                onClick={async () => {
+                  setPlanLoading(true);
+                  setPlanError(null);
+                  setPlanSuccess(null);
+                  try {
+                    const res = await fetch('/api/admin/assign-plan', {
+                      method: 'POST',
+                      credentials: 'include',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ investorId: planInvestorId, planName }),
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Failed to assign plan');
+                    setPlanSuccess(`Plan set to "${planName}".`);
+                    setInvestors(prev => prev.map(inv =>
+                      inv.id === planInvestorId ? { ...inv, planName, planId: String(plans.find(p => p.name === planName)?.id ?? inv.planId) } : inv
+                    ));
+                    setTimeout(() => setPlanModalOpen(false), 1500);
+                  } catch (err: any) {
+                    setPlanError(err.message);
+                  } finally {
+                    setPlanLoading(false);
+                  }
+                }}
+                className="w-full py-2.5 rounded-xl bg-[#3B82F6] text-white text-sm font-semibold hover:bg-[#2563EB] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {planLoading ? 'Assigning...' : 'Assign Plan'}
+              </button>
+            </div>
+
+            <button onClick={() => setPlanModalOpen(false)} className="mt-3 w-full py-2 rounded-xl border border-[#2B393F] text-[#93A09A] text-xs hover:bg-[#1A252C] transition-colors">Cancel</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

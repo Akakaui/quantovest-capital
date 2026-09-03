@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import InvestorSidebar from '@/components/InvestorSidebar';
 import HoldingCard from '@/components/portfolio/HoldingCard';
 import AllocationPie from '@/components/portfolio/AllocationPie';
+import OrderBook from '@/components/portfolio/OrderBook';
 import { Icon } from '@iconify/react';
 
 const ASSETS = [
@@ -210,6 +211,9 @@ export default function PortfolioPage() {
             <AllocationPie data={allocation} />
           </div>
         </div>
+
+        {/* Order Book */}
+        <OrderBook />
       </main>
     </div>
   );

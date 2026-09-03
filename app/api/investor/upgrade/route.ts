@@ -3,7 +3,6 @@ import { eq } from 'drizzle-orm';
 import { getCurrentIdentity } from '@/lib/supabase/identity';
 import { getDb } from '@/lib/db';
 import { investorAccounts, plans, portfolioLedger } from '@/db/schema';
-import { PLAN_MINIMUMS_CENTS } from '@/lib/constants';
 import { notifyUser } from '@/lib/notifications';
 import { sendPlanUpdated } from '@/lib/email';
 
@@ -23,21 +22,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid plan name. Must be Starter, Growth, or Elite.' }, { status: 400 });
   }
 
-  const minBalanceCents = PLAN_MINIMUMS_CENTS[planName];
-
   try {
     const [account] = await db.select().from(investorAccounts).where(eq(investorAccounts.investorId, actor.id)).limit(1);
 
     if (!account) {
       return NextResponse.json({ error: 'No investor account found.' }, { status: 404 });
-    }
-
-    if (account.balanceCents < minBalanceCents) {
-      const needed = (minBalanceCents - account.balanceCents) / 100;
-      return NextResponse.json({
-        success: false,
-        error: `Insufficient balance. You need $${needed.toLocaleString()} more to qualify for the ${planName} plan.`
-      }, { status: 400 });
     }
 
     const [targetPlan] = await db.select().from(plans).where(eq(plans.name, planName)).limit(1);

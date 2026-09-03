@@ -49,24 +49,53 @@ export async function PATCH(request: Request) {
     if (!body?.depositId || (body.action !== 'approve' && body.action !== 'reject')) return NextResponse.json({ error: 'Deposit and action are required.' }, { status: 400 });
     try {
     const result = await db.transaction(async tx => {
+      // 1. Find the deposit and confirm it is pending FIRST (prevents race conditions)
       const rows = await tx.select().from(deposits).where(and(eq(deposits.id, body.depositId!), eq(deposits.status, 'pending'))).limit(1);
-      if (!rows[0]) throw new Error('Pending deposit was not found.');
+      if (!rows[0]) {
+        const existing = await tx.select({ id: deposits.id, status: deposits.status }).from(deposits).where(eq(deposits.id, body.depositId!)).limit(1);
+        if (!existing[0]) throw new Error('Deposit not found.');
+        if (existing[0].status === 'completed' || existing[0].status === 'approved') {
+          return { investorId: '', status: 'completed', planName: null, amountCents: 0, alreadyProcessed: true };
+        }
+        throw new Error(`Deposit is already ${existing[0].status}. Only pending deposits can be reviewed.`);
+      }
       const deposit = rows[0];
       if (body.action === 'reject') {
         await tx.update(deposits).set({ status: 'rejected', reviewedBy: identity.id, reviewNote: body.reviewNote?.trim() || null, updatedAt: new Date() }).where(eq(deposits.id, deposit.id));
         return { investorId: deposit.investorId, status: 'rejected', planName: null, amountCents: deposit.amountCents };
       }
+      // 2. Mark deposit as completed BEFORE touching balance (prevents re-processing)
+      await tx.update(deposits).set({ status: 'completed', reviewedBy: identity.id, reviewNote: body.reviewNote?.trim() || null, updatedAt: new Date() }).where(eq(deposits.id, deposit.id));
+      // 3. Credit investor balance — plan assignment is optional and separate
+      const existingAccounts = await tx.select().from(investorAccounts).where(eq(investorAccounts.investorId, deposit.investorId)).limit(1);
+      // Try to find a matching plan but do NOT fail if none found
       const availablePlans = await tx.select().from(plans).where(eq(plans.active, 1)).orderBy(asc(plans.minimumDepositCents));
-      const selectedPlan = (deposit.planId ? availablePlans.find(plan => plan.id === deposit.planId) : undefined) ?? [...availablePlans].reverse().find(plan => deposit.amountCents >= plan.minimumDepositCents && (plan.maximumDepositCents == null || deposit.amountCents <= plan.maximumDepositCents));
-      if (!selectedPlan) throw new Error('No active plan matches this deposit amount.');
-      await tx.update(deposits).set({ status: 'completed', planId: selectedPlan.id, reviewedBy: identity.id, reviewNote: body.reviewNote?.trim() || null, updatedAt: new Date() }).where(eq(deposits.id, deposit.id));
-      const existing = await tx.select().from(investorAccounts).where(eq(investorAccounts.investorId, deposit.investorId)).limit(1);
-      if (existing[0]) await tx.update(investorAccounts).set({ planId: selectedPlan.id, principalCents: existing[0].principalCents + deposit.amountCents, balanceCents: existing[0].balanceCents + deposit.amountCents, status: 'active', updatedAt: new Date() }).where(eq(investorAccounts.id, existing[0].id));
-      else await tx.insert(investorAccounts).values({ id: crypto.randomUUID(), investorId: deposit.investorId, planId: selectedPlan.id, principalCents: deposit.amountCents, balanceCents: deposit.amountCents, status: 'active' });
-      await tx.insert(portfolioLedger).values({ investorId: deposit.investorId, type: 'deposit', amountCents: deposit.amountCents, referenceId: deposit.id, description: `Deposit approved and assigned to ${selectedPlan.name} plan` });
-      return { investorId: deposit.investorId, status: 'completed', planName: selectedPlan.name, amountCents: deposit.amountCents };
+      const selectedPlan = (deposit.planId ? availablePlans.find(plan => plan.id === deposit.planId) : undefined)
+        ?? [...availablePlans].reverse().find(plan => deposit.amountCents >= plan.minimumDepositCents && (plan.maximumDepositCents == null || deposit.amountCents <= plan.maximumDepositCents));
+      if (existingAccounts[0]) {
+        await tx.update(investorAccounts).set({
+          ...(selectedPlan ? { planId: selectedPlan.id } : {}),
+          principalCents: existingAccounts[0].principalCents + deposit.amountCents,
+          balanceCents: existingAccounts[0].balanceCents + deposit.amountCents,
+          status: 'active',
+          updatedAt: new Date(),
+        }).where(eq(investorAccounts.id, existingAccounts[0].id));
+      } else {
+        // Create account with a placeholder planId of 1 (or selectedPlan if found)
+        const planId = selectedPlan?.id ?? availablePlans[0]?.id ?? 1;
+        await tx.insert(investorAccounts).values({ id: crypto.randomUUID(), investorId: deposit.investorId, planId, principalCents: deposit.amountCents, balanceCents: deposit.amountCents, status: 'active' });
+      }
+      // 4. Record in ledger (guard against unique constraint if entry already exists from a prior partial attempt)
+      const existingLedger = await tx.select({ id: portfolioLedger.id }).from(portfolioLedger).where(and(eq(portfolioLedger.type, 'deposit'), eq(portfolioLedger.referenceId, deposit.id))).limit(1);
+      if (!existingLedger[0]) {
+        await tx.insert(portfolioLedger).values({ investorId: deposit.investorId, type: 'deposit', amountCents: deposit.amountCents, referenceId: deposit.id, description: selectedPlan ? `Deposit approved — ${selectedPlan.name} plan` : 'Deposit approved' });
+      }
+      return { investorId: deposit.investorId, status: 'completed', planName: selectedPlan?.name ?? null, amountCents: deposit.amountCents };
     });
-    if (result.status === 'completed') await notifyUser(result.investorId, 'deposit_approved', 'Deposit approved', `Your deposit was verified and your account is now on the ${result.planName} plan.`);
+    if ('alreadyProcessed' in result && result.alreadyProcessed) {
+      return NextResponse.json({ message: 'Deposit was already processed.', ...result });
+    }
+    if (result.status === 'completed') await notifyUser(result.investorId, 'deposit_approved', 'Deposit approved', result.planName ? `Your deposit was verified and your account is now on the ${result.planName} plan.` : 'Your deposit has been verified and your account balance has been updated.');
     else await notifyUser(result.investorId, 'deposit_rejected', 'Deposit requires attention', 'Your deposit proof was not approved. Review the admin note and submit corrected proof.');
     await notifyAdmins(`deposit_${result.status}`, `Deposit ${result.status}`, `The deposit review was marked ${result.status} for investor ${result.investorId}.`);
     try {

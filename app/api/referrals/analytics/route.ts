@@ -4,6 +4,8 @@ import { requireAuth } from "@/lib/auth-helpers";
 import { getDb } from "@/lib/db";
 import { referralAttributions, referralRewards } from "@/db/schema";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     const { identity, error } = await requireAuth();

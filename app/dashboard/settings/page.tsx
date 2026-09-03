@@ -31,7 +31,7 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile>({
     id: '', name: '', email: '', avatar: null, role: 'investor',
     balance: 0, totalInvested: 0, totalProfit: 0, dailyRoiPercent: 0,
-    allTimeRoiPercent: 0, plan: 'None', kycStatus: 'unverified',
+    allTimeRoiPercent: 0, plan: '', kycStatus: 'unverified',
     onboardingCompleted: false,
   });
   const [name, setName] = useState('');
@@ -82,7 +82,7 @@ export default function SettingsPage() {
         totalProfit: 0,
         dailyRoiPercent: 0,
         allTimeRoiPercent: 0,
-        plan: 'None',
+        plan: '',
         kycStatus: 'unverified',
         onboardingCompleted: false,
       };
@@ -248,7 +248,7 @@ export default function SettingsPage() {
               <div className="min-w-0">
                 <h3 className="text-base sm:text-lg font-medium truncate">{profile.name}</h3>
                 <p className="text-xs text-[#93A09A] font-mono truncate">{profile.email}</p>
-                <span className="text-[10px] bg-[#22C55E]/10 text-[#22C55E] px-2.5 py-0.5 rounded-full font-mono mt-1 inline-block">{profile.plan} Plan Investor</span>
+                <span className="text-[10px] bg-[#22C55E]/10 text-[#22C55E] px-2.5 py-0.5 rounded-full font-mono mt-1 inline-block">{profile.plan ? `${profile.plan} Plan Investor` : 'Investor'}</span>
               </div>
             </div>
             <label className="text-xs text-[#93A09A]">Display name

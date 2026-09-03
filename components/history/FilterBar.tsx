@@ -13,10 +13,12 @@ interface FilterBarProps {
 const typeOptions = [
   { value: '', label: 'All Types' },
   { value: 'deposit', label: 'Deposits' },
-  { value: 'roi', label: 'ROI' },
+  { value: 'roi', label: 'ROI Credits' },
+  { value: 'profit', label: 'Profits' },
+  { value: 'credit', label: 'Account Credits' },
   { value: 'withdrawal', label: 'Withdrawals' },
   { value: 'referral_reward', label: 'Referral Rewards' },
-  { value: 'adjustment', label: 'Adjustments' },
+  { value: 'plan_assignment', label: 'Plan Changes' },
 ];
 
 export default function FilterBar({ typeFilter, onTypeFilterChange, searchQuery, onSearchChange }: FilterBarProps) {

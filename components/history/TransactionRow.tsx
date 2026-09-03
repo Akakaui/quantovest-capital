@@ -13,26 +13,34 @@ interface TransactionRowProps {
 
 function typeIcon(type: string): string {
   if (type === 'deposit') return 'solar:wallet-money-bold';
-  if (type === 'roi') return 'solar:graph-bold';
+  if (type === 'roi' || type === 'profit') return 'solar:graph-bold';
   if (type === 'withdrawal') return 'solar:card-send-bold';
   if (type === 'referral_reward') return 'solar:share-bold';
+  if (type === 'credit' || type === 'balance_credit') return 'solar:add-circle-bold';
+  if (type === 'plan_assignment' || type === 'plan_purchase') return 'solar:medal-ribbon-bold';
   return 'solar:refresh-bold';
 }
 
 function typeColor(type: string): string {
   if (type === 'deposit') return 'bg-[#22C55E]/10 text-[#22C55E]';
-  if (type === 'roi') return 'bg-blue-500/10 text-blue-400';
+  if (type === 'roi' || type === 'profit') return 'bg-blue-500/10 text-blue-400';
   if (type === 'withdrawal') return 'bg-amber-500/10 text-amber-400';
   if (type === 'referral_reward') return 'bg-purple-500/10 text-purple-400';
+  if (type === 'credit' || type === 'balance_credit') return 'bg-[#22C55E]/10 text-[#22C55E]';
+  if (type === 'plan_assignment' || type === 'plan_purchase') return 'bg-sky-500/10 text-sky-400';
   return 'bg-[#263437] text-[#93A09A]';
 }
 
 function typeLabel(type: string): string {
   if (type === 'deposit') return 'Deposit';
   if (type === 'roi') return 'ROI Credit';
+  if (type === 'profit') return 'Profit';
   if (type === 'withdrawal') return 'Withdrawal';
-  if (type === 'referral_reward') return 'Referral Reward';
-  return 'Adjustment';
+  if (type === 'referral_reward') return 'Referral Bonus';
+  if (type === 'credit' || type === 'balance_credit') return 'Account Credit';
+  if (type === 'plan_assignment') return 'Plan Assigned';
+  if (type === 'plan_purchase') return 'Plan Purchase';
+  return 'Transaction';
 }
 
 export default function TransactionRow({ type, amountCents, description, createdAt }: TransactionRowProps) {

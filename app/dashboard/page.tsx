@@ -9,7 +9,6 @@ import { Icon } from '@iconify/react';
 import Link from 'next/link';
 import dynamicImport from 'next/dynamic';
 
-const DynamicRoiCalculatorModal = dynamicImport(() => import('@/components/RoiCalculatorModal'), { ssr: false });
 const DynamicAllocationRingChart = dynamicImport(() => import('@/components/AllocationRingChart'), { ssr: false });
 const DashboardAreaChart = dynamicImport(() => import('@/components/DashboardAreaChart'), { ssr: false });
 
@@ -158,7 +157,6 @@ export default function InvestorDashboard() {
 
   const [isMasked, setIsMasked] = useState(false);
   const [isKycOpen, setIsKycOpen] = useState(false);
-  const [isCalcOpen, setIsCalcOpen] = useState(false);
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
   const [tourStep, setTourStep] = useState<number | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
@@ -266,13 +264,6 @@ export default function InvestorDashboard() {
     fetchAllData();
   }, [fetchAllData]);
 
-  useEffect(() => {
-    if (profile.kycStatus !== 'approved' && profile.onboardingCompleted) {
-      const timer = setTimeout(() => setIsKycOpen(true), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [profile.kycStatus, profile.onboardingCompleted]);
-
   const completeTour = useCallback(async () => {
     setTourStep(null);
     if (!profile.id) return;
@@ -304,7 +295,6 @@ export default function InvestorDashboard() {
       <InvestorSidebar
         onOpenDeposit={() => {}}
         onOpenWithdraw={() => {}}
-        onOpenCalculator={() => setIsCalcOpen(true)}
       />
 
       <main className="dashboard-main flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
@@ -315,15 +305,19 @@ export default function InvestorDashboard() {
             <div className="min-w-0">
               <h1 className="text-lg sm:text-2xl font-normal text-[#F3F7F4] truncate">Hello, {profile.name}</h1>
               <p className="text-xs text-[#93A09A] flex items-center gap-2">
-                Plan: <span className="text-[#22C55E] font-semibold font-mono">{profile.plan}</span>
-                <span>•</span>
+                {profile.plan && (
+                  <>
+                    Plan: <span className="text-[#22C55E] font-semibold font-mono">{profile.plan}</span>
+                    <span>•</span>
+                  </>
+                )}
                 KYC:{' '}
                 <span
                   className={`font-mono text-[11px] font-semibold ${
                     kycStatus === 'approved' ? 'text-[#22C55E]' : 'text-amber-400'
                   }`}
                 >
-                  {kycStatus.toUpperCase()}
+                  {kycStatus === 'approved' ? 'VERIFIED' : kycStatus.toUpperCase()}
                 </span>
               </p>
             </div>
@@ -345,13 +339,6 @@ export default function InvestorDashboard() {
             >
               <Icon icon="solar:arrow-up-line-bold" className="w-4 h-4" />
               <span>Upgrade Plan</span>
-            </button>
-            <button
-              onClick={() => setIsCalcOpen(true)}
-              className="px-4 py-2 rounded-full bg-[#141C1F] border border-[#263437] text-[#22C55E] text-xs font-mono hover:bg-[#0A0F11] transition-colors flex items-center gap-1.5"
-            >
-              <Icon icon="solar:calculator-bold" className="w-4 h-4" />
-              <span>ROI Calculator</span>
             </button>
           </div>
         </div>
@@ -481,7 +468,6 @@ export default function InvestorDashboard() {
 
       {/* Modals */}
       <KycModal isOpen={isKycOpen} onClose={() => setIsKycOpen(false)} />
-      <DynamicRoiCalculatorModal isOpen={isCalcOpen} onClose={() => setIsCalcOpen(false)} />
 
       {/* Upgrade Plan Modal */}
       {isUpgradeOpen && (
@@ -501,8 +487,6 @@ export default function InvestorDashboard() {
                 const targetIdx = PLAN_ORDER.indexOf(planName);
                 const isCurrent = profile.plan === planName;
                 const isLower = targetIdx <= currentIdx;
-                const canAfford = profile.balance >= min;
-                const needed = min - profile.balance;
                 return (
                   <div key={planName} className={`p-4 rounded-xl border transition-colors ${
                     isCurrent ? 'border-[#22C55E]/40 bg-[#22C55E]/5' : 'border-[#263437] bg-[#0A0F11]'
@@ -516,7 +500,7 @@ export default function InvestorDashboard() {
                         <span className="text-[10px] font-semibold px-3 py-1 rounded-full bg-[#22C55E]/10 text-[#22C55E]">Current</span>
                       ) : isLower ? (
                         <span className="text-[10px] text-[#93A09A]">Lower plan</span>
-                      ) : canAfford ? (
+                      ) : (
                         <button
                           onClick={() => {
                             fetch('/api/investor/upgrade', {
@@ -534,8 +518,6 @@ export default function InvestorDashboard() {
                         >
                           Upgrade
                         </button>
-                      ) : (
-                        <span className="text-[10px] text-amber-400">Need ${needed.toLocaleString()} more</span>
                       )}
                     </div>
                   </div>

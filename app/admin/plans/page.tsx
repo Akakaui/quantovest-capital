@@ -25,10 +25,10 @@ interface PlanForm {
 
 const EMPTY_FORM: PlanForm = {
   name: '',
-  minimumDepositCents: 100000,
+  minimumDepositCents: 150000,
   maximumDepositCents: null,
-  minRoiBps: 100,
-  maxRoiBps: 300,
+  minRoiBps: 1500,
+  maxRoiBps: 1500,
   active: true,
 };
 
@@ -209,6 +209,7 @@ export default function AdminPlansPage() {
                         <div>Min: {formatCents(plan.minimumDepositCents)}</div>
                         <div>Max: {plan.maximumDepositCents != null ? formatCents(plan.maximumDepositCents) : 'Unlimited'}</div>
                         <div>ROI: {formatBps(plan.minRoiBps)} – {formatBps(plan.maxRoiBps)}</div>
+                        <div>Duration: 7 Days</div>
                       </div>
                     </div>
                     <button
