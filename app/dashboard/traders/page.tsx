@@ -14,7 +14,6 @@ interface ApiTrader {
   specialty: string;
   winRateBps: number;
   thirtyDayReturnBps: number;
-  riskLevel: number;
   bio: string | null;
   active: number;
   createdAt: string;

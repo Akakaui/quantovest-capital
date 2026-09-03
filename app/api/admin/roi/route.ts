@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, desc, eq, gte, lt } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { notifyAdmins, notifyUser } from "@/lib/notifications";
 import { getDb } from "@/lib/db";
@@ -8,17 +8,6 @@ import { investorAccounts, plans, portfolioLedger, roiEntries, users } from "@/d
 export const dynamic = "force-dynamic";
 
 const FIXED_ROI_BPS: Record<string, number> = { Starter: 1500, Growth: 2500, Elite: 3500 };
-
-function utcWeekBounds(date = new Date()) {
-  const start = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-  const day = start.getUTCDay();
-  const diff = start.getUTCDate() - day + (day === 0 ? -6 : 1);
-  start.setUTCDate(diff);
-  start.setUTCHours(0, 0, 0, 0);
-  const end = new Date(start);
-  end.setUTCDate(end.getUTCDate() + 7);
-  return { start, end };
-}
 
 export async function GET(request: Request) {
   try {
@@ -75,18 +64,6 @@ export async function POST(request: Request) {
           .limit(1);
         if (!account[0]) throw new Error('Active investor account was not found.');
         const { account: investorAccount, plan } = account[0];
-        
-        const { start: weekStart, end: weekEnd } = utcWeekBounds();
-        const existingCredit = await tx.select().from(roiEntries)
-          .where(and(
-            eq(roiEntries.investorId, body.investorId!),
-            gte(roiEntries.entryDate, weekStart),
-            lt(roiEntries.entryDate, weekEnd)
-          ))
-          .limit(1);
-        if (existingCredit.length > 0) {
-          throw new Error('ROI has already been credited for this 7-day period.');
-        }
 
         const profitCents = body.amountCents!;
         const message = body.message!.trim();
@@ -124,8 +101,7 @@ export async function POST(request: Request) {
       }
       return NextResponse.json({ created: true, notifications: "queued", ...result }, { status: 201 });
     } catch (error) {
-      const duplicate = error instanceof Error && (error.message.includes("already been credited") || error.message.includes("already credited"));
-      return NextResponse.json({ error: error instanceof Error ? error.message : "Performance credit failed." }, { status: duplicate ? 409 : 400 });
+      return NextResponse.json({ error: error instanceof Error ? error.message : "Performance credit failed." }, { status: 400 });
     }
   } catch (err) {
     console.error("[roi POST]", err);

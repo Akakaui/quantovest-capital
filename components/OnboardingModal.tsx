@@ -13,7 +13,6 @@ export interface OnboardingAnswers {
   assetInterest: string;
   capitalGoal: string;
   targetDeposit: string;
-  riskTolerance: string;
 }
 
 export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
@@ -23,14 +22,13 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
     experience: 'Intermediate',
     assetInterest: 'Multi-Asset',
     capitalGoal: 'Capital Growth',
-    targetDeposit: '$7,500 Growth',
-    riskTolerance: 'Balanced'
+    targetDeposit: '$7,500 Growth'
   });
 
   if (!isOpen) return null;
 
   const handleNext = async () => {
-    if (step < 5) {
+    if (step < 4) {
       setStep(step + 1);
     } else {
       setSaving(true);
@@ -59,11 +57,11 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
             </span>
             <div>
               <h3 className="text-sm font-semibold text-white">Investor Questionnaire</h3>
-              <p className="text-xs text-[#A8ACB3]">Step {step} of 5</p>
+              <p className="text-xs text-[#A8ACB3]">Step {step} of 4</p>
             </div>
           </div>
           <div className="flex gap-1.5">
-            {[1, 2, 3, 4, 5].map((i) => (
+            {[1, 2, 3, 4].map((i) => (
               <span
                 key={i}
                 className={`w-5 h-1.5 rounded-full transition-all ${
@@ -183,38 +181,6 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
           </div>
         )}
 
-        {step === 5 && (
-          <div className="space-y-4">
-            <h4 className="text-lg font-normal text-white">Select your preferred risk appetite</h4>
-            <p className="text-xs text-[#A8ACB3]">Master traders execute copytrades matching your risk profile.</p>
-            <div className="space-y-2.5 pt-2">
-              {[
-                { name: 'Conservative (Low Drawdown, Capital Preservation)', badge: 'Risk Level 1-2' },
-                { name: 'Balanced (Moderate Risk & Steady Target ROI)', badge: 'Risk Level 3' },
-                { name: 'Aggressive (Maximum Alpha Yield Pursuit)', badge: 'Risk Level 4-5' }
-              ].map((opt) => (
-                <button
-                  key={opt.name}
-                  onClick={() => setAnswers({ ...answers, riskTolerance: opt.name })}
-                  className={`w-full p-4 rounded-xl border text-left text-xs font-medium flex items-center justify-between transition-all ${
-                    answers.riskTolerance === opt.name
-                      ? 'border-[#22C55E] bg-[#22C55E]/10 text-white'
-                      : 'border-[#202722] bg-[#1A1F24] text-[#A8ACB3] hover:border-[#22C55E]/40'
-                  }`}
-                >
-                  <div>
-                    <p className="font-semibold text-white">{opt.name}</p>
-                    <span className="text-[10px] bg-[#202722] text-[#A8ACB3] px-2 py-0.5 rounded font-mono mt-1 inline-block">
-                      {opt.badge}
-                    </span>
-                  </div>
-                  {answers.riskTolerance === opt.name && <Icon icon="solar:check-circle-bold" className="w-5 h-5 text-[#22C55E]" />}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Buttons Footer */}
         <div className="flex items-center justify-between pt-6 mt-6 border-t border-[#202722]">
           {step > 1 ? (
@@ -232,7 +198,7 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
             disabled={saving}
             className="px-6 py-2.5 rounded-full text-xs font-semibold bg-[#22C55E] text-[#0A0D0C] hover:bg-[#16A34A] flex items-center gap-2"
           >
-            <span>{step === 5 ? (saving ? 'Saving...' : 'Complete Onboarding') : 'Continue'}</span>
+            <span>{step === 4 ? (saving ? 'Saving...' : 'Complete Onboarding') : 'Continue'}</span>
             <Icon icon="solar:alt-arrow-right-bold" className="w-4 h-4" />
           </button>
         </div>
