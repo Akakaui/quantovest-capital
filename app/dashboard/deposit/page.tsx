@@ -19,6 +19,7 @@ type Deposit = {
   method: string;
   status: string;
   proofPath: string | null;
+  planId: number | null;
   createdAt: string;
 };
 
@@ -28,6 +29,15 @@ const CRYPTO_COINS = [
   { value: 'btc', label: 'Bitcoin (BTC)', icon: 'cryptocurrency:btc' },
   { value: 'eth', label: 'Ethereum (ETH)', icon: 'cryptocurrency:eth' },
 ] as const;
+
+type Plan = {
+  id: number;
+  name: string;
+  minimumDepositCents: number;
+  maximumDepositCents: number | null;
+  minRoiBps: number;
+  maxRoiBps: number;
+};
 
 export default function DepositPage() {
   const [instructions, setInstructions] = useState<Instruction[]>([]);
@@ -40,13 +50,16 @@ export default function DepositPage() {
   const [loading, setLoading] = useState(false);
   const [instructionsLoading, setInstructionsLoading] = useState(true);
   const [instructionsError, setInstructionsError] = useState(false);
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
 
   async function load() {
     setInstructionsLoading(true);
     setInstructionsError(false);
-    const [instructionResult, depositResult] = await Promise.allSettled([
+    const [instructionResult, depositResult, planResult] = await Promise.allSettled([
       fetch('/api/deposit-instructions', { cache: 'no-store' }),
       fetch('/api/deposits', { cache: 'no-store' }),
+      fetch('/api/plans', { cache: 'no-store' }),
     ]);
 
     if (instructionResult.status === 'fulfilled' && instructionResult.value.ok) {
@@ -58,12 +71,21 @@ export default function DepositPage() {
     if (depositResult.status === 'fulfilled' && depositResult.value.ok) {
       setDeposits(await depositResult.value.json());
     }
+
+    if (planResult.status === 'fulfilled' && planResult.value.ok) {
+      setPlans(await planResult.value.json());
+    }
     setInstructionsLoading(false);
   }
 
   useEffect(() => {
     void load();
   }, []);
+
+  function choosePlan(plan: Plan | null) {
+    setSelectedPlan(plan);
+    setAmount(plan ? plan.minimumDepositCents / 100 : 50);
+  }
 
   const activeInstruction = instructions.find(item => item.method === method) ?? null;
 
@@ -104,6 +126,7 @@ export default function DepositPage() {
           amountCents: Math.round(amount * 100),
           method,
           proofPath: uploadData.path,
+          planId: selectedPlan?.id ?? null,
         }),
       });
 
@@ -171,6 +194,39 @@ export default function DepositPage() {
         ) : (
           <div className="grid max-w-4xl grid-cols-1 gap-8 lg:grid-cols-2">
             <section className="rounded-2xl border border-[#263437] bg-[#141C1F] p-6 sm:p-8 space-y-6">
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-[#93A09A]">Choose a plan or enter a custom amount</p>
+                <div className="grid grid-cols-1 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => choosePlan(null)}
+                    className={`flex items-center justify-between rounded-xl border p-3.5 text-xs transition-all ${
+                      selectedPlan === null
+                        ? 'border-[#22C55E] bg-[#22C55E]/10 text-white font-semibold'
+                        : 'border-[#263437] bg-[#0A0F11] text-[#93A09A] hover:text-white'
+                    }`}
+                  >
+                    <span>Custom amount (any $50+)</span>
+                    <span className="font-mono">min $50</span>
+                  </button>
+                  {plans.map(plan => (
+                    <button
+                      key={plan.id}
+                      type="button"
+                      onClick={() => choosePlan(plan)}
+                      className={`flex items-center justify-between rounded-xl border p-3.5 text-xs transition-all ${
+                        selectedPlan?.id === plan.id
+                          ? 'border-[#22C55E] bg-[#22C55E]/10 text-white font-semibold'
+                          : 'border-[#263437] bg-[#0A0F11] text-[#93A09A] hover:text-white'
+                      }`}
+                    >
+                      <span>{plan.name} Plan</span>
+                      <span className="font-mono">${(plan.minimumDepositCents / 100).toLocaleString()} · {(plan.minRoiBps / 100).toFixed(1)}% / 7 days</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <p className="text-xs font-semibold text-[#93A09A]">Select Cryptocurrency</p>
                 <div className="grid grid-cols-2 gap-2">
@@ -245,14 +301,15 @@ export default function DepositPage() {
 
               <form onSubmit={submitDeposit} className="space-y-4 pt-2">
                 <label className="block text-xs text-[#93A09A]">
-                  Deposit Amount ($ USD)
+                  {selectedPlan ? `Deposit Amount — ${selectedPlan.name} Plan ($ USD)` : 'Custom Deposit Amount ($ USD)'}
                   <input
                     required
                     min="50"
                     type="number"
                     value={amount}
                     onChange={event => setAmount(Number(event.target.value))}
-                    className="mt-1.5 w-full rounded-xl border border-[#263437] bg-[#0A0F11] px-4 py-3 text-sm text-white focus:outline-none focus:border-[#22C55E]"
+                    disabled={!!selectedPlan}
+                    className="mt-1.5 w-full rounded-xl border border-[#263437] bg-[#0A0F11] px-4 py-3 text-sm text-white focus:outline-none focus:border-[#22C55E] disabled:opacity-60"
                   />
                 </label>
 
@@ -289,7 +346,7 @@ export default function DepositPage() {
                         ${(deposit.amountCents / 100).toLocaleString()}
                       </p>
                       <p className="text-[10px] text-[#93A09A] mt-0.5 uppercase tracking-wider font-mono">
-                        {deposit.method}
+                        {deposit.method}{deposit.planId ? ' · PLAN' : ''}
                       </p>
                     </div>
                     <span

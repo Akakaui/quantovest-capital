@@ -27,13 +27,13 @@ export async function POST(request: Request) {
   const db = getDb();
   if (!db) return databaseUnavailable('deposits POST');
   try {
-    const body = await request.json().catch(() => null) as { amountCents?: number; method?: string; proofPath?: string } | null;
+    const body = await request.json().catch(() => null) as { amountCents?: number; method?: string; proofPath?: string; planId?: number | null } | null;
     if (!body?.amountCents || !Number.isInteger(body.amountCents) || body.amountCents < 5000 || !['usdt-trc20', 'usdt-erc20', 'btc', 'eth'].includes(body.method || '') || !body.proofPath?.trim()) return NextResponse.json({ error: 'Minimum deposit is $50. Select a valid cryptocurrency and upload proof.' }, { status: 400 });
     if (!body.proofPath.startsWith(`deposit-proof/${actor.id}/`)) return NextResponse.json({ error: 'Deposit proof is invalid or expired. Please upload it again.' }, { status: 400 });
     const id = crypto.randomUUID();
-    await db.insert(deposits).values({ id, investorId: actor.id, amountCents: body.amountCents, method: body.method!, proofPath: body.proofPath.trim(), status: 'pending' });
+    await db.insert(deposits).values({ id, investorId: actor.id, amountCents: body.amountCents, method: body.method!, proofPath: body.proofPath.trim(), planId: body.planId ?? null, status: 'pending' });
     try {
-      await notifyAdmins('deposit_submitted', 'New deposit awaiting verification', `Investor ${actor.id} submitted a ${(body.amountCents / 100).toFixed(2)} deposit via ${body.method}.`);
+      await notifyAdmins('deposit_submitted', 'New deposit awaiting verification', `Investor ${actor.id} submitted a $${(body.amountCents / 100).toFixed(2)} deposit via ${body.method}.`);
       if (actor.email) {
         const investor = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, actor.id)).limit(1);
         if (investor[0]?.email) sendDepositSubmitted(investor[0].email, investor[0].name || 'Investor', `$${(body.amountCents / 100).toFixed(2)}`);
