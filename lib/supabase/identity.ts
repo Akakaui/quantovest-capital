@@ -22,6 +22,16 @@ export async function getCurrentIdentity() {
   if (!db) return { id: user.id, name: authName, avatar: authAvatar, role: (authRole === 'admin' ? 'admin' : 'investor') as 'admin' | 'investor', email: user.email ?? null };
   try {
     const profile = await db.select({ id: users.id, role: users.role, email: users.email }).from(users).where(eq(users.id, user.id)).limit(1);
+    if (profile.length === 0) {
+      await db.insert(users).values({
+        id: user.id,
+        email: user.email ?? '',
+        name: authName ?? 'User',
+        image: authAvatar,
+        role: 'investor',
+      }).onConflictDoNothing();
+      return { id: user.id, name: authName ?? 'User', avatar: authAvatar, role: (authRole === 'admin' ? 'admin' : 'investor') as 'admin' | 'investor', email: user.email ?? null };
+    }
     const dbRole = profile[0]?.role === 'admin' ? 'admin' : 'investor';
     return { id: user.id, name: authName, avatar: authAvatar, role: (authRole === 'admin' || dbRole === 'admin' ? 'admin' : 'investor') as 'admin' | 'investor', email: profile[0]?.email ?? user.email ?? null };
   } catch {

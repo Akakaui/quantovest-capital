@@ -11,14 +11,14 @@ const PLANS = [
   {
     name: 'Starter',
     min: 1500,
-    dailyRoi: 15,
+    weeklyRoi: 15,
     color: '#22C55E',
-    features: ['FX & Top Crypto Asset Access', 'Daily ROI Dashboard Updates', '0% Management Fee (15% Perf Fee)'],
+    features: ['FX & Top Crypto Asset Access', '7-Day ROI Dashboard Updates', '0% Management Fee (15% Perf Fee)'],
   },
   {
     name: 'Growth',
     min: 7500,
-    dailyRoi: 25,
+    weeklyRoi: 25,
     color: '#22C55E',
     recommended: true,
     features: ['FX, Crypto & US Equities Access', 'Dedicated Account Manager', 'Priority Investment Execution'],
@@ -26,7 +26,7 @@ const PLANS = [
   {
     name: 'Elite',
     min: 45000,
-    dailyRoi: 35,
+    weeklyRoi: 35,
     color: '#22C55E',
     features: ['Full Multi-Asset VIP Access', 'Custom Risk Controls', 'Direct Portfolio Manager Insights'],
   },
@@ -35,21 +35,19 @@ const PLANS = [
 export default function PlansPage() {
   const [selectedPlan, setSelectedPlan] = useState<number>(1);
   const [deposit, setDeposit] = useState(7500);
-  const [months, setMonths] = useState(6);
+  const [days, setDays] = useState(14);
 
   const plan = PLANS[selectedPlan];
-  const dailyReturn = deposit * (plan.dailyRoi / 100);
-  const tradingDays = 21;
-  const monthlyRoi = plan.dailyRoi * tradingDays;
+  const dailyRoiRate = plan.weeklyRoi / 7;
 
   const chartData = [];
-  for (let i = 0; i <= months; i++) {
+  for (let i = 0; i <= days; i++) {
     chartData.push({
-      month: i === 0 ? 'Now' : `M${i}`,
-      value: Math.round(deposit * (1 + (monthlyRoi / 100) * i)),
+      day: i === 0 ? 'Now' : `D${i}`,
+      value: Math.round(deposit * (1 + (plan.weeklyRoi / 100 / 7) * i)),
     });
   }
-  const projected = Math.round(deposit * (1 + (monthlyRoi / 100) * months));
+  const projected = Math.round(deposit * (1 + (plan.weeklyRoi / 100 / 7) * days));
   const profit = projected - deposit;
 
   return (
@@ -99,13 +97,13 @@ export default function PlansPage() {
 
                 <div className={`p-4 rounded-xl border ${selectedPlan === i ? 'bg-[#12161A] border-[#202722]' : 'bg-white border-[#DEE1E6]'}`}>
                   <p className={`text-[10px] uppercase font-mono ${selectedPlan === i ? 'text-[#A8ACB3]' : 'text-[#5B616E]'}`}>
-                    Illustrative Daily Rate
+                    Illustrative 7-Day ROI
                   </p>
                   <p className="text-2xl sm:text-4xl font-mono font-bold text-[#22C55E] mt-1 truncate">
-                    {p.dailyRoi}%
+                    {p.weeklyRoi}%
                   </p>
                   <p className={`text-xs mt-1 ${selectedPlan === i ? 'text-[#A8ACB3]' : 'text-[#5B616E]'}`}>
-                    per trading day
+                    after 7 days
                   </p>
                 </div>
 
@@ -189,20 +187,20 @@ export default function PlansPage() {
                 <div>
                   <label className="text-xs font-semibold text-[#5B616E] flex justify-between mb-2">
                     <span>Time Horizon</span>
-                    <span className="font-mono text-[#22C55E]">{months} months</span>
+                    <span className="font-mono text-[#22C55E]">{days} days</span>
                   </label>
                   <div className="grid grid-cols-4 gap-2">
-                    {[1, 3, 6, 12].map(m => (
+                    {[3, 7, 14, 30].map(d => (
                       <button
-                        key={m}
-                        onClick={() => setMonths(m)}
+                        key={d}
+                        onClick={() => setDays(d)}
                         className={`py-2.5 rounded-xl text-xs font-mono font-medium transition-all ${
-                          months === m
+                          days === d
                             ? 'bg-[#22C55E] text-[#0A0D0C]'
                             : 'bg-[#F7F7F7] border border-[#DEE1E6] text-[#5B616E] hover:border-[#22C55E]'
                         }`}
                       >
-                        {m}M
+                        {d}D
                       </button>
                     ))}
                   </div>
@@ -215,16 +213,16 @@ export default function PlansPage() {
                     <span className="font-semibold text-[#22C55E]">{plan.name}</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-[#5B616E]">Illustrative Daily Rate</span>
-                    <span className="font-mono font-bold text-[#22C55E]">{plan.dailyRoi}%</span>
+                    <span className="text-[#5B616E]">ROI After 7 Days</span>
+                    <span className="font-mono font-bold text-[#22C55E]">{plan.weeklyRoi}%</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-[#5B616E]">Daily Dollar Return</span>
-                    <span className="font-mono font-semibold text-[#0A0D0C]">${dailyReturn.toLocaleString(undefined, {maximumFractionDigits: 0})}/day</span>
+                    <span className="text-[#5B616E]">7-Day Dollar Return</span>
+                    <span className="font-mono font-semibold text-[#0A0D0C]">${(deposit * plan.weeklyRoi / 100).toLocaleString(undefined, {maximumFractionDigits: 0})}/wk</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-[#5B616E]">Monthly Scenario</span>
-                    <span className="font-mono font-semibold text-[#0A0D0C]">~{monthlyRoi.toFixed(0)}%</span>
+                    <span className="text-[#5B616E]">Daily Rate (est.)</span>
+                    <span className="font-mono font-semibold text-[#0A0D0C]">~{dailyRoiRate.toFixed(2)}%/day</span>
                   </div>
                 </div>
               </div>
@@ -256,7 +254,7 @@ export default function PlansPage() {
                           <stop offset="95%" stopColor="#22C55E" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#5B616E' }} axisLine={false} tickLine={false} />
+                      <XAxis dataKey="day" tick={{ fontSize: 10, fill: '#5B616E' }} axisLine={false} tickLine={false} />
                       <YAxis hide domain={['dataMin', 'dataMax']} />
                       <Tooltip
                         contentStyle={{ backgroundColor: '#fff', borderColor: '#DEE1E6', borderRadius: '12px', fontSize: '11px', color: '#0A0D0C' }}
@@ -274,7 +272,7 @@ export default function PlansPage() {
                   Start with {plan.name} Plan — ${deposit.toLocaleString()}
                 </Link>
                 <p className="text-[10px] text-[#5B616E] text-center">
-                  *Illustrative simple-return scenario using 21 trading days per month. Actual results may vary and are not guaranteed.
+                  *Illustrative simple-return scenario using daily compounding. Actual results may vary and are not guaranteed.
                 </p>
               </div>
             </div>

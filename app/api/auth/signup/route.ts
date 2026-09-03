@@ -37,7 +37,16 @@ export async function POST(request: Request) {
           name: body.name,
           email: body.email,
           emailVerified: data.user.email_confirmed_at ? new Date(data.user.email_confirmed_at) : null,
-        }).onConflictDoNothing();
+          role: 'investor',
+        }).onConflictDoUpdate({
+          target: users.id,
+          set: {
+            name: body.name,
+            email: body.email,
+            emailVerified: data.user.email_confirmed_at ? new Date(data.user.email_confirmed_at) : null,
+            role: 'investor',
+          },
+        });
       }
     }
 

@@ -20,18 +20,22 @@ export async function GET(request: Request) {
             : typeof data.user.user_metadata?.picture === 'string'
               ? data.user.user_metadata.picture
               : null;
-          const existing = await db.select({ id: users.id, image: users.image }).from(users).where(eq(users.id, data.user.id)).limit(1);
-          if (existing.length === 0) {
-            await db.insert(users).values({
-              id: data.user.id,
+          const authName = data.user.user_metadata?.name ?? data.user.user_metadata?.full_name ?? data.user.email?.split('@')[0] ?? 'User';
+          await db.insert(users).values({
+            id: data.user.id,
+            email: data.user.email ?? '',
+            name: authName,
+            image: authAvatar,
+            role: 'investor',
+          }).onConflictDoUpdate({
+            target: users.id,
+            set: {
               email: data.user.email ?? '',
-              name: data.user.user_metadata?.name ?? data.user.user_metadata?.full_name ?? data.user.email?.split('@')[0] ?? 'User',
+              name: authName,
               image: authAvatar,
               role: 'investor',
-            });
-          } else if (!existing[0].image && authAvatar) {
-            await db.update(users).set({ image: authAvatar }).where(eq(users.id, data.user.id));
-          }
+            },
+          });
           const rows = await db.select({ twoFactorEnabled: users.twoFactorEnabled }).from(users).where(eq(users.id, data.user.id)).limit(1);
           if (rows[0]?.twoFactorEnabled) {
             const response = NextResponse.redirect(new URL('/verify-2fa', requestUrl.origin));

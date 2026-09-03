@@ -9,10 +9,14 @@ export const dynamic = "force-dynamic";
 
 const FIXED_ROI_BPS: Record<string, number> = { Starter: 1500, Growth: 2500, Elite: 3500 };
 
-function utcDayBounds(date = new Date()) {
+function utcWeekBounds(date = new Date()) {
   const start = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  const day = start.getUTCDay();
+  const diff = start.getUTCDate() - day + (day === 0 ? -6 : 1);
+  start.setUTCDate(diff);
+  start.setUTCHours(0, 0, 0, 0);
   const end = new Date(start);
-  end.setUTCDate(end.getUTCDate() + 1);
+  end.setUTCDate(end.getUTCDate() + 7);
   return { start, end };
 }
 
@@ -72,14 +76,27 @@ export async function POST(request: Request) {
         if (!account[0]) throw new Error('Active investor account was not found.');
         const { account: investorAccount, plan } = account[0];
         
+        const { start: weekStart, end: weekEnd } = utcWeekBounds();
+        const existingCredit = await tx.select().from(roiEntries)
+          .where(and(
+            eq(roiEntries.investorId, body.investorId!),
+            gte(roiEntries.entryDate, weekStart),
+            lt(roiEntries.entryDate, weekEnd)
+          ))
+          .limit(1);
+        if (existingCredit.length > 0) {
+          throw new Error('ROI has already been credited for this 7-day period.');
+        }
+
         const profitCents = body.amountCents!;
         const message = body.message!.trim();
         const planId = plan?.id ?? 1; // fallback planId if investor has no plan yet
+        const percentageBps = plan ? FIXED_ROI_BPS[plan.name] ?? 0 : 0;
 
         const inserted = await tx.insert(roiEntries).values({
           investorId: body.investorId!,
           planId,
-          percentageBps: 0,
+          percentageBps,
           profitCents,
           marketNote: message,
           publishedBy: identity.id
@@ -107,7 +124,7 @@ export async function POST(request: Request) {
       }
       return NextResponse.json({ created: true, notifications: "queued", ...result }, { status: 201 });
     } catch (error) {
-      const duplicate = error instanceof Error && error.message.includes("already been credited");
+      const duplicate = error instanceof Error && (error.message.includes("already been credited") || error.message.includes("already credited"));
       return NextResponse.json({ error: error instanceof Error ? error.message : "Performance credit failed." }, { status: duplicate ? 409 : 400 });
     }
   } catch (err) {

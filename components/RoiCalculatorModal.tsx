@@ -10,9 +10,9 @@ interface RoiCalculatorModalProps {
 }
 
 const PLAN_TIERS = [
-  { name: 'Starter', min: 1500, max: 7499, dailyRoi: 15 },
-  { name: 'Growth', min: 7500, max: 44999, dailyRoi: 25 },
-  { name: 'Elite', min: 45000, max: Infinity, dailyRoi: 35 },
+  { name: 'Starter', min: 1500, max: 7499, weeklyRoi: 15 },
+  { name: 'Growth', min: 7500, max: 44999, weeklyRoi: 25 },
+  { name: 'Elite', min: 45000, max: Infinity, weeklyRoi: 35 },
 ];
 
 function getPlanForDeposit(amount: number) {
@@ -30,7 +30,7 @@ function formatCurrency(value: number) {
 export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorModalProps) {
   const [deposit, setDeposit] = useState<number>(7500);
   const [inputValue, setInputValue] = useState<string>('7500');
-  const [months, setMonths] = useState<number>(6);
+  const [days, setDays] = useState<number>(14);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -44,20 +44,18 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
   if (!isOpen) return null;
 
   const plan = getPlanForDeposit(deposit);
-  const dailyRoi = plan.dailyRoi;
-  const tradingDaysPerMonth = 21;
-  const monthlyRoi = dailyRoi * tradingDaysPerMonth;
+  const weeklyRoi = plan.weeklyRoi;
 
   // Use a simple-return scenario to avoid presenting unrealistic exponential outcomes.
   const chartData = [];
-  for (let i = 0; i <= months; i++) {
+  for (let i = 0; i <= days; i++) {
     chartData.push({
-      month: i === 0 ? 'Start' : `Month ${i}`,
-      value: Math.round(deposit * (1 + (monthlyRoi / 100) * i)),
+      day: i === 0 ? 'Start' : `Day ${i}`,
+      value: Math.round(deposit * (1 + (weeklyRoi / 100 / 7) * i)),
     });
   }
 
-  const totalProjected = Math.round(deposit * (1 + (monthlyRoi / 100) * months));
+  const totalProjected = Math.round(deposit * (1 + (weeklyRoi / 100 / 7) * days));
   const projectedProfit = totalProjected - deposit;
 
   return (
@@ -148,20 +146,20 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
             <div>
               <label className="text-xs font-semibold text-[#A8ACB3] flex justify-between mb-2">
                 <span>Investment Horizon</span>
-                <span className="font-mono text-[#22C55E] font-semibold">{months} Months</span>
+                <span className="font-mono text-[#22C55E] font-semibold">{days} Days</span>
               </label>
-              <div className="grid grid-cols-3 gap-2">
-                {[3, 6, 12].map(m => (
+              <div className="grid grid-cols-4 gap-2">
+                {[3, 7, 14, 30].map(d => (
                   <button
-                    key={m}
-                    onClick={() => setMonths(m)}
+                    key={d}
+                    onClick={() => setDays(d)}
                     className={`py-2.5 rounded-xl text-xs font-mono font-medium transition-all ${
-                      months === m
+                      days === d
                         ? 'bg-[#22C55E] text-[#07110B] font-semibold'
                         : 'bg-[#1A2528] border border-[#263437] text-[#A8ACB3] hover:text-white'
                     }`}
                   >
-                    {m} Months
+                    {d}D
                   </button>
                 ))}
               </div>
@@ -174,15 +172,15 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
                 <span className="text-xs font-semibold text-[#22C55E]">{plan.name} Plan</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-[#A8ACB3]">Illustrative Daily Rate:</span>
-                <span className="text-xs font-mono font-bold text-[#22C55E]">{dailyRoi}%</span>
+                <span className="text-xs text-[#A8ACB3]">ROI After 7 Days:</span>
+                <span className="text-xs font-mono font-bold text-[#22C55E]">{weeklyRoi}%</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-[#A8ACB3]">Modelled Monthly Scenario:</span>
-                <span className="text-xs font-mono font-semibold text-white">~{monthlyRoi.toFixed(1)}%</span>
+                <span className="text-xs text-[#A8ACB3]">7-Day Dollar Return:</span>
+                <span className="text-xs font-mono font-semibold text-white">${(deposit * weeklyRoi / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
               </div>
               <p className="text-[10px] text-[#A8ACB3] border-t border-[#263437] pt-2">
-                {plan.name} scenario: ${plan.min.toLocaleString()} minimum example, {dailyRoi}% illustrative daily rate.
+                {plan.name} scenario: ${plan.min.toLocaleString()} minimum example, {weeklyRoi}% ROI after 7 days.
               </p>
             </div>
 
@@ -195,7 +193,7 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
                     : 'border-[#263437] bg-[#1A2528] text-[#A8ACB3]'
                 }`}>
                   <p className="font-semibold">{t.name}</p>
-                  <p className="font-mono font-bold text-xs">{t.dailyRoi}%/day</p>
+                  <p className="font-mono font-bold text-xs">{t.weeklyRoi}%/7D</p>
                 </div>
               ))}
             </div>
@@ -229,7 +227,7 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
                       <stop offset="95%" stopColor="#22C55E" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="month" hide />
+                  <XAxis dataKey="day" hide />
                   <YAxis hide domain={['dataMin', 'dataMax']} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#12161A', borderColor: '#263437', borderRadius: '12px', fontSize: '11px', color: '#FFFFFF' }}
@@ -240,12 +238,12 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
               </ResponsiveContainer>
             </div>
 
-            {/* Daily Breakdown */}
+            {/* 7-Day Breakdown */}
             <div className="p-3 bg-[#1A2528] border border-[#263437] rounded-xl">
-              <p className="text-[10px] text-[#A8ACB3] uppercase font-mono mb-2">Illustrative Daily Scenario</p>
+              <p className="text-[10px] text-[#A8ACB3] uppercase font-mono mb-2">7-Day Return Scenario</p>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-[#A8ACB3]">{dailyRoi}% of ${deposit.toLocaleString()}</span>
-                <span className="text-sm font-mono font-bold text-[#22C55E]">=${(deposit * dailyRoi / 100).toLocaleString()}/day</span>
+                <span className="text-xs text-[#A8ACB3]">{weeklyRoi}% of ${deposit.toLocaleString()}</span>
+                <span className="text-sm font-mono font-bold text-[#22C55E]">=${(deposit * weeklyRoi / 100).toLocaleString()}/7d</span>
               </div>
             </div>
           </div>
@@ -254,7 +252,7 @@ export default function RoiCalculatorModal({ isOpen, onClose }: RoiCalculatorMod
         {/* Footer */}
         <div className="pt-6 mt-6 border-t border-[#263437] flex items-center justify-between">
           <p className="text-[11px] text-[#A8ACB3] max-w-xs">
-            Illustrative simple-return scenario using {tradingDaysPerMonth} trading days per month. It is not a guaranteed return, investment advice, or a forecast of actual performance.
+            Illustrative simple-return scenario over a 7-day ROI cycle. It is not a guaranteed return, investment advice, or a forecast of actual performance.
           </p>
           <button
             type="button"
