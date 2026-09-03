@@ -23,15 +23,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Investor ID and plan name are required.' }, { status: 400 });
     }
 
-    const result = await db.transaction(async tx => {
+      const result = await db.transaction(async tx => {
       const targetPlan = await tx.select().from(plans).where(eq(plans.name, body.planName!)).limit(1);
       if (!targetPlan[0]) throw new Error('Plan not found');
+
+      const creditCents = targetPlan[0].minimumDepositCents;
 
       const existing = await tx.select().from(investorAccounts).where(eq(investorAccounts.investorId, body.investorId!)).limit(1);
 
       if (existing[0]) {
         await tx.update(investorAccounts).set({
           planId: targetPlan[0].id,
+          principalCents: existing[0].principalCents + creditCents,
+          balanceCents: existing[0].balanceCents + creditCents,
+          status: 'active',
           updatedAt: new Date(),
         }).where(eq(investorAccounts.id, existing[0].id));
       } else {
@@ -39,8 +44,8 @@ export async function POST(request: Request) {
           id: crypto.randomUUID(),
           investorId: body.investorId!,
           planId: targetPlan[0].id,
-          principalCents: 0,
-          balanceCents: 0,
+          principalCents: creditCents,
+          balanceCents: creditCents,
           status: 'active',
         });
       }
@@ -48,12 +53,12 @@ export async function POST(request: Request) {
       await tx.insert(portfolioLedger).values({
         investorId: body.investorId!,
         type: 'plan_assignment',
-        amountCents: 0,
+        amountCents: creditCents,
         referenceId: `plan-assign-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         description: `Plan assigned — ${body.planName}`,
       });
 
-      return { success: true, plan: body.planName! };
+      return { success: true, plan: body.planName!, creditedCents: creditCents };
     });
 
     return NextResponse.json(result);
