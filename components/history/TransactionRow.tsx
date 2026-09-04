@@ -15,9 +15,10 @@ function typeIcon(type: string): string {
   if (type === 'deposit') return 'solar:wallet-money-bold';
   if (type === 'roi' || type === 'profit') return 'solar:graph-bold';
   if (type === 'withdrawal') return 'solar:card-send-bold';
+  if (type === 'swap') return 'solar:repeat-bold';
   if (type === 'referral_reward') return 'solar:share-bold';
-  if (type === 'credit' || type === 'balance_credit') return 'solar:add-circle-bold';
-  if (type === 'plan_assignment' || type === 'plan_purchase') return 'solar:medal-ribbon-bold';
+  if (type === 'credit' || type === 'balance_credit' || type === 'adjustment') return 'solar:add-circle-bold';
+  if (type === 'plan_assigned' || type === 'plan_assignment' || type === 'plan_purchase' || type === 'plan_upgrade') return 'solar:medal-ribbon-bold';
   return 'solar:refresh-bold';
 }
 
@@ -25,9 +26,10 @@ function typeColor(type: string): string {
   if (type === 'deposit') return 'bg-[#22C55E]/10 text-[#22C55E]';
   if (type === 'roi' || type === 'profit') return 'bg-blue-500/10 text-blue-400';
   if (type === 'withdrawal') return 'bg-amber-500/10 text-amber-400';
+  if (type === 'swap') return 'bg-cyan-500/10 text-cyan-400';
   if (type === 'referral_reward') return 'bg-purple-500/10 text-purple-400';
-  if (type === 'credit' || type === 'balance_credit') return 'bg-[#22C55E]/10 text-[#22C55E]';
-  if (type === 'plan_assignment' || type === 'plan_purchase') return 'bg-sky-500/10 text-sky-400';
+  if (type === 'credit' || type === 'balance_credit' || type === 'adjustment') return 'bg-[#22C55E]/10 text-[#22C55E]';
+  if (type === 'plan_assigned' || type === 'plan_assignment' || type === 'plan_purchase' || type === 'plan_upgrade') return 'bg-sky-500/10 text-sky-400';
   return 'bg-[#263437] text-[#93A09A]';
 }
 
@@ -36,9 +38,12 @@ function typeLabel(type: string): string {
   if (type === 'roi') return 'ROI Credit';
   if (type === 'profit') return 'Profit';
   if (type === 'withdrawal') return 'Withdrawal';
+  if (type === 'swap') return 'Swap';
   if (type === 'referral_reward') return 'Referral Bonus';
   if (type === 'credit' || type === 'balance_credit') return 'Account Credit';
-  if (type === 'plan_assignment') return 'Plan Assigned';
+  if (type === 'adjustment') return 'Adjustment';
+  if (type === 'plan_assigned' || type === 'plan_assignment') return 'Plan Assigned';
+  if (type === 'plan_upgrade') return 'Plan Upgrade';
   if (type === 'plan_purchase') return 'Plan Purchase';
   return 'Transaction';
 }

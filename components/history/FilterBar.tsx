@@ -17,8 +17,10 @@ const typeOptions = [
   { value: 'profit', label: 'Profits' },
   { value: 'credit', label: 'Account Credits' },
   { value: 'withdrawal', label: 'Withdrawals' },
+  { value: 'swap', label: 'Swaps' },
   { value: 'referral_reward', label: 'Referral Rewards' },
-  { value: 'plan_assignment', label: 'Plan Changes' },
+  { value: 'plan_upgrade', label: 'Plan Changes' },
+  { value: 'adjustment', label: 'Adjustments' },
 ];
 
 export default function FilterBar({ typeFilter, onTypeFilterChange, searchQuery, onSearchChange }: FilterBarProps) {

@@ -212,7 +212,7 @@ export default function PortfolioPage() {
           </div>
         </div>
 
-        {/* Order Book */}
+        {/* Activity / Trade History */}
         <OrderBook />
       </main>
     </div>
