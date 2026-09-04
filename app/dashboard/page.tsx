@@ -158,7 +158,6 @@ export default function InvestorDashboard() {
   const [isMasked, setIsMasked] = useState(false);
   const [isKycOpen, setIsKycOpen] = useState(false);
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
-  const [tourStep, setTourStep] = useState<number | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const managerRedirected = useRef(false);
 
@@ -263,30 +262,6 @@ export default function InvestorDashboard() {
   useEffect(() => {
     fetchAllData();
   }, [fetchAllData]);
-
-  const completeTour = useCallback(async () => {
-    setTourStep(null);
-    if (!profile.id) return;
-    localStorage.setItem(`quantovest_tour_completed_${profile.id}`, 'true');
-    try {
-      await fetch('/api/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tourCompleted: true }),
-      });
-    } catch { /* local marker still prevents repeat on this device */ }
-  }, [profile.id]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && profileLoaded && profile.id && !profile.tourCompleted) {
-      const tourDone = localStorage.getItem(`quantovest_tour_completed_${profile.id}`);
-      if (tourDone) {
-        void completeTour();
-      } else if (!profile.onboardingCompleted) {
-        setTourStep(0);
-      }
-    }
-  }, [completeTour, profile.id, profile.onboardingCompleted, profile.tourCompleted, profileLoaded]);
 
   const kycStatus = kycData.length > 0 ? kycData[0].status : profile.kycStatus;
 
@@ -531,96 +506,6 @@ export default function InvestorDashboard() {
         </div>
       )}
 
-      {/* Interactive Welcome Tour Overlay */}
-      {tourStep !== null && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 text-[#F3F7F4]">
-          <div className="bg-[#141C1F] border border-[#263437] rounded-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto p-5 sm:p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between border-b border-[#263437] pb-2">
-              <span className="text-[10px] uppercase font-mono text-[#22C55E] font-bold tracking-wider">
-                Step {tourStep + 1} of 4 • User Guide
-              </span>
-              <button 
-                onClick={() => {
-                  void completeTour();
-                }}
-                className="text-[#93A09A] hover:text-[#F3F7F4] text-xs font-semibold"
-              >
-                Skip Tour
-              </button>
-            </div>
-
-            {tourStep === 0 && (
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-[#F3F7F4]">
-                  Welcome to Quantovest Capital
-                </h4>
-                <p className="text-xs text-[#93A09A] leading-relaxed">
-                  Let&apos;s take a quick 30-second tour of your new light-theme managed investment portal.
-                </p>
-              </div>
-            )}
-
-            {tourStep === 1 && (
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-[#F3F7F4]">
-                  Live Portfolio Balance
-                </h4>
-                <p className="text-xs text-[#93A09A] leading-relaxed">
-                  This card displays your total current capital, absolute ROI profits, and the overall yield of your managed assets.
-                </p>
-              </div>
-            )}
-
-            {tourStep === 2 && (
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-[#F3F7F4]">
-                  Portfolio Strategy Managers
-                </h4>
-                <p className="text-xs text-[#93A09A] leading-relaxed">
-                  Click on the &quot;Portfolio Managers&quot; tab in the sidebar (or bottom bar on mobile) to select and follow a strategy manager.
-                </p>
-              </div>
-            )}
-
-            {tourStep === 3 && (
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-[#F3F7F4]">
-                  Funding &amp; Payouts
-                </h4>
-                <p className="text-xs text-[#93A09A] leading-relaxed">
-                  Deposit capital via cryptocurrency to start strategy mirroring instantly, or request withdrawals back to your wallet or bank account.
-                </p>
-              </div>
-            )}
-
-            <div className="flex justify-between items-center pt-2">
-              <button
-                onClick={() => setTourStep(prev => prev !== null && prev > 0 ? prev - 1 : prev)}
-                disabled={tourStep === 0}
-                className={`px-4 py-2 rounded-full text-xs font-semibold border ${
-                  tourStep === 0 
-                    ? 'border-[#263437] text-[#DEE1E6]/50 cursor-not-allowed' 
-                    : 'border-[#263437] text-[#93A09A] hover:bg-[#0A0F11]'
-                }`}
-              >
-                Back
-              </button>
-              <button
-                onClick={() => {
-                  if (tourStep === 3) {
-                    void completeTour();
-                  } else {
-                    setTourStep(prev => prev !== null ? prev + 1 : null);
-                  }
-                }}
-                className="px-5 py-2 rounded-full text-xs font-semibold bg-[#22C55E] text-[#F3F7F4] hover:bg-[#16A34A] transition-colors"
-              >
-                {tourStep === 3 ? 'Get Started' : 'Next'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
