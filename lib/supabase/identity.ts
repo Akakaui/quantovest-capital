@@ -14,7 +14,7 @@ export async function getCurrentIdentity() {
     console.error('[identity auth lookup]', error instanceof Error ? error.message : error);
   }
   if (!user) return null;
-  const authRole = user.app_metadata?.role ?? user.user_metadata?.role;
+  const authRole = user.app_metadata?.role;
   const authAvatar = typeof user.user_metadata?.avatar_url === 'string'
     ? user.user_metadata.avatar_url
     : typeof user.user_metadata?.picture === 'string'

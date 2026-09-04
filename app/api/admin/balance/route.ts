@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { getDb } from '@/lib/db';
-import { investorAccounts, portfolioLedger } from '@/db/schema';
+import { investorAccounts, portfolioLedger, users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { notifyUser } from '@/lib/notifications';
 import { syncPlanForPrincipal } from '@/lib/auto-plan';
@@ -22,8 +22,13 @@ export async function POST(request: Request) {
       reason?: string;
     } | null;
 
-    if (!body?.investorId || !body?.amountCents || body.amountCents <= 0) {
-      return NextResponse.json({ error: 'Investor ID and positive amount are required.' }, { status: 400 });
+    if (!body?.investorId || !Number.isInteger(body.amountCents) || body.amountCents! <= 0) {
+      return NextResponse.json({ error: 'Investor ID and a whole positive amount are required.' }, { status: 400 });
+    }
+
+    const existingUser = await db.select({ id: users.id }).from(users).where(eq(users.id, body.investorId!)).limit(1);
+    if (!existingUser[0]) {
+      return NextResponse.json({ error: 'Investor does not exist.' }, { status: 400 });
     }
 
     const result = await db.transaction(async tx => {

@@ -57,7 +57,7 @@ export async function GET(request: Request) {
               console.error('[callback referral attribution]', referralError);
             }
           }
-          try { await sendWelcomeEmail(data.user.id); } catch (welcomeError) { console.error('[callback welcome email]', welcomeError); }
+          try { void sendWelcomeEmail(data.user.id).catch(welcomeError => console.error('[callback welcome email]', welcomeError)); } catch (welcomeError) { console.error('[callback welcome email]', welcomeError); }
           if (rows[0]?.twoFactorEnabled) {
             const response = NextResponse.redirect(new URL('/verify-2fa', requestUrl.origin));
             response.cookies.set('qv_2fa_pending', '1', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 600, path: '/' });

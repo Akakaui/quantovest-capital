@@ -305,6 +305,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "referral_rewards_key_unique" ON "referralRewa
 CREATE INDEX IF NOT EXISTS "referral_rewards_referrer_idx" ON "referralRewards" USING btree ("referrerId");
 CREATE INDEX IF NOT EXISTS "referral_withdrawals_investor_idx" ON "referralWithdrawals" USING btree ("investorId");
 CREATE UNIQUE INDEX IF NOT EXISTS "roi_entries_investor_date_unique" ON "roiEntries" USING btree ("investorId","entryDate");
+CREATE INDEX IF NOT EXISTS "roi_entries_investor_date_idx" ON "roiEntries" USING btree ("investorId","entryDate");
 CREATE INDEX IF NOT EXISTS "roi_entries_investor_idx" ON "roiEntries" USING btree ("investorId");
 CREATE INDEX IF NOT EXISTS "portfolio_ledger_investor_idx" ON "portfolioLedger" USING btree ("investorId");
 CREATE UNIQUE INDEX IF NOT EXISTS "portfolio_ledger_reference_unique" ON "portfolioLedger" USING btree ("type","referenceId");

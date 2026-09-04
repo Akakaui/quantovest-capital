@@ -449,7 +449,7 @@ export default function AdminInvestorsPage() {
                     });
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.error || 'Failed to add balance');
-                    setBalanceSuccess(`$${Number(balanceAmount).toFixed(2)} credited as profit.`);
+                    setBalanceSuccess(`$${Number(balanceAmount).toFixed(2)} credited to funding balance (principal + balance).`);
                     await loadInvestors();
                     setTimeout(() => setBalanceModalOpen(false), 1500);
                   } catch (err: any) {

@@ -82,7 +82,7 @@ export async function middleware(request: NextRequest) {
 
   const isAuthenticated = !!user;
 
-  const role = user?.app_metadata?.role ?? user?.user_metadata?.role ?? 'investor';
+  const role = user?.app_metadata?.role ?? 'investor';
   const isAdmin = role === 'admin';
   const pendingTwoFactor = request.cookies.get('qv_2fa_pending')?.value === '1';
   if (isAuthenticated && pendingTwoFactor && pathname !== '/verify-2fa' && !pathname.startsWith('/api/auth/2fa')) {

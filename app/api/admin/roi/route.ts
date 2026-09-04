@@ -67,7 +67,7 @@ export async function POST(request: Request) {
 
         const profitCents = body.amountCents!;
         const message = body.message!.trim();
-        const planId = plan?.id ?? 1; // fallback planId if investor has no plan yet
+        const planId = plan?.id ?? null;
         const percentageBps = plan ? FIXED_ROI_BPS[plan.name] ?? 0 : 0;
 
         const inserted = await tx.insert(roiEntries).values({
