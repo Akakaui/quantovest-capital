@@ -421,3 +421,14 @@ BEGIN
   CREATE POLICY media_admin_read ON storage.objects FOR SELECT USING (bucket_id = 'quantovest-media' AND public.is_admin());
 END
 $$;
+
+-- ── Repair: bring older databases up to the current users schema ──
+-- Safe to run repeatedly. Ensures a stale DB (e.g. one created before the
+-- columns below existed) matches install time even after CREATE TABLE IF NOT EXISTS
+-- already ran. The live production DB was drifted on these columns; this is the fix.
+ALTER TABLE public.users
+  ADD COLUMN IF NOT EXISTS "onboardingCompleted" boolean DEFAULT false NOT NULL,
+  ADD COLUMN IF NOT EXISTS "onboardingAnswers" json,
+  ADD COLUMN IF NOT EXISTS "twoFactorEnabled" boolean DEFAULT false NOT NULL,
+  ADD COLUMN IF NOT EXISTS "twoFactorSecret" text,
+  ADD COLUMN IF NOT EXISTS "payoutDetails" json;
