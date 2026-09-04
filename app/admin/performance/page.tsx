@@ -17,7 +17,17 @@ export default function AdminPerformanceHomePage() {
   const router = useRouter();
   const [investors, setInvestors] = useState<Investor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const [message, setMessage] = useState('');
+
+  const query = searchQuery.trim().toLowerCase();
+  const filtered = query
+    ? investors.filter(investor =>
+        investor.name?.toLowerCase().includes(query) ||
+        investor.email?.toLowerCase().includes(query) ||
+        investor.id.toLowerCase().includes(query)
+      )
+    : investors;
 
   useEffect(() => {
     (async () => {
@@ -45,13 +55,33 @@ export default function AdminPerformanceHomePage() {
 
         {message && <div role="status" className="p-4 rounded-xl text-xs bg-[#CF202F]/10 border border-[#CF202F]/50 text-[#FCA5A5]">{message}</div>}
 
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <label className="relative flex-1 block">
+            <span className="sr-only">Search investors</span>
+            <Icon icon="solar:magnifer-bold" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7F8C86]" />
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={event => setSearchQuery(event.target.value)}
+              placeholder="Search by name or email…"
+              className="w-full rounded-xl border border-[#2B393F] bg-[#151E23] pl-11 pr-4 py-3 text-sm text-white placeholder-[#7F8C86] focus:border-[#F59E0B]/50 focus:outline-none"
+            />
+          </label>
+          <span className="text-[11px] font-mono text-[#7F8C86] whitespace-nowrap">
+            {searchQuery ? `${filtered.length} of ` : ''}{investors.length} investors
+          </span>
+        </div>
+
         {loading ? (
           <SkeletonRows rows={4} height="h-16" />
         ) : investors.length === 0 ? (
           <EmptyState title="No investors yet" hint="Investors appear here once they fund their account." icon="solar:users-group-rounded-bold" />
+        ) : filtered.length === 0 ? (
+          <EmptyState title="No matches" hint="Try a different name or email." icon="solar:magnifer-bold" />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {investors.map(investor => (
+          <div className="max-h-[68vh] overflow-y-auto pr-1 pb-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {filtered.map(investor => (
               <button
                 key={investor.id}
                 onClick={() => router.push(`/admin/performance/${investor.id}`)}
@@ -78,7 +108,8 @@ export default function AdminPerformanceHomePage() {
                   </div>
                 </div>
               </button>
-            ))}
+              ))}
+            </div>
           </div>
         )}
       </main>
