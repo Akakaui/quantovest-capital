@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { and, asc, desc, eq } from 'drizzle-orm';
+import { and, desc, eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { notifyAdmins, notifyUser } from '@/lib/notifications';
 import { getDb } from '@/lib/db';
 import { deposits, investorAccounts, plans, portfolioLedger, users } from '@/db/schema';
 import { sendDepositApproved, sendDepositRejected } from '@/lib/email';
 import { databaseUnavailable } from '@/lib/api-errors';
+import { grantReferralRewardForDeposit } from '@/lib/referral-reward';
+import { syncPlanForPrincipal } from '@/lib/auto-plan';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,42 +68,54 @@ export async function PATCH(request: Request) {
       }
       // 2. Mark deposit as completed BEFORE touching balance (prevents re-processing)
       await tx.update(deposits).set({ status: 'completed', reviewedBy: identity.id, reviewNote: body.reviewNote?.trim() || null, updatedAt: new Date() }).where(eq(deposits.id, deposit.id));
-      // 3. Credit investor balance — plan assignment is optional and separate
+      // 3. Credit investor balance and principal — principal (not profit) drives plan eligibility
       const existingAccounts = await tx.select().from(investorAccounts).where(eq(investorAccounts.investorId, deposit.investorId)).limit(1);
-      // Try to find a matching plan but do NOT fail if none found
-      const availablePlans = await tx.select().from(plans).where(eq(plans.active, 1)).orderBy(asc(plans.minimumDepositCents));
-      const selectedPlan = (deposit.planId ? availablePlans.find(plan => plan.id === deposit.planId) : undefined)
-        ?? [...availablePlans].reverse().find(plan => deposit.amountCents >= plan.minimumDepositCents && (plan.maximumDepositCents == null || deposit.amountCents <= plan.maximumDepositCents));
+      let accountId: string;
+      let currentPlanId: number = 1;
+      let newPrincipalCents: number;
+      let planResult = { changed: false as boolean, fromPlanName: null as string | null, toPlanName: null as string | null };
       if (existingAccounts[0]) {
+        accountId = existingAccounts[0].id;
+        currentPlanId = existingAccounts[0].planId;
+        newPrincipalCents = existingAccounts[0].principalCents + deposit.amountCents;
         await tx.update(investorAccounts).set({
-          ...(selectedPlan ? { planId: selectedPlan.id } : {}),
-          principalCents: existingAccounts[0].principalCents + deposit.amountCents,
+          principalCents: newPrincipalCents,
           balanceCents: existingAccounts[0].balanceCents + deposit.amountCents,
           status: 'active',
           updatedAt: new Date(),
         }).where(eq(investorAccounts.id, existingAccounts[0].id));
       } else {
-        // Create account with a placeholder planId of 1 (or selectedPlan if found)
-        const planId = selectedPlan?.id ?? availablePlans[0]?.id ?? 1;
-        await tx.insert(investorAccounts).values({ id: crypto.randomUUID(), investorId: deposit.investorId, planId, principalCents: deposit.amountCents, balanceCents: deposit.amountCents, status: 'active' });
+        // Create a new account without implying the investor is "on a plan" — use the real
+        // Starter plan id as the default so syncPlanForPrincipal sees a valid currentPlanId.
+        const defaultPlan = await tx.select({ id: plans.id }).from(plans).where(eq(plans.name, 'Starter')).limit(1);
+        accountId = crypto.randomUUID();
+        currentPlanId = defaultPlan[0]?.id ?? 1;
+        newPrincipalCents = deposit.amountCents;
+        await tx.insert(investorAccounts).values({ id: accountId, investorId: deposit.investorId, planId: currentPlanId, principalCents: deposit.amountCents, balanceCents: deposit.amountCents, status: 'active' });
       }
       // 4. Record in ledger (guard against unique constraint if entry already exists from a prior partial attempt)
       const existingLedger = await tx.select({ id: portfolioLedger.id }).from(portfolioLedger).where(and(eq(portfolioLedger.type, 'deposit'), eq(portfolioLedger.referenceId, deposit.id))).limit(1);
       if (!existingLedger[0]) {
-        await tx.insert(portfolioLedger).values({ investorId: deposit.investorId, type: 'deposit', amountCents: deposit.amountCents, referenceId: deposit.id, description: selectedPlan ? `Deposit approved — ${selectedPlan.name} plan` : 'Deposit approved' });
+        await tx.insert(portfolioLedger).values({ investorId: deposit.investorId, type: 'deposit', amountCents: deposit.amountCents, referenceId: deposit.id, description: `Deposit of $${(deposit.amountCents / 100).toFixed(2)} credited` });
       }
-      return { investorId: deposit.investorId, status: 'completed', planName: selectedPlan?.name ?? null, amountCents: deposit.amountCents };
+      // 5. Auto-assign/upgrade plan when total principal crosses a plan threshold (principal only, never profit)
+      planResult = await syncPlanForPrincipal(tx, accountId, deposit.investorId, currentPlanId, newPrincipalCents);
+      return { investorId: deposit.investorId, status: 'completed', planName: planResult.toPlanName, amountCents: deposit.amountCents };
     });
     if ('alreadyProcessed' in result && result.alreadyProcessed) {
       return NextResponse.json({ message: 'Deposit was already processed.', ...result });
     }
-    if (result.status === 'completed') await notifyUser(result.investorId, 'deposit_approved', 'Deposit approved', result.planName ? `Your deposit was verified and your account is now on the ${result.planName} plan.` : 'Your deposit has been verified and your account balance has been updated.');
-    else await notifyUser(result.investorId, 'deposit_rejected', 'Deposit requires attention', 'Your deposit proof was not approved. Review the admin note and submit corrected proof.');
+    if (result.status === 'completed') {
+      await notifyUser(result.investorId, 'deposit_approved', 'Deposit approved', `Your deposit of $${(result.amountCents / 100).toFixed(2)} has been credited to your account balance.`);
+      if (result.planName) await notifyUser(result.investorId, 'plan_updated', 'Plan upgraded', `You've been upgraded to the ${result.planName} plan.`);
+      try { await grantReferralRewardForDeposit(body.depositId!, result.investorId, result.amountCents); } catch (referralError) { console.error('[deposit referral reward]', referralError); }
+    }
+    else await notifyUser(result.investorId, 'deposit_rejected', 'Deposit requires attention', `Your deposit of $${(result.amountCents / 100).toFixed(2)} could not be approved. Review the admin note and submit corrected proof.`);
     await notifyAdmins(`deposit_${result.status}`, `Deposit ${result.status}`, `The deposit review was marked ${result.status} for investor ${result.investorId}.`);
     try {
       const investor = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, result.investorId)).limit(1);
       if (investor[0]?.email) {
-        if (result.status === 'completed') sendDepositApproved(investor[0].email, investor[0].name || 'Investor', `$${(result.amountCents / 100).toFixed(2)}`, result.planName!);
+        if (result.status === 'completed') sendDepositApproved(investor[0].email, investor[0].name || 'Investor', `$${(result.amountCents / 100).toFixed(2)}`, 'Account Balance');
         else sendDepositRejected(investor[0].email, investor[0].name || 'Investor', body.reviewNote?.trim() || 'Deposit proof did not meet requirements.');
       }
     } catch {}

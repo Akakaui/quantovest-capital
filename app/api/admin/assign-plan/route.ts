@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { getDb } from '@/lib/db';
-import { investorAccounts, plans, portfolioLedger } from '@/db/schema';
+import { investorAccounts, plans, portfolioLedger, users } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { notifyUser } from '@/lib/notifications';
+import { sendPlanUpdated } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,14 +54,21 @@ export async function POST(request: Request) {
 
       await tx.insert(portfolioLedger).values({
         investorId: body.investorId!,
-        type: 'plan_assignment',
+        type: 'plan_upgrade',
         amountCents: creditCents,
-        referenceId: `plan-assign-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-        description: `Plan assigned — ${body.planName}`,
+        referenceId: `plan-assign-${crypto.randomUUID()}`,
+        description: `Account upgraded to the ${targetPlan[0].name} plan`,
       });
 
-      return { success: true, plan: body.planName!, creditedCents: creditCents };
+      return { success: true, plan: body.planName!, creditedCents: creditCents, investorId: body.investorId! };
     });
+
+    const dollars = (result.creditedCents / 100).toFixed(2);
+    await notifyUser(result.investorId, 'plan_updated', 'Plan assigned', `Your account has been upgraded to the ${result.plan} plan and $${dollars} has been credited to your balance.`);
+    try {
+      const investor = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, result.investorId)).limit(1);
+      if (investor[0]?.email) sendPlanUpdated(investor[0].email, investor[0].name || 'Investor', 'Previous plan', result.plan);
+    } catch {}
 
     return NextResponse.json(result);
   } catch (err) {

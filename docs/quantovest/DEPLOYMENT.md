@@ -52,9 +52,12 @@ DATABASE_URL=postgresql://postgres.xxx:password@aws-0-us-east-1.pooler.supabase.
 # App URL
 APP_PUBLIC_URL=https://yourdomain.com
 
-# Email (Resend)
-RESEND_API_KEY=re_your_key
-EMAIL_FROM=Quantovest Capital <notifications@yourdomain.com>
+# Email (Zoho SMTP)
+ZOHO_SMTP_HOST=smtp.zoho.com
+ZOHO_SMTP_PORT=465
+ZOHO_SMTP_USER=support@quantovests.com
+ZOHO_SMTP_PASS=your_zoho_app_password
+EMAIL_FROM=Quantovest Capital <support@quantovests.com>
 
 # Google OAuth (optional)
 GOOGLE_CLIENT_ID=your-google-client-id
@@ -141,14 +144,13 @@ UPDATE users SET role = 'admin' WHERE email = 'admin@yourdomain.com';
 
 ---
 
-## Step 9: Set Up Resend (Email)
+## Step 9: Set Up Zoho Mail (Email)
 
-1. Go to **https://resend.com** → Sign up (free tier: 100 emails/day)
-2. Go to **API Keys** → Create new key → Copy it
-3. Go to **Domains** → Add your domain
-4. Add the DNS records they give you (MX, TXT, CNAME)
-5. Wait for verification (usually 5 minutes)
-6. Set `RESEND_API_KEY` and `EMAIL_FROM` in env vars
+1. Go to **https://www.zoho.com/mail/** → Sign up
+2. Create the business mailbox `support@quantovests.com`
+3. In Zoho, generate an **app-specific password** for SMTP (Account Settings → Security → App Passwords)
+4. Set `ZOHO_SMTP_HOST` (`smtp.zoho.com`), `ZOHO_SMTP_PORT` (`465`), `ZOHO_SMTP_USER` (`support@quantovests.com`), `ZOHO_SMTP_PASS` (the app password), and `EMAIL_FROM` in env vars
+5. Configure Zoho as custom SMTP in Supabase **Authentication → SMTP Settings** for confirmation/password emails
 
 ---
 
@@ -218,7 +220,10 @@ Copy the output into your env vars.
 | `APP_PUBLIC_URL` | ✅ | Your deployed URL |
 | `NEXT_PUBLIC_TAWK_PROPERTY_ID` | Optional | Tawk.to Administration → Property ID |
 | `NEXT_PUBLIC_TAWK_WIDGET_ID` | Optional | Tawk.to Administration → Chat Widget code |
-| `RESEND_API_KEY` | ✅ | resend.com → API Keys |
+| `ZOHO_SMTP_HOST` | ✅ | `smtp.zoho.com` |
+| `ZOHO_SMTP_PORT` | ✅ | `465` |
+| `ZOHO_SMTP_USER` | ✅ | `support@quantovests.com` |
+| `ZOHO_SMTP_PASS` | ✅ | Zoho app-specific password |
 | `EMAIL_FROM` | ✅ | Your verified domain email |
 | `GOOGLE_CLIENT_ID` | Optional | console.cloud.google.com |
 | `GOOGLE_CLIENT_SECRET` | Optional | console.cloud.google.com |

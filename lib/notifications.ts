@@ -13,6 +13,16 @@ function readPrefs(value: unknown): NotificationPrefs {
   return typeof value === 'object' ? value as NotificationPrefs : {};
 }
 
+const FINANCIAL_EMAIL: Record<string, 'deposit_approved' | 'deposit_rejected' | 'withdrawal_approved' | 'withdrawal_rejected' | 'referral_reward_credited' | 'security_alert'> = {
+  deposit_approved: 'deposit_approved',
+  deposit_rejected: 'deposit_rejected',
+  withdrawal_approved: 'withdrawal_approved',
+  withdrawal_rejected: 'withdrawal_rejected',
+  referral_reward_credited: 'referral_reward_credited',
+  security: 'security_alert',
+  security_alert: 'security_alert',
+};
+
 async function maybeEmailUser(user: { email: string | null; name: string | null; notificationPrefs: unknown } | undefined, type: string, title: string, body: string) {
   if (!user?.email) return;
   const prefs = readPrefs(user.notificationPrefs);
@@ -22,7 +32,7 @@ async function maybeEmailUser(user: { email: string | null; name: string | null;
     : type === 'strategy_alert' || type === 'strategy_update'
       ? prefs.notifyStrategyAlerts === true
       : false;
-  if (!optedIn) return;
+  if (!optedIn && (isPerformance || type === 'strategy_alert' || type === 'strategy_update')) return;
   if (isPerformance) {
     await sendEmail(user.email, 'roi_published', {
       investorName: user.name || 'Investor',
@@ -30,12 +40,22 @@ async function maybeEmailUser(user: { email: string | null; name: string | null;
       profitAmount: body.match(/\$[\d,.]+/)?.[0],
       message: body,
     });
-  } else {
-    await sendEmail(user.email, 'admin_broadcast', {
+    return;
+  }
+  const financialTemplate = FINANCIAL_EMAIL[type];
+  if (financialTemplate) {
+    await sendEmail(user.email, financialTemplate, {
       investorName: user.name || 'Investor',
+      amount: body.match(/\$[\d,.]+/)?.[0],
+      reason: body,
       message: body,
     });
+    return;
   }
+  await sendEmail(user.email, 'admin_broadcast', {
+    investorName: user.name || 'Investor',
+    message: body,
+  });
 }
 
 export async function notifyUser(userId: string, type: string, title: string, body: string, relatedRewardId?: number) {
@@ -77,4 +97,11 @@ export async function broadcastNotification(type: string, title: string, body: s
   const recipients = recipientIds?.length ? recipientIds.map(id => ({ id })) : await db.select({ id: users.id }).from(users);
   if (recipients.length) await db.insert(notifications).values(recipients.map(recipient => ({ userId: recipient.id, type, title, body, isRead: 0 })));
   return recipients.length;
+}
+
+export async function sendWelcomeEmail(userId: string) {
+  const db = getDb();
+  if (!db) return;
+  const [user] = await db.select({ email: users.email, name: users.name }).from(users).where(eq(users.id, userId)).limit(1);
+  if (user?.email) await sendEmail(user.email, 'account_welcome', { investorName: user.name || 'Investor', message: 'Your account is ready.' });
 }

@@ -30,7 +30,10 @@ Copy `.env.example` to `.env.local` for local development and configure the same
 | `SUPABASE_MEDIA_BUCKET` | Private media bucket; use `quantovest-media` | Server-side |
 | `DATABASE_URL` | Supabase Postgres pooler connection | Server-only |
 | `APP_PUBLIC_URL` | Canonical app URL for redirects and email links | Server-side |
-| `RESEND_API_KEY` | Transactional email provider key | Server-only |
+| `ZOHO_SMTP_HOST` | Zoho SMTP host (`smtp.zoho.com`) | Server-only |
+| `ZOHO_SMTP_PORT` | Zoho SMTP port (`465`) | Server-only |
+| `ZOHO_SMTP_USER` | Business mailbox (`support@quantovests.com`) | Server-only |
+| `ZOHO_SMTP_PASS` | Zoho app-specific password | Server-only |
 | `EMAIL_FROM` | Verified business sender | Server-side |
 | `NEXT_PUBLIC_TAWK_PROPERTY_ID` | Tawk.to property | Browser-safe |
 | `NEXT_PUBLIC_TAWK_WIDGET_ID` | Tawk.to widget | Browser-safe |

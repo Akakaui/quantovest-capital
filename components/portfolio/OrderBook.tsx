@@ -39,7 +39,7 @@ export default function OrderBook({ investorId }: { investorId?: string }) {
   return (
     <div className="p-6 rounded-2xl bg-[#141C1F] border border-[#263437] space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-normal text-[#F3F7F4]">Order Book</h3>
+        <h3 className="text-base font-normal text-[#F3F7F4]">Activity / Trade History</h3>
         <span className="text-[10px] font-mono text-[#93A09A]">{entries.length} transactions</span>
       </div>
       {/* Header */}
@@ -51,13 +51,19 @@ export default function OrderBook({ investorId }: { investorId?: string }) {
       {/* Rows */}
       <div className="space-y-1 max-h-[400px] overflow-y-auto">
         {entries.slice(0, 20).map(entry => {
-          const isBuy = entry.type === 'deposit' || entry.type === 'roi' || entry.type === 'profit';
+          const isBuy = entry.amountCents >= 0;
+          const label = entry.type.includes("referral") ? "REFERRAL"
+            : entry.type === "deposit" ? "DEPOSIT"
+            : entry.type === "withdrawal" ? "WITHDRAWAL"
+            : entry.type === "swap" ? "SWAP"
+            : entry.type === "roi" || entry.type === "profit" ? "RETURN"
+            : entry.type.toUpperCase();
           return (
             <div key={entry.id} className={`grid grid-cols-3 gap-2 text-xs font-mono px-3 py-2 rounded-lg ${
               isBuy ? 'bg-[#22C55E]/5' : 'bg-[#CF202F]/5'
             }`}>
               <span className={isBuy ? 'text-[#22C55E]' : 'text-[#CF202F]'}>
-                {entry.type === 'deposit' ? 'BUY' : entry.type === 'withdrawal' ? 'SELL' : entry.type === 'roi' ? 'DIV' : entry.type === 'profit' ? 'GAIN' : entry.type.toUpperCase()}
+                {label}
               </span>
               <span className={`text-right ${entry.amountCents >= 0 ? 'text-[#22C55E]' : 'text-[#CF202F]'}`}>
                 {entry.amountCents >= 0 ? '+' : ''}{formatCents(entry.amountCents)}

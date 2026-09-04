@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import AdminSidebar from '@/components/AdminSidebar';
+import EmptyState from '@/components/admin/EmptyState';
 import { Icon } from '@iconify/react';
 
 interface InvestorRow {
@@ -205,7 +206,11 @@ export default function AdminInvestorsPage() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-xs text-[#7F8C86]">No investors found.</div>
+          <EmptyState
+            title={investors.length === 0 ? 'No investors yet' : 'No matching investors'}
+            hint={investors.length === 0 ? 'New investor accounts will appear here.' : 'Try a different name or email search.'}
+            icon="solar:user-bold"
+          />
         ) : (
           <div className="space-y-3">
             {filtered.map(inv => {
@@ -338,7 +343,7 @@ export default function AdminInvestorsPage() {
                       <div>
                         <h4 className="text-xs font-semibold text-[#E8EFEB] mb-2">KYC History</h4>
                         {investorKyc.length === 0 ? (
-                          <p className="text-[10px] text-[#7F8C86]">No KYC submissions.</p>
+                          <p className="text-[10px] text-[#7F8C86] italic">No KYC submissions.</p>
                         ) : (
                           <div className="space-y-2">
                             {investorKyc.map(k => (
@@ -359,7 +364,7 @@ export default function AdminInvestorsPage() {
                       <div>
                         <h4 className="text-xs font-semibold text-[#E8EFEB] mb-2">Recent Withdrawals</h4>
                         {investorWithdrawals.length === 0 ? (
-                          <p className="text-[10px] text-[#7F8C86]">No withdrawal history.</p>
+                          <p className="text-[10px] text-[#7F8C86] italic">No withdrawal history.</p>
                         ) : (
                           <div className="space-y-2">
                             {investorWithdrawals.slice(0, 5).map(w => (

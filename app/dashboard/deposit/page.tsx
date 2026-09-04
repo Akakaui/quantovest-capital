@@ -25,9 +25,7 @@ type Deposit = {
 
 const CRYPTO_COINS = [
   { value: 'usdt-trc20', label: 'USDT (TRC-20)', icon: 'cryptocurrency:usdt' },
-  { value: 'usdt-erc20', label: 'USDT (ERC-20)', icon: 'cryptocurrency:usdt' },
   { value: 'btc', label: 'Bitcoin (BTC)', icon: 'cryptocurrency:btc' },
-  { value: 'eth', label: 'Ethereum (ETH)', icon: 'cryptocurrency:eth' },
 ] as const;
 
 type Plan = {

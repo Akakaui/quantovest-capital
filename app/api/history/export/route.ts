@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
   try {
     const url = new URL(request.url);
-    const type = url.searchParams.get("type") as "deposit" | "roi" | "withdrawal" | "referral_reward" | "adjustment" | null;
+    const type = url.searchParams.get("type") as "deposit" | "roi" | "profit" | "credit" | "withdrawal" | "swap" | "referral_reward" | "adjustment" | "plan_assignment" | "plan_assigned" | "plan_purchase" | "plan_upgrade" | null;
     const conditions = [eq(portfolioLedger.investorId, identity.id)];
     if (type) conditions.push(eq(portfolioLedger.type, type));
     const rows = await db.select().from(portfolioLedger).where(and(...conditions));

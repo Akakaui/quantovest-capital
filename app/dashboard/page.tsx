@@ -398,7 +398,7 @@ export default function InvestorDashboard() {
               <p className="text-base font-mono font-semibold text-[#22C55E]">+${profile.totalProfit.toLocaleString()}</p>
             </div>
             <div>
-              <p className="text-[10px] uppercase font-mono text-[#93A09A]">Daily ROI</p>
+              <p className="text-[10px] uppercase font-mono text-[#93A09A]">Cycle ROI (7-day)</p>
               <p className={`text-base font-mono font-semibold ${profile.dailyRoiPercent >= 0 ? 'text-[#22C55E]' : 'text-[#CF202F]'}`}>
                 {profile.dailyRoiPercent >= 0 ? '+' : ''}{profile.dailyRoiPercent}%
               </p>

@@ -7,11 +7,19 @@
  * 3. Outbox — stores pending emails for retry
  * 4. Provider adapter — sends via Resend/SendGrid/SES
  * 
- * To activate: set RESEND_API_KEY and EMAIL_FROM in .env.local
+ * To activate: set ZOHO_SMTP_USER, ZOHO_SMTP_PASS and EMAIL_FROM in .env.local
  * Without these, emails are logged to console but not sent.
  */
 
 const APP_URL = process.env.APP_PUBLIC_URL || 'http://localhost:3000';
+
+function esc(value: string | null | undefined): string {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
 // ─── Email Templates ─────────────────────────────────────────────────────────
 
@@ -22,6 +30,7 @@ export interface EmailTemplate {
 }
 
 type TemplateName =
+  | 'account_welcome'
   | 'deposit_submitted'
   | 'deposit_approved'
   | 'deposit_rejected'
@@ -91,14 +100,24 @@ function renderTemplate(name: TemplateName, data: TemplateData): EmailTemplate {
   </div>
 </body>
 </html>`,
-    text: `${title}\n\nHello ${data.investorName},\n\n${content.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()}\n\nView your dashboard: ${APP_URL}/dashboard\n\nQuantovest Capital — Your Capital. Their Expertise.`,
+    text: `${title}\n\nHello ${esc(data.investorName)},\n\n${content.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()}\n\nView your dashboard: ${APP_URL}/dashboard\n\nQuantovest Capital — Your Capital. Their Expertise.`,
   });
 
   switch (name) {
+    case 'account_welcome':
+      return baseLayout('Welcome to Quantovest Capital', `
+        <h2>Welcome aboard</h2>
+        <p>Hello ${esc(data.investorName)},</p>
+        <p>Your Quantovest Capital account has been created. You can now fund your account, choose an investment plan, and follow professional traders.</p>
+        <div class="detail-row"><span class="detail-label">Start Investing</span><span class="detail-value">From $1,500</span></div>
+        <div class="detail-row"><span class="detail-label">Support</span><span class="detail-value"><a href="mailto:support@quantovests.com">support@quantovests.com</a></span></div>
+        <a href="${APP_URL}/dashboard" class="cta">Go to Dashboard</a>
+      `);
+
     case 'deposit_submitted':
       return baseLayout('Deposit Received', `
         <h2>Deposit Received</h2>
-        <p>Hello ${data.investorName},</p>
+        <p>Hello ${esc(data.investorName)},</p>
         <p>We&apos;ve received your deposit request and it&apos;s now being reviewed.</p>
         <div class="highlight">
           <div class="amount">${data.amount}</div>
@@ -110,13 +129,13 @@ function renderTemplate(name: TemplateName, data: TemplateData): EmailTemplate {
     case 'deposit_approved':
       return baseLayout('Deposit Approved', `
         <h2>Deposit Approved</h2>
-        <p>Hello ${data.investorName},</p>
+        <p>Hello ${esc(data.investorName)},</p>
         <p>Your deposit has been approved and credited to your account.</p>
         <div class="highlight">
           <div class="amount">${data.amount}</div>
-          <p style="margin:8px 0 0;font-size:14px;color:#16a34a;font-weight:600">Credited to ${data.planName} Plan</p>
+          <p style="margin:8px 0 0;font-size:14px;color:#16a34a;font-weight:600">Credited to ${esc(data.planName)} Plan</p>
         </div>
-        <div class="detail-row"><span class="detail-label">Plan</span><span class="detail-value">${data.planName}</span></div>
+        <div class="detail-row"><span class="detail-label">Plan</span><span class="detail-value">${esc(data.planName)}</span></div>
         <div class="detail-row"><span class="detail-label">Amount</span><span class="detail-value">${data.amount}</span></div>
         <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value" style="color:#16a34a">Completed</span></div>
         <a href="${APP_URL}/dashboard" class="cta">View Dashboard</a>
@@ -125,11 +144,11 @@ function renderTemplate(name: TemplateName, data: TemplateData): EmailTemplate {
     case 'deposit_rejected':
       return baseLayout('Deposit Rejected', `
         <h2>Deposit Rejected</h2>
-        <p>Hello ${data.investorName},</p>
+        <p>Hello ${esc(data.investorName)},</p>
         <p>Your deposit request has been declined.</p>
         <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0;">
           <p style="color:#dc2626;font-weight:600;margin:0;">Reason</p>
-          <p style="margin:8px 0 0;color:#7f1d1d;">${data.reason}</p>
+          <p style="margin:8px 0 0;color:#7f1d1d;">${esc(data.reason)}</p>
         </div>
         <a href="${APP_URL}/dashboard/deposit" class="cta">Try Again</a>
       `);
@@ -137,21 +156,21 @@ function renderTemplate(name: TemplateName, data: TemplateData): EmailTemplate {
     case 'plan_updated':
       return baseLayout('Plan Updated', `
         <h2>Plan Changed</h2>
-        <p>Hello ${data.investorName},</p>
+        <p>Hello ${esc(data.investorName)},</p>
         <p>Your investment plan has been updated.</p>
         <div class="highlight">
-          <div class="amount">${data.planName}</div>
+          <div class="amount">${esc(data.planName)}</div>
           <p style="margin:8px 0 0;font-size:14px;color:#16a34a;font-weight:600">New Active Plan</p>
         </div>
-        <div class="detail-row"><span class="detail-label">Previous Plan</span><span class="detail-value">${data.previousPlan}</span></div>
-        <div class="detail-row"><span class="detail-label">New Plan</span><span class="detail-value" style="color:#16a34a">${data.planName}</span></div>
+        <div class="detail-row"><span class="detail-label">Previous Plan</span><span class="detail-value">${esc(data.previousPlan)}</span></div>
+        <div class="detail-row"><span class="detail-label">New Plan</span><span class="detail-value" style="color:#16a34a">${esc(data.planName)}</span></div>
         <a href="${APP_URL}/dashboard" class="cta">View Dashboard</a>
       `);
 
     case 'roi_published':
       return baseLayout('Daily ROI Credited', `
         <h2>Daily ROI</h2>
-        <p>Hello ${data.investorName},</p>
+        <p>Hello ${esc(data.investorName)},</p>
         <p>Today&apos;s return has been credited to your account.</p>
         <div class="highlight">
           <div class="amount">${data.roiPercent}%</div>
@@ -163,7 +182,7 @@ function renderTemplate(name: TemplateName, data: TemplateData): EmailTemplate {
     case 'kyc_submitted':
       return baseLayout('KYC Documents Received', `
         <h2>Documents Received</h2>
-        <p>Hello ${data.investorName},</p>
+        <p>Hello ${esc(data.investorName)},</p>
         <p>We&apos;ve received your identity verification documents.</p>
         <div style="text-align:center;padding:20px;">
           <span style="display:inline-block;background:#fef3c7;color:#d97706;font-weight:700;font-size:16px;padding:8px 24px;border-radius:100px;">Under Review</span>
@@ -174,7 +193,7 @@ function renderTemplate(name: TemplateName, data: TemplateData): EmailTemplate {
     case 'kyc_approved':
       return baseLayout('KYC Verified', `
         <h2>Identity Verified</h2>
-        <p>Hello ${data.investorName},</p>
+        <p>Hello ${esc(data.investorName)},</p>
         <p>Your identity verification has been approved. You now have full access to all platform features.</p>
         <div style="text-align:center;padding:20px;">
           <span style="display:inline-block;background:#f0fdf4;color:#16a34a;font-weight:700;font-size:16px;padding:8px 24px;border-radius:100px;">✓ Verified</span>
@@ -185,11 +204,11 @@ function renderTemplate(name: TemplateName, data: TemplateData): EmailTemplate {
     case 'kyc_declined':
       return baseLayout('KYC Requires Attention', `
         <h2>Verification Declined</h2>
-        <p>Hello ${data.investorName},</p>
+        <p>Hello ${esc(data.investorName)},</p>
         <p>Your identity verification was declined. Please review and resubmit.</p>
         <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0;">
           <p style="color:#dc2626;font-weight:600;margin:0;">Reason</p>
-          <p style="margin:8px 0 0;color:#7f1d1d;">${data.reason}</p>
+          <p style="margin:8px 0 0;color:#7f1d1d;">${esc(data.reason)}</p>
         </div>
         <a href="${APP_URL}/dashboard/kyc" class="cta">Resubmit Documents</a>
       `);
@@ -197,7 +216,7 @@ function renderTemplate(name: TemplateName, data: TemplateData): EmailTemplate {
     case 'withdrawal_submitted':
       return baseLayout('Withdrawal Requested', `
         <h2>Withdrawal Request</h2>
-        <p>Hello ${data.investorName},</p>
+        <p>Hello ${esc(data.investorName)},</p>
         <p>Your withdrawal request has been submitted and is pending review.</p>
         <div class="highlight">
           <div class="amount">${data.amount}</div>
@@ -208,7 +227,7 @@ function renderTemplate(name: TemplateName, data: TemplateData): EmailTemplate {
     case 'withdrawal_approved':
       return baseLayout('Withdrawal Processed', `
         <h2>Withdrawal Approved</h2>
-        <p>Hello ${data.investorName},</p>
+        <p>Hello ${esc(data.investorName)},</p>
         <p>Your withdrawal has been processed.</p>
         <div class="highlight">
           <div class="amount">${data.amount}</div>
@@ -219,11 +238,11 @@ function renderTemplate(name: TemplateName, data: TemplateData): EmailTemplate {
     case 'withdrawal_rejected':
       return baseLayout('Withdrawal Declined', `
         <h2>Withdrawal Declined</h2>
-        <p>Hello ${data.investorName},</p>
+        <p>Hello ${esc(data.investorName)},</p>
         <p>Your withdrawal request has been declined.</p>
         <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0;">
           <p style="color:#dc2626;font-weight:600;margin:0;">Reason</p>
-          <p style="margin:8px 0 0;color:#7f1d1d;">${data.reason}</p>
+          <p style="margin:8px 0 0;color:#7f1d1d;">${esc(data.reason)}</p>
         </div>
         <a href="${APP_URL}/dashboard/withdraw" class="cta">View Withdrawals</a>
       `);
@@ -231,7 +250,7 @@ function renderTemplate(name: TemplateName, data: TemplateData): EmailTemplate {
     case 'referral_reward_credited':
       return baseLayout('Referral Reward', `
         <h2>Referral Reward</h2>
-        <p>Hello ${data.investorName},</p>
+        <p>Hello ${esc(data.investorName)},</p>
         <p>A referral reward has been credited to your account.</p>
         <div class="highlight">
           <div class="amount">${data.amount}</div>
@@ -240,12 +259,12 @@ function renderTemplate(name: TemplateName, data: TemplateData): EmailTemplate {
       `);
 
     case 'admin_broadcast':
-      return baseLayout(data.message || 'Platform Notice', `
-        <h2>${data.message || 'Platform Notice'}</h2>
-        <p>Hello ${data.investorName},</p>
-        <p>${data.adminName || 'The Quantovest team'} has sent you an update:</p>
+      return baseLayout(esc(data.message) || 'Platform Notice', `
+        <h2>${esc(data.message) || 'Platform Notice'}</h2>
+        <p>Hello ${esc(data.investorName)},</p>
+        <p>${esc(data.adminName) || 'The Quantovest team'} has sent you an update:</p>
         <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:16px;margin:16px 0;">
-          <p style="margin:0;">${data.message}</p>
+          <p style="margin:0;">${esc(data.message)}</p>
         </div>
         <a href="${APP_URL}/dashboard" class="cta">View Dashboard</a>
       `);
@@ -253,22 +272,117 @@ function renderTemplate(name: TemplateName, data: TemplateData): EmailTemplate {
     case 'security_alert':
       return baseLayout('Security Alert', `
         <h2>Security Alert</h2>
-        <p>Hello ${data.investorName},</p>
+        <p>Hello ${esc(data.investorName)},</p>
         <p>A security-related event occurred on your account.</p>
         <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0;">
           <p style="color:#dc2626;font-weight:600;margin:0;">Event</p>
-          <p style="margin:8px 0 0;color:#7f1d1d;">${data.message}</p>
+          <p style="margin:8px 0 0;color:#7f1d1d;">${esc(data.message)}</p>
           <p style="margin:8px 0 0;font-size:12px;color:#9ca3af;">Time: ${data.eventTime}</p>
         </div>
         <a href="${APP_URL}/dashboard/settings" class="cta">Review Security Settings</a>
       `);
 
     default:
-      return baseLayout('Notification', `<p>Hello ${data.investorName},</p><p>You have a new notification.</p>`);
+      return baseLayout('Notification', `<p>Hello ${esc(data.investorName)},</p><p>You have a new notification.</p>`);
   }
 }
 
-// ─── Email Sender ────────────────────────────────────────────────────────────
+// ─── Email Sender (Zoho SMTP) ────────────────────────────────────────────────
+
+import tls from 'tls';
+import net from 'net';
+
+const EMAIL_FROM =
+  process.env.EMAIL_FROM || 'Quantovest Capital <support@quantovests.com>';
+
+function smtpCommand(socket: net.Socket, command: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    const onData = (chunk: Buffer) => {
+      data += chunk.toString('utf8');
+      // A reply is complete when a line ends with "\r\n<code> " (more to come) or
+      // when the last char of the final line is a space is not definitive; SMTP
+      // multi-line replies end when a line starts with "<code> " (space) rather than "-".
+      const lines = data.split('\r\n').filter(Boolean);
+      const last = lines[lines.length - 1];
+      if (last && /^\d{3} /.test(last)) {
+        socket.off('data', onData);
+        resolve(data);
+      }
+    };
+    socket.on('data', onData);
+    socket.write(`${command}\r\n`);
+    setTimeout(() => { socket.off('data', onData); reject(new Error('SMTP command timed out.')); }, 15000);
+  });
+}
+
+function base64(value: string): string {
+  return Buffer.from(value, 'utf8').toString('base64');
+}
+
+async function sendViaZoho(
+  host: string,
+  port: number,
+  user: string,
+  password: string,
+  from: string,
+  to: string,
+  subject: string,
+  html: string,
+  text: string,
+): Promise<{ ok: boolean; message: string }> {
+  return new Promise((resolve, reject) => {
+    const socket = tls.connect({ host, port, servername: host }, async () => {
+      try {
+        const greeting = await smtpCommand(socket, '');
+        if (!/^220/.test(greeting)) return resolve({ ok: false, message: 'Unexpected greeting: ' + greeting.trim() });
+        await smtpCommand(socket, `EHLO ${host}`);
+        await smtpCommand(socket, `AUTH LOGIN`);
+        await smtpCommand(socket, base64(user));
+        const authRes = await smtpCommand(socket, base64(password));
+        if (!/^235/.test(authRes)) {
+          socket.end();
+          return resolve({ ok: false, message: 'Authentication failed: ' + authRes.trim() });
+        }
+        await smtpCommand(socket, `MAIL FROM:<${from}>`);
+        const rcpt = await smtpCommand(socket, `RCPT TO:<${to}>`);
+        if (!/^2\d\d/.test(rcpt)) { socket.end(); return resolve({ ok: false, message: 'Recipient rejected: ' + rcpt.trim() }); }
+        await smtpCommand(socket, 'DATA');
+        const msg = [
+          `From: ${from}`,
+          `To: <${to}>`,
+          `Subject: ${subject.replace(/\r?\n/g, ' ')}`,
+          'MIME-Version: 1.0',
+          'Content-Type: multipart/alternative; boundary="qvb"',
+          '',
+          '--qvb',
+          'Content-Type: text/plain; charset=UTF-8',
+          'Content-Transfer-Encoding: 8bit',
+          '',
+          text,
+          '',
+          '--qvb',
+          'Content-Type: text/html; charset=UTF-8',
+          'Content-Transfer-Encoding: 8bit',
+          '',
+          html,
+          '',
+          '--qvb--',
+          '.',
+        ].join('\r\n');
+        const dataRes = await smtpCommand(socket, msg);
+        socket.end();
+        if (/^2\d\d/.test(dataRes)) return resolve({ ok: true, message: 'Sent' });
+        return resolve({ ok: false, message: 'Data rejected: ' + dataRes.trim() });
+      } catch (err) {
+        socket.end();
+        reject(err);
+      }
+    });
+    socket.on('error', (err) => reject(err));
+    socket.setTimeout(20000, () => { socket.destroy(); reject(new Error('SMTP connection timed out.')); });
+  });
+}
 
 export async function sendEmail(
   to: string,
@@ -276,38 +390,25 @@ export async function sendEmail(
   data: TemplateData
 ): Promise<{ sent: boolean; error?: string }> {
   const template = renderTemplate(templateName, data);
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM || 'Quantovest Capital <notifications@quantovest.com>';
+  const host = process.env.ZOHO_SMTP_HOST || 'smtp.zoho.com';
+  const port = Number(process.env.ZOHO_SMTP_PORT || '465');
+  const user = process.env.ZOHO_SMTP_USER;
+  const password = process.env.ZOHO_SMTP_PASS;
 
-  // If no API key, log to console (development mode)
-  if (!apiKey) {
+  // Without credentials, log to console (development mode)
+  if (!user || !password) {
     console.log(`[EMAIL DEV] To: ${to} | Subject: ${template.subject}`);
     console.log(`[EMAIL DEV] Text: ${template.text.substring(0, 200)}...`);
     return { sent: true };
   }
 
   try {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from,
-        to: [to],
-        subject: template.subject,
-        html: template.html,
-        text: template.text,
-      }),
-    });
-
-    if (!response.ok) {
-      const err = await response.text();
-      console.error('[EMAIL] Send failed:', err);
-      return { sent: false, error: err };
+    const fromAddr = (EMAIL_FROM.match(/<([^>]+)>/) || [])[1] || EMAIL_FROM.trim();
+    const result = await sendViaZoho(host, port, user, password, fromAddr, to, template.subject, template.html, template.text);
+    if (!result.ok) {
+      console.error('[EMAIL] Send failed:', result.message);
+      return { sent: false, error: result.message };
     }
-
     return { sent: true };
   } catch (err) {
     console.error('[EMAIL] Network error:', err);
@@ -363,4 +464,12 @@ export async function sendWithdrawalRejected(to: string, name: string, reason: s
 
 export async function sendSecurityAlert(to: string, name: string, message: string) {
   return sendEmail(to, 'security_alert', { investorName: name, message, eventTime: new Date().toISOString() });
+}
+
+export async function sendWelcome(to: string, name: string) {
+  return sendEmail(to, 'account_welcome', { investorName: name, message: 'Your account is ready.' });
+}
+
+export async function sendReferralReward(to: string, name: string, amount: string) {
+  return sendEmail(to, 'referral_reward_credited', { investorName: name, amount });
 }

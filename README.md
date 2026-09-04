@@ -17,7 +17,7 @@ The platform has two user roles: **Investor** and **Admin** (staff). They intera
 │                    ADMIN (Staff)                         │
 │                                                         │
 │  1. Approves deposits    →  Investor balance updates    │
-│  2. Publishes daily ROI  →  Investor chart moves        │
+│  2. Publishes ROI        →  Investor chart moves        │
 │  3. Approves KYC         →  Investor gets verified      │
 │  4. Approves withdrawals →  Investor gets paid          │
 │  5. Creates traders      →  Investors can copy them     │
@@ -35,29 +35,29 @@ The platform has two user roles: **Investor** and **Admin** (staff). They intera
 │  3. Submits deposit      →  Waits for admin approval    │
 │  4. Gets approved        →  Balance appears, plan active │
 │  5. Copies a trader      →  Trades reflect on dashboard │
-│  6. Sees daily ROI       →  Balance grows/shrinks       │
+│  6. Sees ROI updates     →  Balance grows/shrinks       │
 │  7. Requests withdrawal  →  Waits for admin approval    │
 └─────────────────────────────────────────────────────────┘
 ```
 
-### Fixed Daily ROI Per Plan
+### Fixed ROI Per Plan (7-Day Cycle)
 
-| Plan | Min Deposit | Daily ROI | Monthly (Compounded) | $1,500 Example |
-|---|---|---|---|---|
-| **Starter** | $1,500 | **15%** | ~1,839% | $1,500 → $225/day |
-| **Growth** | $7,500 | **25%** | ~5,682% | $7,500 → $1,875/day |
-| **Elite** | $45,000 | **35%** | ~14,554% | $45,000 → $15,750/day |
+| Plan | Plan Amount | ROI (7 days) | ROI USD on Plan Amount |
+|---|---|---|---|
+| **Starter** | $1,500 | **15%** | $225 |
+| **Growth** | $7,500 | **25%** | $1,875 |
+| **Elite** | $45,000 | **35%** | $15,750 |
 
-Admin taps one button per investor — the fixed rate is applied automatically.
+Admin selects an investor and applies the fixed plan rate; the investor's balance, ledger, activity, and notifications update.
 
 ### The Full User Flow
 
 #### Investor Journey
 1. **Signup** → `/signup` → creates Supabase Auth account + DB user row
-2. **Onboarding** → 5-step modal (experience, interests, goals, deposit target, risk tolerance)
+2. **Onboarding** → modal (experience, interests, goals, deposit target)
 3. **KYC** → upload government ID + proof of address → admin reviews
-4. **Deposit** → choose method (bank/crypto) → upload payment proof → admin approves → balance credited → plan auto-assigned
-5. **Dashboard** → see portfolio balance, performance chart, daily ROI, activity log
+4. **Deposit** → choose a plan or enter a custom $50+ amount → select payment method (USDT TRC-20 or BTC) → upload payment proof → admin approves → balance credited (a deposit never auto-assigns a plan)
+5. **Dashboard** → see portfolio balance, performance chart, ROI updates, activity log
 6. **Copy Trader** → after approved funding and KYC, browse portfolio managers and select one active manager (requires min $1,500 balance)
 7. **Upgrade Plan** → Starter ($1,500) → Growth ($7,500) → Elite ($45,000) — upgrades when the account balance qualifies and records a plan-transition audit entry
 8. **Withdraw** → enter amount → 2FA verification if enabled → admin processes → money sent
@@ -67,22 +67,23 @@ Admin taps one button per investor — the fixed rate is applied automatically.
 #### Admin Journey
 1. **Login** → `/admin/login` → Supabase Auth + role check (must be `admin` role in DB)
 2. **Dashboard** → total AUM, pending deposits/withdrawals/KYC counts
-3. **Deposits** → review proof screenshots → approve (credits balance + assigns plan) or reject
-4. **Withdrawals** → review requests → approve (processes payout) or reject (reverses balance)
-5. **KYC** → review uploaded documents → approve or decline with reason
-6. **Performance** → select investor → add a market note → apply the fixed plan performance credit → investor balance, ledger, activity, and notifications update
-7. **Traders** → create/edit master trader profiles with images and stats
-8. **Notifications** → send broadcasts (all users, specific users, or plan-targeted)
-9. **Plans** → manage Starter/Growth/Elite tiers
-10. **Investors** → view all investor accounts with details
-11. **Settings** → platform configuration
+3. **Deposits** → review proof screenshots → approve (credits balance only — a deposit never auto-assigns a plan) or reject
+4. **Assign Plan** → set an investor's plan, which credits the plan amount to their balance and records a plan-upgrade ledger entry
+5. **Withdrawals** → review requests → approve (processes payout) or reject (reverses balance)
+6. **KYC** → review uploaded documents → approve or decline with reason
+7. **Performance** → select investor → add a market note → apply the fixed plan performance credit → investor balance, ledger, activity, and notifications update
+8. **Traders** → create/edit master trader profiles with images and stats
+9. **Notifications** → send broadcasts (all users, specific users, or plan-targeted)
+10. **Plans** → manage Starter/Growth/Elite tiers
+11. **Investors** → view all investor accounts with details
+12. **Settings** → platform configuration
 
 ### Key Features
 
 | Feature | How It Works |
 |---|---|
-| **Single Active Plan** | Each investor has one plan at a time. Upgrade when balance meets the minimum. |
-| **Manual Performance Credit** | Starter=15%, Growth=25%, Elite=35% — admin applies the plan’s fixed rate per investor |
+| **Single Active Plan** | Each investor has one plan at a time. Plans are set by admin (Assign Plan) or by an in-app purchase — never auto-assigned by a deposit. |
+| **Manual Performance Credit** | Starter=15%, Growth=25%, Elite=35% per 7-day cycle — admin applies the plan’s fixed rate per investor |
 | **Close Account** | Withdraw entire balance + close account in one action |
 | **2FA (TOTP)** | Optional. If enabled, withdrawals require a 6-digit authenticator code |
 | **Email System** | 12 templates (deposit, withdrawal, KYC, ROI, security, broadcast) via Resend |
@@ -109,11 +110,11 @@ API Routes (server-side, 25+ endpoints)
 Database (Supabase Postgres via Drizzle ORM)
 ├── users — id, email, name, role (investor/admin)
 ├── investorAccounts — balance, plan, ROI tracking
-├── plans — Starter/Growth/Elite with fixed daily ROI
+├── plans — Starter/Growth/Elite with fixed 7-day ROI
 ├── deposits, investorWithdrawals — financial records
 ├── kycApplications — verification documents
-├── roiEntries — daily ROI log per investor
-├── traderProfiles — master trader cards
+├── roiEntries — ROI log per investor
+├── traders — master trader cards
 ├── notifications — in-app messages
 ├── portfolioLedger — transaction history
 └── referral* — referral tracking tables
@@ -166,9 +167,9 @@ npm install
 cp .env.example .env.local
 # Fill in your Supabase URL, anon key, and service role key
 
-# Set up a new database in one run
-# Paste db/quantovest-install.sql into a new Supabase SQL Editor query and run it
-# For an existing production database, apply only the numbered db/migrations-pg/*.sql files
+# Set up the database in one run
+# In the Supabase SQL Editor, paste the contents of db/quantovest-install.sql and run it once.
+# This creates all tables, indexes, seed plans, the private media bucket, and security policies.
 
 # Start dev server
 npm run dev
@@ -178,9 +179,9 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ### One-Click Portability
 
-For a new owner or a new Supabase project, use [`docs/quantovest/ONE_CLICK_PORTABILITY.md`](./docs/quantovest/ONE_CLICK_PORTABILITY.md) and run [`db/quantovest-install.sql`](./db/quantovest-install.sql) once. The bootstrap creates the application tables, indexes, seed plans, private `quantovest-media` bucket, and guarded security policies. It does not copy customer data or secrets and does not configure external providers such as Resend, Zoho, Vercel, OAuth, or Tawk.to.
+For a new owner or a new Supabase project, run [`db/quantovest-install.sql`](./db/quantovest-install.sql) once. The bootstrap creates the application tables, indexes, seed plans, private `quantovest-media` bucket, and guarded security policies. It does not copy customer data or secrets and does not configure external providers such as Resend, Zoho, Vercel, OAuth, or Tawk.to.
 
-For an existing database, do not rerun the full bootstrap blindly; use the numbered migrations and verify the target environment first.
+This single file is the one and only schema source for a fresh install. It is safe to re-run on the same database because every statement is idempotent (`CREATE TABLE IF NOT EXISTS`, `ON CONFLICT`, and replaceable policies).
 
 ### Environment Variables
 
@@ -196,9 +197,15 @@ DATABASE_URL=postgresql://postgres:password@pooler.supabase.com:6543/postgres
 # App
 APP_PUBLIC_URL=http://localhost:3000
 
-# Email (optional — logs to console without this)
-RESEND_API_KEY=re_your_key
-EMAIL_FROM=Quantovest Capital <notifications@yourdomain.com>
+# 2FA session signing secret (REQUIRED for 2FA; random, at least 32 chars)
+JWT_SECRET=your-long-random-secret
+
+# Email (Zoho SMTP — logs to console without this)
+ZOHO_SMTP_HOST=smtp.zoho.com
+ZOHO_SMTP_PORT=465
+ZOHO_SMTP_USER=support@quantovests.com
+ZOHO_SMTP_PASS=your_zoho_app_password
+EMAIL_FROM=Quantovest Capital <support@quantovests.com>
 ```
 
 ### Creating an Admin User
@@ -272,7 +279,7 @@ app/
         ├── deposits/           #   Approve/reject deposits
         ├── withdrawals/        #   Approve/reject withdrawals
         ├── kyc/                #   Approve/reject KYC
-        ├── roi/                #   Publish fixed daily ROI
+        ├── roi/                #   Publish fixed ROI
         ├── traders/            #   Manage traders
         ├── notifications/      #   Send broadcasts
         ├── plans/              #   Manage plans
@@ -308,9 +315,6 @@ lib/
     └── identity.ts             # Get current user + role
 
 db/
-├── schema.ts                   # Drizzle table definitions
-├── quantovest-install.sql      # Canonical one-click bootstrap for new projects
-├── seed-plans.sql              # Seed plan reference
-├── migrations-pg/              # Incremental PostgreSQL migrations
-└── supabase/policies.sql       # Policy source reference
+├── schema.ts                   # Drizzle table definitions (type source)
+└── quantovest-install.sql      # Single canonical bootstrap — run once in Supabase
 ```

@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getDb } from "@/lib/db";
-import { users } from "@/db/schema";
+import { referralLinks, referralAttributions, users } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { sendWelcomeEmail } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json().catch(() => null) as { name?: string; email?: string; password?: string } | null;
+    const body = await request.json().catch(() => null) as { name?: string; email?: string; password?: string; referralCode?: string } | null;
     if (!body?.name || !body?.email || !body?.password) {
       return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
     }
@@ -47,6 +49,22 @@ export async function POST(request: Request) {
             role: 'investor',
           },
         });
+
+        if (body.referralCode) {
+          try {
+            const link = await db.select().from(referralLinks).where(eq(referralLinks.code, body.referralCode)).limit(1);
+            if (link[0] && link[0].ownerId !== data.user.id) {
+              const existingAttribution = await db.select().from(referralAttributions).where(eq(referralAttributions.referredInvestorId, data.user.id)).limit(1);
+              if (!existingAttribution[0]) {
+                await db.insert(referralAttributions).values({ referrerId: link[0].ownerId, referredInvestorId: data.user.id, linkId: link[0].id, status: 'active' });
+              }
+            }
+          } catch (referralError) {
+            console.error('[signup referral attribution]', referralError);
+          }
+        }
+
+        if (data.session) { try { await sendWelcomeEmail(data.user.id); } catch (welcomeError) { console.error('[signup welcome email]', welcomeError); } }
       }
     }
 

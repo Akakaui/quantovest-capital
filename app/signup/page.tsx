@@ -31,10 +31,12 @@ export default function SignupPage() {
     }
 
     setLoading(true);
+    const refMatch = document.cookie.match(/(?:^|;\s*)referral_code=([^;]+)/);
+    const referralCode = refMatch ? decodeURIComponent(refMatch[1]) : null;
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, email, password, referralCode }),
     });
     const data = await res.json();
     if (!res.ok) { setMessage(data.error || 'Signup failed'); setLoading(false); return; }

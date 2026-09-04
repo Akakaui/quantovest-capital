@@ -12,8 +12,13 @@ function fromBase64Url(value: string) {
 }
 
 async function signature(payload: string) {
-  const secret = process.env.JWT_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!secret) throw new Error('2FA session signing secret is not configured');
+  const secret = process.env.JWT_SECRET;
+  // A dedicated secret is required. Do NOT fall back to the service-role key:
+  // rotating that key (as recommended after launch) would invalidate all 2FA sessions.
+  // Failing closed here also avoids signing with a weak/leaked default.
+  if (!secret || secret.length < 32) {
+    throw new Error('JWT_SECRET must be set to a random value of at least 32 characters for 2FA session signing.');
+  }
   const key = await crypto.subtle.importKey('raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
   return { key, bytes: new Uint8Array(await crypto.subtle.sign('HMAC', key, encoder.encode(payload))) };
 }

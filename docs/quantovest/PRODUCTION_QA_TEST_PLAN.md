@@ -121,5 +121,5 @@ The investor tester signs off on investor workflows, the administrator signs off
 ## References
 
 [1]: https://supabase.com/docs/guides/auth/sessions Supabase Auth sessions documentation  
-[2]: https://resend.com/docs/dashboard/domains/introduction Resend domain verification documentation  
+[2]: https://www.zoho.com/mail/help/adminconsole/ Zoho Mail admin console
 [3]: https://help.tawk.to/article/adding-a-widget-to-your-website Tawk.to widget installation documentation
