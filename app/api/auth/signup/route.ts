@@ -34,21 +34,25 @@ export async function POST(request: Request) {
     if (data.user) {
       const db = getDb();
       if (db) {
-        await db.insert(users).values({
-          id: data.user.id,
-          name: body.name,
-          email: body.email,
-          emailVerified: data.user.email_confirmed_at ? new Date(data.user.email_confirmed_at) : null,
-          role: 'investor',
-        }).onConflictDoUpdate({
-          target: users.id,
-          set: {
+        try {
+          await db.insert(users).values({
+            id: data.user.id,
             name: body.name,
             email: body.email,
             emailVerified: data.user.email_confirmed_at ? new Date(data.user.email_confirmed_at) : null,
             role: 'investor',
-          },
-        });
+          }).onConflictDoUpdate({
+            target: users.id,
+            set: {
+              name: body.name,
+              email: body.email,
+              emailVerified: data.user.email_confirmed_at ? new Date(data.user.email_confirmed_at) : null,
+              role: 'investor',
+            },
+          });
+        } catch (insertError) {
+          console.error('[auth signup profile insert skipped]', insertError);
+        }
 
         if (body.referralCode) {
           try {
