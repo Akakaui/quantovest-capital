@@ -13,7 +13,7 @@ const PLANS = [
     min: 1500,
     weeklyRoi: 15,
     color: '#22C55E',
-    features: ['FX & Top Crypto Asset Access', '7-Day ROI Dashboard Updates', '0% Management Fee (15% Perf Fee)'],
+    features: ['FX & Top Crypto Asset Access', 'Weekly ROI Distribution', '0% Management Fee (15% Perf Fee)'],
   },
   {
     name: 'Growth',
@@ -97,13 +97,13 @@ export default function PlansPage() {
 
                 <div className={`p-4 rounded-xl border ${selectedPlan === i ? 'bg-[#12161A] border-[#202722]' : 'bg-white border-[#DEE1E6]'}`}>
                   <p className={`text-[10px] uppercase font-mono ${selectedPlan === i ? 'text-[#A8ACB3]' : 'text-[#5B616E]'}`}>
-                    Illustrative 7-Day ROI
+                    ROI in 7 days
                   </p>
                   <p className="text-2xl sm:text-4xl font-mono font-bold text-[#22C55E] mt-1 truncate">
                     {p.weeklyRoi}%
                   </p>
                   <p className={`text-xs mt-1 ${selectedPlan === i ? 'text-[#A8ACB3]' : 'text-[#5B616E]'}`}>
-                    after 7 days
+                    ROI in 7 days
                   </p>
                 </div>
 
@@ -213,7 +213,7 @@ export default function PlansPage() {
                     <span className="font-semibold text-[#22C55E]">{plan.name}</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-[#5B616E]">ROI After 7 Days</span>
+                    <span className="text-[#5B616E]">ROI in 7 days</span>
                     <span className="font-mono font-bold text-[#22C55E]">{plan.weeklyRoi}%</span>
                   </div>
                   <div className="flex justify-between text-xs">
@@ -272,7 +272,7 @@ export default function PlansPage() {
                   Start with {plan.name} Plan — ${deposit.toLocaleString()}
                 </Link>
                 <p className="text-[10px] text-[#5B616E] text-center">
-                  *Illustrative simple-return scenario using daily compounding. Actual results may vary and are not guaranteed.
+                  *Projections assume consistent plan performance over the selected period.
                 </p>
               </div>
             </div>
