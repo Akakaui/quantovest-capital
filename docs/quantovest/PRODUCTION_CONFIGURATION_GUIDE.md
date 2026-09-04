@@ -1,12 +1,12 @@
 # Quantovest Capital Production Configuration Guide
 
-## Business email with Resend and a custom .com domain
+## Business email with Zoho Mail and the quantovests.com domain
 
-A custom business sender requires a domain that you own and verify. After purchasing `yourdomain.com`, add it to Resend under **Domains**, publish the DNS verification records at Namecheap, and wait until Resend shows the domain as verified. Then set the Vercel production variable `EMAIL_FROM` to a sender on that verified domain, for example `Quantovest Capital <notifications@yourdomain.com>`. Keep `RESEND_API_KEY` only in Vercel/server environment variables; never expose it in the browser or commit it.
+The platform uses a single Zoho Mail business mailbox (`support@quantovests.com`) as both the transactional sender and the support inbox. Set up the Zoho Mailbox, then create an app-specific password in Zoho for SMTP authentication (the Zoho sign-in password is not valid for SMTP by default). Configure the Vercel/server environment variables `ZOHO_SMTP_HOST` (`smtp.zoho.com`), `ZOHO_SMTP_PORT` (`465`), `ZOHO_SMTP_USER` (`support@quantovests.com`), `ZOHO_SMTP_PASS` (the app-specific password), and `EMAIL_FROM` (`Quantovest Capital <support@quantovests.com>`). Keep these server-only; never expose them in the browser or commit them.
 
-Create the mailbox separately with Zoho Mail, Google Workspace, or another mail provider. Resend is the transactional sending service; it does not automatically create a normal inbox for receiving replies. Add SPF and DKIM exactly as Resend provides them. Add a single DMARC TXT record for the domain after confirming that SPF and DKIM pass. Use a monitored reply-to address if the `notifications@` address is send-only.
+Add SPF, DKIM, and DMARC exactly as Zoho provides them in the DNS records. Also configure Zoho as the custom SMTP in Supabase **Authentication → SMTP Settings** so signup confirmation and password-reset emails are sent from `support@quantovests.com` rather than a Supabase/Resend default.
 
-Test one message for deposit submission, KYC decision, withdrawal decision, ROI publication, security alert, and admin broadcast. Confirm the visible From address is the business `.com` address and that replies go to the intended support mailbox.
+Test one message for deposit submission, KYC decision, withdrawal decision, ROI publication, security alert, and admin broadcast. Confirm the visible From address is `support@quantovests.com` and that replies arrive in the Zoho mailbox.
 
 ## Google OAuth branding
 
@@ -37,7 +37,7 @@ Before production publication, remove any accidental spaces from the USDT transc
 
 ## References
 
-[1]: https://resend.com/docs/dashboard/domains/introduction Resend domain verification  
+[1]: https://www.zoho.com/mail/help/adminconsole/steps-to-configuring-spf-dkim-dmarc.html Zoho Mail SPF/DKIM/DMARC configuration
 [2]: https://supabase.com/docs/guides/auth/social-login/auth-google Supabase Google social login  
 [3]: https://support.google.com/cloud/answer/10311615 Google OAuth consent-screen configuration  
 [4]: https://help.tawk.to/article/tawk-to-mobile-app Tawk.to mobile app documentation  
