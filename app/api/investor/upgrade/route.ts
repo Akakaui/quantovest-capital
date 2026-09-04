@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       });
     });
 
-    await notifyUser(actor.id, 'plan_updated', 'Investment plan updated', `Your investment plan is now ${targetPlan.name}.`);
+    await notifyUser(actor.id, 'plan_updated', 'Investment plan updated', `You've upgraded to the ${targetPlan.name} plan.`);
     if (actor.email) {
       try { await sendPlanUpdated(actor.email, actor.name || 'Investor', previousPlan[0]?.name ?? 'Previous plan', targetPlan.name); } catch {}
     }

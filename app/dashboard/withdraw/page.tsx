@@ -16,11 +16,11 @@ type UserProfile = {
 
 type Withdrawal = { id: number; amountCents: number; destination: string; destinationType: string; status: string; createdAt: string };
 
-const PLAN_MINIMUMS: Record<string, number> = { Starter: 1500, Growth: 7500, Elite: 45000 };
+const MIN_WITHDRAW_BALANCE = 3000;
 
 export default function WithdrawPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [amount, setAmount] = useState(1500);
+  const [amount, setAmount] = useState(MIN_WITHDRAW_BALANCE);
   const [destinationType, setDestinationType] = useState<'bank' | 'crypto'>('bank');
   const [closeAccountMode, setCloseAccountMode] = useState(false);
   const [otpCode, setOtpCode] = useState('');
@@ -29,8 +29,6 @@ export default function WithdrawPage() {
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
-
-  const planMinimum = PLAN_MINIMUMS[profile?.plan ?? ''] ?? 0;
 
   async function loadProfile() {
     try {
@@ -70,8 +68,7 @@ export default function WithdrawPage() {
   }
 
   const balance = profile?.balance ?? 0;
-  const remainingBalance = balance - amount;
-  const wouldDropBelowMin = !closeAccountMode && remainingBalance < planMinimum && remainingBalance > 0;
+  const eligible = balance >= MIN_WITHDRAW_BALANCE;
   const hasPayoutDetails = destinationType === 'crypto'
     ? !!profile?.payoutDetails.cryptoAddress
     : (!!profile?.payoutDetails.bankName && !!profile?.payoutDetails.bankAccountNumber);
@@ -98,7 +95,6 @@ export default function WithdrawPage() {
         amountCents: Math.round(amount * 100),
         destinationType,
         destination,
-        closeAccount: closeAccountMode,
       }),
     });
     const data = await res.json().catch(() => ({}));
@@ -137,9 +133,7 @@ export default function WithdrawPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="rounded-xl border border-[#263437] bg-[#0A0F11] p-4 text-xs text-[#93A09A] overflow-hidden">
                   Available balance: <strong className="text-white">${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}</strong>
-                  {profile?.plan && profile.plan !== 'None' && (
-                    <span className="ml-2 text-[#22C55E]">({profile.plan} plan — min ${planMinimum.toLocaleString()})</span>
-                  )}
+                  <span className="ml-2 text-[#22C55E]">Minimum balance to withdraw: $3,000</span>
                 </div>
 
                 {/* Close Account Toggle */}
@@ -161,7 +155,8 @@ export default function WithdrawPage() {
                   Withdrawal Amount ($)
                   <input
                     type="number"
-                    min={closeAccountMode ? 0 : 1500}
+                    min={closeAccountMode ? 0 : 0.01}
+                    max={balance}
                     step="0.01"
                     required
                     value={amount}
@@ -171,11 +166,10 @@ export default function WithdrawPage() {
                   />
                 </label>
 
-                {/* Below-minimum Warning */}
-                {wouldDropBelowMin && (
+                {!eligible && (
                   <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-[10px] text-amber-300">
                     <Icon icon="solar:warning-bold" className="w-4 h-4 inline mr-1" />
-                    This would drop below the {profile?.plan} minimum of ${planMinimum.toLocaleString()}. Your plan may be downgraded.
+                    You need a balance of at least $3,000 to request a withdrawal. Add funds to unlock withdrawals.
                   </div>
                 )}
 
@@ -233,7 +227,7 @@ export default function WithdrawPage() {
 
                 <button
                   type="submit"
-                  disabled={submitting || amount <= 0 || !hasPayoutDetails || (profile?.twoFactorEnabled && otpCode.length !== 6)}
+                  disabled={submitting || amount <= 0 || !eligible || !hasPayoutDetails || (profile?.twoFactorEnabled && otpCode.length !== 6)}
                   className={`w-full rounded-full px-5 py-3 text-xs font-semibold disabled:opacity-40 ${
                     closeAccountMode
                       ? 'bg-rose-500 text-white hover:bg-rose-600'

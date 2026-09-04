@@ -47,7 +47,7 @@ export async function PATCH(request: Request) {
       if (body.action === 'reject') {
         const accounts = await tx.select().from(investorAccounts).where(and(eq(investorAccounts.investorId, withdrawal.investorId), eq(investorAccounts.status, 'active'))).limit(1);
         if (accounts[0]) await tx.update(investorAccounts).set({ balanceCents: accounts[0].balanceCents + withdrawal.amountCents }).where(eq(investorAccounts.id, accounts[0].id));
-        await tx.insert(portfolioLedger).values({ investorId: withdrawal.investorId, type: 'adjustment', amountCents: withdrawal.amountCents, referenceId: `investor-withdrawal-reversal:${withdrawal.id}`, description: 'Rejected withdrawal balance released' });
+        await tx.insert(portfolioLedger).values({ investorId: withdrawal.investorId, type: 'adjustment', amountCents: withdrawal.amountCents, referenceId: `investor-withdrawal-reversal:${withdrawal.id}`, description: `Rejected withdrawal of $${(withdrawal.amountCents / 100).toFixed(2)} — balance released` });
       }
     });
     if (investorId) {
