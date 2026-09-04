@@ -50,6 +50,7 @@ export default function AdminDashboard() {
   const [msgAudience, setMsgAudience] = useState<'all' | 'plan'>('all');
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
@@ -64,6 +65,8 @@ export default function AdminDashboard() {
         }
       } catch (e) {
         console.error('Failed to load admin dashboard data', e);
+      } finally {
+        setLoading(false);
       }
     }
     fetchData();
@@ -86,6 +89,12 @@ export default function AdminDashboard() {
 
         {/* Action Counters Banner */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="p-5 rounded-2xl bg-[#151E23] border border-[#2B393F] h-24 animate-pulse" />
+            ))
+          ) : (
+            <>
             <div className="p-5 rounded-2xl bg-[#151E23] border border-[#2B393F] space-y-1">
               <p className="text-[10px] uppercase font-mono text-[#93A09A]">Total Managed AUM</p>
               <p className="text-2xl font-mono font-semibold text-[#22C55E]">{formatCurrency(aumCents)}</p>
@@ -94,7 +103,6 @@ export default function AdminDashboard() {
             <Link href="/admin/deposits" className="p-5 rounded-2xl bg-[#151E23] border border-[#2B393F] hover:border-[#22C55E]/40 transition-colors space-y-1">
               <div className="flex justify-between items-center">
                 <p className="text-[10px] uppercase font-mono text-[#93A09A]">Pending Deposits</p>
-                
               </div>
               <p className="text-2xl font-mono font-semibold text-[#E8EFEB]">{pendingDeposits} Requests</p>
             </Link>
@@ -102,7 +110,6 @@ export default function AdminDashboard() {
             <Link href="/admin/withdrawals" className="p-5 rounded-2xl bg-[#151E23] border border-[#2B393F] hover:border-[#22C55E]/40 transition-colors space-y-1">
               <div className="flex justify-between items-center">
                 <p className="text-[10px] uppercase font-mono text-[#93A09A]">Pending Withdrawals</p>
-                
               </div>
               <p className="text-2xl font-mono font-semibold text-[#E8EFEB]">{pendingWithdrawals} Requests</p>
             </Link>
@@ -110,14 +117,20 @@ export default function AdminDashboard() {
             <Link href="/admin/kyc" className="p-5 rounded-2xl bg-[#151E23] border border-[#2B393F] hover:border-[#22C55E]/40 transition-colors space-y-1">
               <div className="flex justify-between items-center">
                 <p className="text-[10px] uppercase font-mono text-[#93A09A]">KYC Queue</p>
-                
               </div>
               <p className="text-2xl font-mono font-semibold text-[#E8EFEB]">{pendingKyc} Pending</p>
             </Link>
+            </>
+          )}
         </div>
 
         {/* Quick Tools Navigation Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-base font-semibold text-[#E8EFEB]">Quick Tools</h2>
+            <p className="text-xs text-[#7F8C86] mt-1">Frequently used operational actions, one click away.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Link href="/admin/performance" className="p-6 rounded-2xl bg-[#151E23] border border-[#22C55E]/40 hover:bg-[#0D1215] transition-all space-y-3">
             <div className="w-10 h-10 rounded-xl bg-[#22C55E]/10 border border-[#22C55E]/30 text-[#22C55E] flex items-center justify-center">
               <Icon icon="solar:graph-bold" className="w-6 h-6" />
@@ -137,7 +150,8 @@ export default function AdminDashboard() {
               Inspect investor payment screenshots and click Approve to credit investor balances.
             </p>
           </Link>
-        </div>
+          </div>
+        </section>
 
         {/* Quick Message Composer */}
         <div className="p-6 rounded-2xl bg-[#151E23] border border-[#2B393F] space-y-4">

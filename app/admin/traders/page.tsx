@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import AdminSidebar from '@/components/AdminSidebar';
+import EmptyState from '@/components/admin/EmptyState';
 
 type Trader = {
   id: string;
@@ -133,7 +134,13 @@ export default function AdminTradersPage() {
           </form>
           <section className="space-y-4">
             <div className="flex items-center justify-between"><h2 className="text-base">Active Master Traders ({traders.length})</h2><span className="text-[10px] text-[#A8ACB3]">Images replaceable</span></div>
-            {traders.length === 0 && <div className="p-8 rounded-2xl bg-[#12161A] border border-[#202722] text-center text-xs text-[#A8ACB3]">No active trader profiles yet.</div>}
+            {traders.length === 0 && (
+              <EmptyState
+                title="No active trader profiles yet"
+                hint="Add your first master trader profile using the form to build the strategy directory."
+                icon="solar:users-group-rounded-bold"
+              />
+            )}
             {traders.map(trader => <div key={trader.id} className="p-4 rounded-xl bg-[#12161A] border border-[#202722] flex items-center gap-3"><img src={trader.imageUrl || `https://api.dicebear.com/9.x/initials/svg?seed=${encodeURIComponent(trader.name)}`} alt="" className="w-11 h-11 rounded-full object-cover border border-[#22C55E]/30" /><div className="min-w-0 flex-1"><p className="font-semibold text-white text-xs truncate">{trader.name}</p><p className="text-[10px] text-[#A8ACB3]">{trader.specialty} · {(trader.thirtyDayReturnBps / 100).toFixed(1)}% 30D</p></div><button type="button" onClick={() => startEdit(trader)} className="px-3 py-2 rounded-full border border-[#22C55E]/40 text-[#86EFAC] text-[10px] hover:bg-[#22C55E]/10">Edit / Replace</button></div>)}
           </section>
         </div>

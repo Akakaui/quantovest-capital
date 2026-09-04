@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import AdminSidebar from '@/components/AdminSidebar';
+import EmptyState from '@/components/admin/EmptyState';
 import { Icon } from '@iconify/react';
 
 interface Plan {
@@ -174,7 +175,11 @@ export default function AdminPlansPage() {
             ))}
           </div>
         ) : plans.length === 0 ? (
-          <div className="text-center py-12 text-xs text-[#7F8C86]">No plans found. Create one to get started.</div>
+          <EmptyState
+            title="No plans created yet"
+            hint="Create your first investment plan to start onboarding investors."
+            icon="solar:layer-bold"
+          />
         ) : (
           <div className="space-y-4">
             {plans.map(plan => (

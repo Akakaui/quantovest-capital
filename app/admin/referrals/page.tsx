@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import AdminSidebar from '@/components/AdminSidebar';
+import EmptyState from '@/components/admin/EmptyState';
+import SkeletonRows from '@/components/admin/SkeletonRows';
 
 type Withdrawal = { id: number; investorId: string; investorName: string | null; investorEmail: string | null; amountCents: number; destinationType: string; destination: string; destinationDetails: string | null; status: string; reviewedBy: string | null; reviewNote: string | null; createdAt: string; updatedAt: string };
 function formatDate(value: string) { return new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }); }
@@ -17,5 +19,64 @@ export default function AdminReferralPayoutsPage() {
   useEffect(() => { void load(); }, []);
   async function settle(withdrawalId: number, action: 'approve' | 'reject') { const response = await fetch('/api/admin/referrals/withdrawals', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ withdrawalId, action, reviewNote: note }) }); const data = await response.json().catch(() => ({})); setMessage(response.ok ? `Referral withdrawal ${action}d.` : data.error ?? 'Settlement failed.'); if (response.ok) { setNote(''); await load(); } }
   const visible = useMemo(() => rows.filter(row => view === 'pending' ? row.status === 'pending' : row.status !== 'pending'), [rows, view]);
-  return <div className="min-h-screen bg-[#10161A] text-[#F2F6F3] flex flex-col md:flex-row font-sans"><AdminSidebar /><main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8"><div className="border-b border-[#263139] pb-6"><h1 className="text-2xl font-normal">Referral Payout Operations</h1><p className="mt-1 text-xs text-[#93A09A]">Review pending referral withdrawals and audit prior decisions.</p></div>{message && <div role="status" className="rounded-xl border border-[#F4B860]/40 bg-[#F4B860]/10 p-4 text-xs text-[#F7D99D]">{message}</div>}<label className="block max-w-2xl text-xs text-[#93A09A]">Review note applied to the next action<textarea value={note} onChange={event => setNote(event.target.value)} rows={2} className="mt-2 w-full rounded-xl border border-[#263139] bg-[#151E23] p-3 text-sm text-white" /></label><div className="flex items-center justify-between gap-4 flex-wrap"><div><h2 className="text-base font-semibold">Referral Withdrawal Records</h2><p className="text-xs text-[#7F8C86] mt-1">{rows.length} total records</p></div><div className="flex rounded-full border border-[#263139] bg-[#151E23] p-1">{(['pending', 'history'] as const).map(tab => <button key={tab} type="button" onClick={() => setView(tab)} className={`rounded-full px-4 py-2 text-xs font-semibold capitalize ${view === tab ? 'bg-[#22C55E] text-[#07110B]' : 'text-[#93A09A] hover:text-white'}`}>{tab}</button>)}</div></div>{loading ? <div className="rounded-2xl border border-[#263139] bg-[#151E23] p-10 text-center text-xs text-[#93A09A]">Loading referral records…</div> : visible.length === 0 ? <div className="rounded-2xl border border-dashed border-[#263139] p-12 text-center text-sm text-[#93A09A]">No {view === 'pending' ? 'pending referral payout requests' : 'referral payout history'}.</div> : <section className="space-y-4">{visible.map(row => <article key={row.id} className="rounded-2xl border border-[#263139] bg-[#151E23] p-5"><div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><p className="font-semibold text-white">{row.investorName ?? 'Unnamed investor'}</p><p className="text-[10px] text-[#7F8C86]">{row.investorEmail ?? row.investorId}</p><p className="mt-3 text-2xl font-mono text-white">{formatCents(row.amountCents)} · {row.destinationType.toUpperCase()}</p><p className="mt-2 break-all text-xs text-[#C8D3CC]">{row.destination}</p>{row.destinationDetails && <p className="mt-1 text-xs text-[#93A09A]">{row.destinationDetails}</p>}<p className="mt-2 text-[10px] text-[#93A09A]">Submitted {formatDate(row.createdAt)} · <span className="capitalize">{row.status}</span>{row.reviewedBy ? ` · Reviewed by ${row.reviewedBy}` : ''}</p>{row.reviewNote && <p className="mt-2 text-xs text-[#A8B6AD]">Review note: {row.reviewNote}</p>}</div>{row.status === 'pending' ? <div className="flex gap-2"><button type="button" onClick={() => void settle(row.id, 'approve')} className="rounded-full bg-[#22C55E] px-4 py-2 text-xs font-semibold text-[#07110B]">Approve</button><button type="button" onClick={() => void settle(row.id, 'reject')} className="rounded-full border border-rose-400/40 px-4 py-2 text-xs font-semibold text-rose-300">Reject</button></div> : <span className={`rounded-full px-4 py-1.5 font-mono text-xs font-semibold ${row.status === 'approved' ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-rose-500/10 text-rose-300'}`}>{row.status.toUpperCase()}</span>}</div></article>)}</section>}</main></div>;
+  return (
+    <div className="min-h-screen bg-[#10161A] text-[#F2F6F3] flex flex-col md:flex-row font-sans">
+      <AdminSidebar />
+      <main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
+        <div className="border-b border-[#263139] pb-6">
+          <h1 className="text-2xl font-normal">Referral Payout Operations</h1>
+          <p className="mt-1 text-xs text-[#93A09A]">Review pending referral withdrawals and audit prior decisions.</p>
+        </div>
+        {message && <div role="status" className="rounded-xl border border-[#F4B860]/40 bg-[#F4B860]/10 p-4 text-xs text-[#F7D99D]">{message}</div>}
+        <div className="rounded-2xl border border-[#263139] bg-[#151E23] p-5 space-y-2">
+          <p className="text-[10px] uppercase font-mono tracking-wider text-[#93A09A]">Review note</p>
+          <textarea value={note} onChange={event => setNote(event.target.value)} rows={2} placeholder="Optional note applied to the next approve/reject action" className="w-full rounded-xl border border-[#263139] bg-[#10161A] p-3 text-sm text-white placeholder-[#7F8C86]" />
+        </div>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div>
+            <h2 className="text-base font-semibold">Referral Withdrawal Records</h2>
+            <p className="text-xs text-[#7F8C86] mt-1">{rows.length} total records</p>
+          </div>
+          <div className="flex rounded-full border border-[#263139] bg-[#151E23] p-1">
+            {(['pending', 'history'] as const).map(tab => <button key={tab} type="button" onClick={() => setView(tab)} className={`rounded-full px-4 py-2 text-xs font-semibold capitalize ${view === tab ? 'bg-[#22C55E] text-[#07110B]' : 'text-[#93A09A] hover:text-white'}`}>{tab}</button>)}
+          </div>
+        </div>
+        {loading ? (
+          <SkeletonRows rows={3} />
+        ) : visible.length === 0 ? (
+          <EmptyState
+            title={view === 'pending' ? 'No pending referral payouts' : 'No referral payout history'}
+            hint="Payout requests awaiting settlement will appear here."
+            icon="solar:share-bold"
+          />
+        ) : (
+          <section className="space-y-4">
+            {visible.map(row => (
+              <article key={row.id} className="rounded-2xl border border-[#263139] bg-[#151E23] p-5">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                  <div>
+                    <p className="font-semibold text-white">{row.investorName ?? 'Unnamed investor'}</p>
+                    <p className="text-[10px] text-[#7F8C86]">{row.investorEmail ?? row.investorId}</p>
+                    <p className="mt-3 text-2xl font-mono text-white">{formatCents(row.amountCents)} · {row.destinationType.toUpperCase()}</p>
+                    <p className="mt-2 break-all text-xs text-[#C8D3CC]">{row.destination}</p>
+                    {row.destinationDetails && <p className="mt-1 text-xs text-[#93A09A]">{row.destinationDetails}</p>}
+                    <p className="mt-2 text-[10px] text-[#93A09A]">Submitted {formatDate(row.createdAt)} · <span className="capitalize">{row.status}</span>{row.reviewedBy ? ` · Reviewed by ${row.reviewedBy}` : ''}</p>
+                    {row.reviewNote && <p className="mt-2 text-xs text-[#A8B6AD]">Review note: {row.reviewNote}</p>}
+                  </div>
+                  {row.status === 'pending' ? (
+                    <div className="flex gap-2">
+                      <button type="button" onClick={() => void settle(row.id, 'approve')} className="rounded-full bg-[#22C55E] px-4 py-2 text-xs font-semibold text-[#07110B] hover:bg-[#86EFAC]">Approve</button>
+                      <button type="button" onClick={() => void settle(row.id, 'reject')} className="rounded-full border border-rose-400/40 px-4 py-2 text-xs font-semibold text-rose-300 hover:bg-rose-500/10">Reject</button>
+                    </div>
+                  ) : (
+                    <span className={`rounded-full px-4 py-1.5 font-mono text-xs font-semibold ${row.status === 'approved' ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-rose-500/10 text-rose-300'}`}>{row.status.toUpperCase()}</span>
+                  )}
+                </div>
+              </article>
+            ))}
+          </section>
+        )}
+      </main>
+    </div>
+  );
 }

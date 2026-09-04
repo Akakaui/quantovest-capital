@@ -172,9 +172,14 @@ export default function AdminNotificationsPage() {
                   />
                   <div className="max-h-48 overflow-y-auto space-y-1.5">
                     {loading ? (
-                      <p className="text-xs text-[#7F8C86] py-4 text-center">Loading investors...</p>
+                      <div className="space-y-2 pt-1">
+                        {[1, 2, 3].map(i => <div key={i} className="h-14 rounded-xl bg-[#1A252C] border border-[#2B393F] animate-pulse" />)}
+                      </div>
                     ) : filteredInvestors.length === 0 ? (
-                      <p className="text-xs text-[#7F8C86] py-4 text-center">No investors found.</p>
+                      <div className="flex flex-col items-center text-center py-6">
+                        <Icon icon="solar:user-search-bold" className="w-8 h-8 text-[#75928A] mb-2" />
+                        <p className="text-xs text-[#7F8C86]">No matching investors.</p>
+                      </div>
                     ) : (
                       filteredInvestors.map(inv => (
                         <label
