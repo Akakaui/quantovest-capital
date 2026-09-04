@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import AdminSidebar from '@/components/AdminSidebar';
 import EmptyState from '@/components/admin/EmptyState';
 import { Icon } from '@iconify/react';
@@ -72,6 +73,8 @@ function formatCents(cents: number): string {
 }
 
 export default function AdminInvestorsPage() {
+  const router = useRouter();
+
   const [investors, setInvestors] = useState<InvestorRow[]>([]);
   const [kycApps, setKycApps] = useState<KycRow[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRow[]>([]);
@@ -97,15 +100,6 @@ export default function AdminInvestorsPage() {
   const [planLoading, setPlanLoading] = useState(false);
   const [planSuccess, setPlanSuccess] = useState<string | null>(null);
   const [planError, setPlanError] = useState<string | null>(null);
-
-  const [roiModalOpen, setRoiModalOpen] = useState(false);
-  const [roiInvestorId, setRoiInvestorId] = useState('');
-  const [roiAmount, setRoiAmount] = useState('');
-  const [roiMessageTemplate, setRoiMessageTemplate] = useState('');
-  const [roiCustomMessage, setRoiCustomMessage] = useState('');
-  const [roiLoading, setRoiLoading] = useState(false);
-  const [roiSuccess, setRoiSuccess] = useState<string | null>(null);
-  const [roiError, setRoiError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -310,15 +304,7 @@ export default function AdminInvestorsPage() {
                           Add Balance
                         </button>
                         <button
-                          onClick={() => {
-                            setRoiInvestorId(inv.id);
-                            setRoiAmount('');
-                            setRoiMessageTemplate('');
-                            setRoiCustomMessage('');
-                            setRoiSuccess(null);
-                            setRoiError(null);
-                            setRoiModalOpen(true);
-                          }}
+                          onClick={() => router.push(`/admin/performance/${inv.id}`)}
                           className="flex items-center gap-1.5 text-[10px] font-mono px-3 py-1.5 rounded-lg bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30 hover:bg-[#F59E0B]/20 transition-colors"
                         >
                           <Icon icon="solar:graph-up-bold" className="w-3.5 h-3.5" />
@@ -465,99 +451,6 @@ export default function AdminInvestorsPage() {
             </div>
 
             <button onClick={() => setBalanceModalOpen(false)} className="mt-3 w-full py-2 rounded-xl border border-[#2B393F] text-[#93A09A] text-xs hover:bg-[#1A252C] transition-colors">Cancel</button>
-          </div>
-        </div>
-      )}
-
-      {/* Add ROI Modal */}
-      {roiModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setRoiModalOpen(false)}>
-          <div className="bg-[#151E23] border border-[#2B393F] rounded-2xl p-6 w-full max-w-sm shadow-2xl" onClick={e => e.stopPropagation()}>
-            <h3 className="text-sm font-semibold text-[#E8EFEB] mb-4">Add ROI / Profit</h3>
-
-            {roiSuccess && <div className="mb-3 p-3 rounded-lg bg-[#22C55E]/10 border border-[#22C55E]/30 text-[10px] font-mono text-[#22C55E]">{roiSuccess}</div>}
-            {roiError && <div className="mb-3 p-3 rounded-lg bg-rose-500/10 border border-rose-500/30 text-[10px] font-mono text-rose-300">{roiError}</div>}
-
-            <div className="space-y-3">
-              <div>
-                <label className="block text-[10px] uppercase font-mono text-[#93A09A] mb-1">Amount (USD)</label>
-                <input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={roiAmount}
-                  onChange={e => setRoiAmount(e.target.value)}
-                  placeholder="e.g. 50.00"
-                  className="w-full rounded-xl border border-[#2B393F] bg-[#0D1215] px-4 py-2.5 text-sm text-white placeholder-[#7F8C86] font-mono"
-                />
-              </div>
-              <div>
-                <label className="block text-[10px] uppercase font-mono text-[#93A09A] mb-1">Message Template</label>
-                <select
-                  value={roiMessageTemplate}
-                  onChange={e => setRoiMessageTemplate(e.target.value)}
-                  className="w-full rounded-xl border border-[#2B393F] bg-[#0D1215] px-4 py-2.5 text-sm text-white focus:outline-none"
-                >
-                  <option value="" disabled>Select a message...</option>
-                  <option value="BTC market gains">BTC market gains</option>
-                  <option value="ETH portfolio performance">ETH portfolio performance</option>
-                  <option value="USDT yield return">USDT yield return</option>
-                  <option value="Forex market gains">Forex market gains</option>
-                  <option value="Custom">Custom message...</option>
-                </select>
-              </div>
-              
-              {roiMessageTemplate === 'Custom' && (
-                <div>
-                  <label className="block text-[10px] uppercase font-mono text-[#93A09A] mb-1">Custom Message</label>
-                  <input
-                    type="text"
-                    value={roiCustomMessage}
-                    onChange={e => setRoiCustomMessage(e.target.value)}
-                    placeholder="Enter custom message"
-                    className="w-full rounded-xl border border-[#2B393F] bg-[#0D1215] px-4 py-2.5 text-sm text-white placeholder-[#7F8C86]"
-                  />
-                </div>
-              )}
-
-              <button
-                disabled={roiLoading || !roiAmount || Number(roiAmount) <= 0 || !roiMessageTemplate || (roiMessageTemplate === 'Custom' && !roiCustomMessage)}
-                onClick={async () => {
-                  setRoiLoading(true);
-                  setRoiError(null);
-                  setRoiSuccess(null);
-                  try {
-                    const message = roiMessageTemplate === 'Custom' ? roiCustomMessage : roiMessageTemplate;
-                    const res = await fetch('/api/admin/roi', {
-                      method: 'POST',
-                      credentials: 'include',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        investorId: roiInvestorId,
-                        amountCents: Math.round(Number(roiAmount) * 100),
-                        message,
-                      }),
-                    });
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error || 'Failed to add ROI');
-                    setRoiSuccess(`$${Number(roiAmount).toFixed(2)} ROI credited.`);
-                    setInvestors(prev => prev.map(inv =>
-                      inv.id === roiInvestorId ? { ...inv, balanceCents: inv.balanceCents + Math.round(Number(roiAmount) * 100) } : inv
-                    ));
-                    setTimeout(() => setRoiModalOpen(false), 1500);
-                  } catch (err: any) {
-                    setRoiError(err.message);
-                  } finally {
-                    setRoiLoading(false);
-                  }
-                }}
-                className="w-full py-2.5 rounded-xl bg-[#F59E0B] text-black text-sm font-semibold hover:bg-[#D97706] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {roiLoading ? 'Processing...' : 'Add ROI / Profit'}
-              </button>
-            </div>
-
-            <button onClick={() => setRoiModalOpen(false)} className="mt-3 w-full py-2 rounded-xl border border-[#2B393F] text-[#93A09A] text-xs hover:bg-[#1A252C] transition-colors">Cancel</button>
           </div>
         </div>
       )}
