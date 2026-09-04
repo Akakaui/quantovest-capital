@@ -3,21 +3,9 @@ import { requireAuth } from "@/lib/auth-helpers";
 import { getDb } from "@/lib/db";
 import { swapConfig } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
+import { fetchLivePrices } from "@/lib/swap-prices";
 
 export const dynamic = "force-dynamic";
-
-const ASSET_PRICES: Record<string, number> = {
-  BTC: 67500,
-  ETH: 3450,
-  SOL: 178,
-  USDT: 1,
-  USDC: 1,
-  XRP: 0.62,
-  DOGE: 0.16,
-  GBP: 1.27,
-  EUR: 1.09,
-  USD: 1,
-};
 
 export async function GET(request: Request) {
   const { identity, error } = await requireAuth();
@@ -32,8 +20,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Invalid parameters" }, { status: 400 });
   }
 
-  const baseFrom = ASSET_PRICES[from] ?? 0;
-  const baseTo = ASSET_PRICES[to] ?? 0;
+  const prices = await fetchLivePrices([from, to]);
+  const baseFrom = prices[from] ?? 0;
+  const baseTo = prices[to] ?? 0;
   if (!baseFrom || !baseTo) {
     return NextResponse.json({ error: "Unsupported asset pair" }, { status: 400 });
   }
