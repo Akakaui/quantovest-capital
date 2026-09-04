@@ -81,7 +81,9 @@ export async function notifyUser(userId: string, type: string, title: string, bo
   } catch (error) {
     console.error('[notifications in-app insert]', error instanceof Error ? error.message : error);
   }
-  try { await maybeEmailUser(user, type, title, body); } catch (error) { console.error('[notifications email]', error); }
+  try {
+    void maybeEmailUser(user, type, title, body).catch(error => console.error('[notifications email]', error));
+  } catch (error) { console.error('[notifications email]', error); }
 }
 
 export async function notifyAdmins(type: string, title: string, body: string) {

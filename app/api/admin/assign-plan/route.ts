@@ -8,6 +8,8 @@ import { sendPlanUpdated } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 
+class PlanAssignmentError extends Error {}
+
 export async function POST(request: Request) {
   try {
     const { identity, error } = await requireAdmin();
@@ -27,13 +29,13 @@ export async function POST(request: Request) {
 
       const result = await db.transaction(async tx => {
       const targetPlan = await tx.select().from(plans).where(eq(plans.name, body.planName!)).limit(1);
-      if (!targetPlan[0]) throw new Error('Plan not found');
+      if (!targetPlan[0]) throw new PlanAssignmentError('Plan not found');
 
       const existing = await tx.select().from(investorAccounts).where(eq(investorAccounts.investorId, body.investorId!)).limit(1);
       const principalCents = existing[0]?.principalCents ?? 0;
 
       if (principalCents < targetPlan[0].minimumDepositCents) {
-        throw new Error(
+        throw new PlanAssignmentError(
           `This investor's total deposit of $${(principalCents / 100).toFixed(2)} is below the ${targetPlan[0].name} plan's minimum of $${(targetPlan[0].minimumDepositCents / 100).toFixed(2)}. No plan is granted until the minimum deposit is reached.`
         );
       }
@@ -75,6 +77,9 @@ export async function POST(request: Request) {
     return NextResponse.json(result);
   } catch (err) {
     console.error('[admin assign-plan POST]', err);
+    if (err instanceof PlanAssignmentError) {
+      return NextResponse.json({ error: err.message }, { status: 400 });
+    }
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

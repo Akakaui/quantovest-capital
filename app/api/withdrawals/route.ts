@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     const dollars = (body.amountCents! / 100).toFixed(2);
     await notifyUser(actor.id, 'withdrawal_submitted', 'Withdrawal requested', `Your withdrawal request of $${dollars} has been submitted and is pending review.`);
     await notifyAdmins('withdrawal_submitted', 'New withdrawal request', `A withdrawal request of $${dollars} was submitted by ${actor.name || actor.id}.`);
-    try { if (actor.email) await sendWithdrawalSubmitted(actor.email, actor.name || 'Investor', `$${dollars}`); } catch {}
+    try { if (actor.email) void sendWithdrawalSubmitted(actor.email, actor.name || 'Investor', `$${dollars}`).catch(error => console.error('[withdrawal email]', error)); } catch {}
     return NextResponse.json({ withdrawalId, status: 'pending' }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : 'Withdrawal request failed.' }, { status: 400 });

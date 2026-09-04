@@ -4,8 +4,15 @@ import { getDb } from '@/lib/db';
 import { users } from '@/db/schema';
 
 export async function getCurrentIdentity() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  let supabase;
+  let user;
+  try {
+    supabase = await createClient();
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch (error) {
+    console.error('[identity auth lookup]', error instanceof Error ? error.message : error);
+  }
   if (!user) return null;
   const authRole = user.app_metadata?.role ?? user.user_metadata?.role;
   const authAvatar = typeof user.user_metadata?.avatar_url === 'string'

@@ -53,14 +53,14 @@ export async function POST(request: Request) {
         investorId: actor.id,
         type: 'plan_upgrade',
         amountCents: 0,
-        referenceId: `plan-upgrade:${account.id}:${account.planId}:${targetPlan.id}`,
+        referenceId: `plan-upgrade:${crypto.randomUUID()}`,
         description: `Plan changed from ${previousPlan[0]?.name ?? 'previous plan'} to ${targetPlan.name}`,
       });
     });
 
     await notifyUser(actor.id, 'plan_updated', 'Investment plan updated', `You've upgraded to the ${targetPlan.name} plan.`);
     if (actor.email) {
-      try { await sendPlanUpdated(actor.email, actor.name || 'Investor', previousPlan[0]?.name ?? 'Previous plan', targetPlan.name); } catch {}
+      void sendPlanUpdated(actor.email, actor.name || 'Investor', previousPlan[0]?.name ?? 'Previous plan', targetPlan.name).catch(error => console.error('[upgrade plan email]', error));
     }
     return NextResponse.json({ success: true, plan: planName });
   } catch (error) {

@@ -312,7 +312,7 @@ function smtpCommand(socket: net.Socket, command: string): Promise<string> {
     };
     socket.on('data', onData);
     socket.write(`${command}\r\n`);
-    setTimeout(() => { socket.off('data', onData); reject(new Error('SMTP command timed out.')); }, 15000);
+    setTimeout(() => { socket.off('data', onData); reject(new Error('SMTP command timed out.')); }, 5000);
   });
 }
 
@@ -380,7 +380,7 @@ async function sendViaZoho(
       }
     });
     socket.on('error', (err) => reject(err));
-    socket.setTimeout(20000, () => { socket.destroy(); reject(new Error('SMTP connection timed out.')); });
+    socket.setTimeout(5000, () => { socket.destroy(); reject(new Error('SMTP connection timed out.')); });
   });
 }
 
@@ -396,7 +396,7 @@ export async function sendEmail(
   const password = process.env.ZOHO_SMTP_PASS;
 
   // Without credentials, log to console (development mode)
-  if (!user || !password) {
+  if (!user || !password || /<FILL_/.test(user) || /<FILL_/.test(password)) {
     console.log(`[EMAIL DEV] To: ${to} | Subject: ${template.subject}`);
     console.log(`[EMAIL DEV] Text: ${template.text.substring(0, 200)}...`);
     return { sent: true };

@@ -69,7 +69,7 @@ export async function POST(request: Request) {
           }
         }
 
-        if (data.session) { try { await sendWelcomeEmail(data.user.id); } catch (welcomeError) { console.error('[signup welcome email]', welcomeError); } }
+        if (data.session) { try { void sendWelcomeEmail(data.user.id).catch(welcomeError => console.error('[signup welcome email]', welcomeError)); } catch (welcomeError) { console.error('[signup welcome email]', welcomeError); } }
       }
     }
 
