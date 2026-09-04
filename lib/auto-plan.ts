@@ -19,13 +19,13 @@ export async function syncPlanForPrincipal(
   tx: Tx,
   accountId: string,
   investorId: string,
-  currentPlanId: number,
+  currentPlanId: number | null,
   principalCents: number,
 ): Promise<AutoPlanResult> {
   const planRows = await tx.select().from(plans).where(eq(plans.active, 1)).orderBy(desc(plans.minimumDepositCents));
   if (!planRows.length) return { changed: false, fromPlanName: null, toPlanName: null };
 
-  let target = planRows[planRows.length - 1];
+  let target: (typeof planRows)[number] | null = null;
   for (const plan of planRows) {
     if (principalCents >= plan.minimumDepositCents) {
       target = plan;
@@ -33,22 +33,34 @@ export async function syncPlanForPrincipal(
     }
   }
 
-  if (target.id === currentPlanId) {
+  if ((target?.id ?? null) === currentPlanId) {
     return { changed: false, fromPlanName: null, toPlanName: null };
   }
 
-  const previous = await tx.select({ id: plans.id, name: plans.name }).from(plans).where(eq(plans.id, currentPlanId)).limit(1);
+  const previous = currentPlanId
+    ? await tx.select({ id: plans.id, name: plans.name }).from(plans).where(eq(plans.id, currentPlanId)).limit(1)
+    : [];
   const previousName = previous[0]?.name ?? null;
 
-  await tx.update(investorAccounts).set({ planId: target.id, updatedAt: new Date() }).where(eq(investorAccounts.id, accountId));
+  await tx.update(investorAccounts).set({ planId: target?.id ?? null, updatedAt: new Date() }).where(eq(investorAccounts.id, accountId));
 
-  await tx.insert(portfolioLedger).values({
-    investorId,
-    type: 'plan_upgrade',
-    amountCents: 0,
-    referenceId: `plan-auto-${investorId}-${target.id}-${crypto.randomUUID()}`,
-    description: `Account upgraded to the ${target.name} plan`,
-  });
+  if (target) {
+    await tx.insert(portfolioLedger).values({
+      investorId,
+      type: 'plan_upgrade',
+      amountCents: 0,
+      referenceId: `plan-auto-${investorId}-${target.id}-${crypto.randomUUID()}`,
+      description: `Account upgraded to the ${target.name} plan`,
+    });
+  } else {
+    await tx.insert(portfolioLedger).values({
+      investorId,
+      type: 'plan_unassigned',
+      amountCents: 0,
+      referenceId: `plan-remove-${investorId}-${crypto.randomUUID()}`,
+      description: 'Plan removed: account total deposit is below the minimum for any plan',
+    });
+  }
 
-  return { changed: true, fromPlanName: previousName, toPlanName: target.name };
+  return { changed: true, fromPlanName: previousName, toPlanName: target?.name ?? null };
 }

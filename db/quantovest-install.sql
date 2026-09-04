@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS "plans" (
 CREATE TABLE IF NOT EXISTS "investorAccounts" (
 	"id" varchar(191) PRIMARY KEY NOT NULL,
 	"investorId" varchar(191) NOT NULL,
-	"planId" integer NOT NULL,
+	"planId" integer,
 	"principalCents" integer DEFAULT 0 NOT NULL,
 	"balanceCents" integer DEFAULT 0 NOT NULL,
 	"status" varchar(24) DEFAULT 'active' NOT NULL,
@@ -432,3 +432,12 @@ ALTER TABLE public.users
   ADD COLUMN IF NOT EXISTS "twoFactorEnabled" boolean DEFAULT false NOT NULL,
   ADD COLUMN IF NOT EXISTS "twoFactorSecret" text,
   ADD COLUMN IF NOT EXISTS "payoutDetails" json;
+
+-- Investors are only placed on a plan once their total deposit meets a plan
+-- minimum; planId is NULL (no plan) until then.
+ALTER TABLE public."investorAccounts" ALTER COLUMN "planId" DROP NOT NULL;
+UPDATE public."investorAccounts" SET "planId" = NULL
+WHERE "planId" IS NOT NULL
+  AND NOT EXISTS (SELECT 1 FROM public.plans p
+                  WHERE p.id = "investorAccounts"."planId"
+                    AND p."minimumDepositCents" <= "investorAccounts"."principalCents");
