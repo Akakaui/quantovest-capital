@@ -323,11 +323,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS "recovery_codes_hash_unique" ON "recoveryCodes
 CREATE UNIQUE INDEX IF NOT EXISTS "platform_settings_key_unique" ON "platformSettings" USING btree ("settingKey");
 
 -- ── Seed Plans ─────────────────────────────────────────────────
+-- Fixed-plan tiers. Assign-Plan credits the plan amount (minimumDepositCents).
+-- Matches the live production values.
 
 INSERT INTO "plans" ("name", "minimumDepositCents", "maximumDepositCents", "minRoiBps", "maxRoiBps", "active")
 VALUES
-  ('Starter', 150000, 749999, 1500, 1500, 1),
-  ('Growth', 750000, 4499999, 2500, 2500, 1),
+  ('Starter', 150000, NULL, 1500, 1500, 1),
+  ('Growth', 750000, NULL, 2500, 2500, 1),
   ('Elite', 4500000, NULL, 3500, 3500, 1)
 ON CONFLICT DO NOTHING;
 
