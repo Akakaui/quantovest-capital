@@ -13,7 +13,11 @@ export async function GET(request: Request) {
   const referralCode = cookies().get('referral_code')?.value || null;
   if (code) {
     const supabase = await createClient();
-    const { data } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (error || !data.user) {
+      console.error('[auth callback exchange]', error?.message || 'No user returned from callback exchange');
+      return NextResponse.redirect(new URL('/login?error=oauth_callback', requestUrl.origin));
+    }
     if (data.user) {
       const db = getDb();
       if (db) {

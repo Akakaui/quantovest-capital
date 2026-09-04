@@ -57,6 +57,14 @@ export async function middleware(request: NextRequest) {
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!supabaseUrl || !supabaseKey) return response;
 
+  const { pathname, searchParams } = request.nextUrl;
+  if (pathname === '/' && searchParams.has('code')) {
+    const callbackUrl = request.nextUrl.clone();
+    callbackUrl.pathname = '/auth/callback';
+    callbackUrl.searchParams.set('next', searchParams.get('next') || '/dashboard');
+    return NextResponse.redirect(callbackUrl);
+  }
+
   const supabase = createServerClient(supabaseUrl, supabaseKey, {
     cookies: {
       getAll() {
@@ -72,7 +80,6 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
   const isAuthenticated = !!user;
 
   const role = user?.app_metadata?.role ?? user?.user_metadata?.role ?? 'investor';

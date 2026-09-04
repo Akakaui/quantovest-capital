@@ -18,12 +18,13 @@ export async function POST(request: Request) {
     }
 
     const supabase = await createClient();
+    const appUrl = process.env.APP_PUBLIC_URL || new URL(request.url).origin;
     const { data, error } = await supabase.auth.signUp({
       email: body.email,
       password: body.password,
       options: {
         data: { name: body.name },
-        emailRedirectTo: `${new URL(request.url).origin}/auth/callback?next=/dashboard`,
+        emailRedirectTo: `${appUrl}/auth/callback?next=/dashboard`,
       },
     });
 
