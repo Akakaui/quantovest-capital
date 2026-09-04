@@ -14,11 +14,16 @@ export async function GET() {
       return NextResponse.json({ error: 'Database connection unavailable' }, { status: 503 });
     }
     const rows = await client.unsafe(
-      `SELECT u.id, u.name, u.email, ia.id as "accountId", ia."planId", ia."balanceCents", ia."principalCents", p.name as "planName", p."minRoiBps", p."maxRoiBps"
+      `SELECT u.id, u.name, u.email, ia.id as "accountId", ia."planId",
+              COALESCE(ia."balanceCents", 0) as "balanceCents",
+              COALESCE(ia."principalCents", 0) as "principalCents",
+              ia.status as "accountStatus",
+              p.name as "planName", p."minRoiBps", p."maxRoiBps"
        FROM users u
        LEFT JOIN "investorAccounts" ia ON u.id = ia."investorId"
        LEFT JOIN plans p ON ia."planId" = p.id
-       WHERE u.role = $1`,
+       WHERE u.role = $1
+       ORDER BY u."createdAt" ASC`,
       ['investor']
     );
     return NextResponse.json(rows);

@@ -5,16 +5,17 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { createClient } from '@/lib/supabase/client';
+import { signOutWithCookies } from '@/lib/auth-logout';
 import NotificationCenter from '@/components/NotificationCenter';
 
 const adminLinks = [
   { label: 'Control Center', href: '/admin', icon: 'solar:widget-add-bold' },
+  { label: 'Investors', href: '/admin/investors', icon: 'solar:user-bold' },
   { label: 'Daily ROI Entry', href: '/admin/performance', icon: 'solar:graph-bold' },
   { label: 'Deposit Queue', href: '/admin/deposits', icon: 'solar:wallet-bold' },
   { label: 'Withdrawal Queue', href: '/admin/withdrawals', icon: 'solar:card-transfer-bold' },
   { label: 'Referral Payouts', href: '/admin/referrals', icon: 'solar:share-bold' },
   { label: 'KYC Queue', href: '/admin/kyc', icon: 'solar:shield-check-bold' },
-  { label: 'Investors', href: '/admin/investors', icon: 'solar:user-bold' },
   { label: 'Portfolio Managers', href: '/admin/traders', icon: 'solar:users-group-rounded-bold' },
   { label: 'Notifications', href: '/admin/notifications', icon: 'solar:bell-bold' },
   { label: 'Support', href: '/admin/support', icon: 'solar:chat-round-dots-bold' },
@@ -53,9 +54,8 @@ export default function AdminSidebar() {
   }, [drawerOpen]);
 
   async function handleLogout() {
-    await supabase.auth.signOut({ scope: 'global' });
+    await signOutWithCookies();
     router.replace('/login');
-    router.refresh();
   }
 
   const displayName = user.name || 'Admin';

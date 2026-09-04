@@ -158,6 +158,8 @@ export default function InvestorDashboard() {
   const [isMasked, setIsMasked] = useState(false);
   const [isKycOpen, setIsKycOpen] = useState(false);
   const [isUpgradeOpen, setIsUpgradeOpen] = useState(false);
+  const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null);
+  const [upgradeError, setUpgradeError] = useState<string | null>(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const managerRedirected = useRef(false);
 
@@ -477,21 +479,32 @@ export default function InvestorDashboard() {
                         <span className="text-[10px] text-[#93A09A]">Lower plan</span>
                       ) : (
                         <button
-                          onClick={() => {
-                            fetch('/api/investor/upgrade', {
-                              method: 'POST',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ planName })
-                            }).then(res => res.json()).then(data => {
-                              if (data.success) {
+                          disabled={upgradingPlan !== null}
+                          onClick={async () => {
+                            setUpgradeError(null);
+                            setUpgradingPlan(planName);
+                            try {
+                              const res = await fetch('/api/investor/upgrade', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ planName })
+                              });
+                              const data = await res.json().catch(() => null);
+                              if (res.ok && data?.success) {
                                 setProfile(p => ({ ...p, plan: planName }));
                                 setIsUpgradeOpen(false);
+                              } else {
+                                setUpgradeError(data?.error || 'Upgrade failed. Please try again.');
                               }
-                            });
+                            } catch {
+                              setUpgradeError('Network error — please try again.');
+                            } finally {
+                              setUpgradingPlan(null);
+                            }
                           }}
-                          className="text-[10px] font-semibold px-4 py-1.5 rounded-full bg-[#22C55E] text-[#07110B] hover:bg-[#16A34A] transition-colors"
+                          className="text-[10px] font-semibold px-4 py-1.5 rounded-full bg-[#22C55E] text-[#07110B] hover:bg-[#16A34A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Upgrade
+                          {upgradingPlan === planName ? 'Upgrading…' : 'Upgrade'}
                         </button>
                       )}
                     </div>
@@ -499,6 +512,11 @@ export default function InvestorDashboard() {
                 );
               })}
             </div>
+            {upgradeError && (
+              <p className="text-[10px] text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg px-3 py-2">
+                {upgradeError}
+              </p>
+            )}
             <Link href="/dashboard/deposit" onClick={() => setIsUpgradeOpen(false)} className="block text-center text-[10px] text-[#22C55E] hover:underline">
               Go to Deposit →
             </Link>

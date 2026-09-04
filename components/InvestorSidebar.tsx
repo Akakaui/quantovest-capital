@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Icon } from '@iconify/react';
 import { createClient } from '@/lib/supabase/client';
+import { signOutWithCookies } from '@/lib/auth-logout';
 import NotificationCenter from '@/components/NotificationCenter';
 
 interface InvestorSidebarProps {
@@ -62,10 +63,8 @@ export default function InvestorSidebar({ onOpenDeposit, onOpenWithdraw, onOpenC
   const avatarSrc = user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${displayName}`;
 
   async function handleLogout() {
-    const supabase = createClient();
-    await supabase.auth.signOut({ scope: 'global' });
+    await signOutWithCookies();
     router.replace('/login');
-    router.refresh();
   }
 
   return (

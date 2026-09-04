@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminSidebar from '@/components/AdminSidebar';
 import EmptyState from '@/components/admin/EmptyState';
@@ -11,6 +11,7 @@ interface InvestorRow {
   name: string | null;
   email: string;
   accountId: string | null;
+  accountStatus: string | null;
   planId: string | null;
   balanceCents: number;
   principalCents: number;
@@ -100,6 +101,15 @@ export default function AdminInvestorsPage() {
   const [planLoading, setPlanLoading] = useState(false);
   const [planSuccess, setPlanSuccess] = useState<string | null>(null);
   const [planError, setPlanError] = useState<string | null>(null);
+
+  const loadInvestors = useCallback(async () => {
+    try {
+      const invRes = await fetch('/api/admin/investors', { credentials: 'include' as const });
+      if (invRes.ok) setInvestors(await invRes.json());
+    } catch {
+      setErrorMsg('Failed to refresh investor list.');
+    }
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -255,8 +265,14 @@ export default function AdminInvestorsPage() {
                               KYC: {kycStatus}
                             </span>
                           )}
-                          <span className="text-[10px] px-2 py-0.5 rounded-full font-mono bg-[#22C55E]/10 text-[#22C55E]">
-                            ACTIVE
+                          <span className={`text-[10px] px-2 py-0.5 rounded-full font-mono ${
+                            inv.accountStatus === 'active'
+                              ? 'bg-[#22C55E]/10 text-[#22C55E]'
+                              : inv.accountStatus
+                              ? 'bg-amber-500/10 text-amber-400'
+                              : 'bg-[#2B393F] text-[#7F8C86]'
+                          }`}>
+                            {inv.accountStatus ? String(inv.accountStatus).toUpperCase() : 'NO ACCOUNT'}
                           </span>
                         </div>
                       </div>
@@ -434,9 +450,7 @@ export default function AdminInvestorsPage() {
                     const data = await res.json();
                     if (!res.ok) throw new Error(data.error || 'Failed to add balance');
                     setBalanceSuccess(`$${Number(balanceAmount).toFixed(2)} credited as profit.`);
-                    setInvestors(prev => prev.map(inv =>
-                      inv.id === balanceInvestorId ? { ...inv, balanceCents: inv.balanceCents + Math.round(Number(balanceAmount) * 100) } : inv
-                    ));
+                    await loadInvestors();
                     setTimeout(() => setBalanceModalOpen(false), 1500);
                   } catch (err: any) {
                     setBalanceError(err.message);
