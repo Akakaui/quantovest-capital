@@ -19,7 +19,7 @@ export async function GET() {
       .where(and(eq(investorAccounts.investorId, identity.id), eq(investorAccounts.status, "active")))
       .limit(1);
 
-    const [plan] = account
+    const [plan] = account?.planId
       ? await db.select({ name: plans.name }).from(plans).where(eq(plans.id, account.planId)).limit(1)
       : [];
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { getDb } from '@/lib/db';
-import { investorAccounts, portfolioLedger, plans } from '@/db/schema';
+import { investorAccounts, portfolioLedger } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { notifyUser } from '@/lib/notifications';
 import { syncPlanForPrincipal } from '@/lib/auto-plan';
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
       const existing = await tx.select().from(investorAccounts).where(eq(investorAccounts.investorId, body.investorId!)).limit(1);
 
       let accountId: string;
-      let currentPlanId: number;
+      let currentPlanId: number | null = null;
       let newPrincipalCents: number;
       let planName: string | null = null;
 
@@ -44,14 +44,14 @@ export async function POST(request: Request) {
           updatedAt: new Date(),
         }).where(eq(investorAccounts.id, existing[0].id));
       } else {
-        const defaultPlan = await tx.select().from(plans).where(eq(plans.name, 'Starter')).limit(1);
+        // Account is created without a plan. syncPlanForPrincipal assigns a plan
+        // only once the total credit reaches a plan's minimum deposit.
         accountId = crypto.randomUUID();
-        currentPlanId = defaultPlan[0]?.id ?? 1;
         newPrincipalCents = body.amountCents!;
         await tx.insert(investorAccounts).values({
           id: accountId,
           investorId: body.investorId!,
-          planId: currentPlanId,
+          planId: null,
           principalCents: body.amountCents!,
           balanceCents: body.amountCents!,
           status: 'active',

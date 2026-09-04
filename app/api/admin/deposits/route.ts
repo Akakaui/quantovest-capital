@@ -4,7 +4,7 @@ import { and, desc, eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth-helpers';
 import { notifyAdmins, notifyUser } from '@/lib/notifications';
 import { getDb } from '@/lib/db';
-import { deposits, investorAccounts, plans, portfolioLedger, users } from '@/db/schema';
+import { deposits, investorAccounts, portfolioLedger, users } from '@/db/schema';
 import { sendDepositApproved, sendDepositRejected } from '@/lib/email';
 import { databaseUnavailable } from '@/lib/api-errors';
 import { grantReferralRewardForDeposit } from '@/lib/referral-reward';
@@ -71,7 +71,7 @@ export async function PATCH(request: Request) {
       // 3. Credit investor balance and principal — principal (not profit) drives plan eligibility
       const existingAccounts = await tx.select().from(investorAccounts).where(eq(investorAccounts.investorId, deposit.investorId)).limit(1);
       let accountId: string;
-      let currentPlanId: number = 1;
+      let currentPlanId: number | null = null;
       let newPrincipalCents: number;
       let planResult = { changed: false as boolean, fromPlanName: null as string | null, toPlanName: null as string | null };
       if (existingAccounts[0]) {
@@ -85,13 +85,11 @@ export async function PATCH(request: Request) {
           updatedAt: new Date(),
         }).where(eq(investorAccounts.id, existingAccounts[0].id));
       } else {
-        // Create a new account without implying the investor is "on a plan" — use the real
-        // Starter plan id as the default so syncPlanForPrincipal sees a valid currentPlanId.
-        const defaultPlan = await tx.select({ id: plans.id }).from(plans).where(eq(plans.name, 'Starter')).limit(1);
+        // Create the account without a plan. syncPlanForPrincipal assigns a plan
+        // only once the total deposit meets a plan's minimum deposit.
         accountId = crypto.randomUUID();
-        currentPlanId = defaultPlan[0]?.id ?? 1;
         newPrincipalCents = deposit.amountCents;
-        await tx.insert(investorAccounts).values({ id: accountId, investorId: deposit.investorId, planId: currentPlanId, principalCents: deposit.amountCents, balanceCents: deposit.amountCents, status: 'active' });
+        await tx.insert(investorAccounts).values({ id: accountId, investorId: deposit.investorId, planId: null, principalCents: deposit.amountCents, balanceCents: deposit.amountCents, status: 'active' });
       }
       // 4. Record in ledger (guard against unique constraint if entry already exists from a prior partial attempt)
       const existingLedger = await tx.select({ id: portfolioLedger.id }).from(portfolioLedger).where(and(eq(portfolioLedger.type, 'deposit'), eq(portfolioLedger.referenceId, deposit.id))).limit(1);

@@ -29,8 +29,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Allocation cannot exceed your available balance." }, { status: 400 });
     }
 
-    const [plan] = await db.select({ id: plans.id }).from(plans)
-      .where(and(eq(plans.id, account.planId), eq(plans.active, 1))).limit(1);
+    const [plan] = account.planId
+      ? await db.select({ id: plans.id }).from(plans).where(and(eq(plans.id, account.planId), eq(plans.active, 1))).limit(1)
+      : [];
     if (!plan) return NextResponse.json({ error: "Your account does not have an active plan." }, { status: 409 });
 
     const [kyc] = await db.select({ status: kycApplications.status }).from(kycApplications)

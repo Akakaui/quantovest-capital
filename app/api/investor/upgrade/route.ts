@@ -38,7 +38,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, plan: planName, unchanged: true });
     }
 
-    const previousPlan = await db.select({ name: plans.name }).from(plans).where(eq(plans.id, account.planId)).limit(1);
+    if (account.principalCents < targetPlan.minimumDepositCents) {
+      return NextResponse.json({
+        error: `Your total deposit of $${(account.principalCents / 100).toFixed(2)} does not meet the ${targetPlan.name} plan minimum of $${(targetPlan.minimumDepositCents / 100).toFixed(2)} yet.`,
+      }, { status: 400 });
+    }
+
+    const previousPlan = account.planId
+      ? await db.select({ name: plans.name }).from(plans).where(eq(plans.id, account.planId)).limit(1)
+      : [];
     await db.transaction(async tx => {
       await tx.update(investorAccounts).set({ planId: targetPlan.id, updatedAt: new Date() }).where(eq(investorAccounts.id, account.id));
       await tx.insert(portfolioLedger).values({
