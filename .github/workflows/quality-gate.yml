@@ -17,8 +17,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      - run: npm install --no-audit --no-fund
       - run: npm run build
 
   pytest:
@@ -41,11 +40,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: npm ci
+      - run: npm install --no-audit --no-fund
       - run: npm run build
       - run: npm start -- -p 3000 > /tmp/quantovest.log 2>&1 &
       - run: sleep 8
@@ -72,8 +70,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
+      - run: npm install --no-audit --no-fund
       - run: npm run build
       - run: npm start -- -p 3000 > /tmp/quantovest-zap.log 2>&1 &
       - run: sleep 8
