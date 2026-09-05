@@ -46,16 +46,16 @@ export default function AdminPerformanceHomePage() {
   return (
     <div className="min-h-screen bg-[#0D1215] text-[#E8EFEB] flex flex-col md:flex-row font-sans">
       <AdminSidebar />
-      <main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
-        <div className="border-b border-[#2B393F] pb-6 space-y-1">
+      <main className="flex-1 min-w-0 p-3 sm:p-8 space-y-6 sm:space-y-8 overflow-y-auto pb-24 md:pb-8">
+        <div className="border-b border-[#2B393F] pb-5 sm:pb-6 space-y-2">
           <div className="flex items-center gap-2 text-xs text-[#22C55E] font-mono"><span className="w-2 h-2 rounded-full bg-[#22C55E]" /> PERFORMANCE OPERATIONS</div>
-          <h1 className="text-2xl font-normal">Daily ROI Entry</h1>
-          <p className="text-xs text-[#93A09A]">Select an investor to enter an exact ROI/profit credit and a message. Credits can be applied at any time.</p>
+          <h1 className="text-xl sm:text-2xl font-normal">Daily ROI Entry</h1>
+          <p className="max-w-2xl text-xs leading-relaxed text-[#93A09A]">Select an investor to enter an exact ROI/profit credit and a message. Credits can be applied at any time.</p>
         </div>
 
         {message && <div role="status" className="p-4 rounded-xl text-xs bg-[#CF202F]/10 border border-[#CF202F]/50 text-[#FCA5A5]">{message}</div>}
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl border border-[#2B393F] bg-[#151E23] p-3 sm:p-4">
           <label className="relative flex-1 block">
             <span className="sr-only">Search investors</span>
             <Icon icon="solar:magnifer-bold" className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7F8C86]" />
@@ -64,7 +64,7 @@ export default function AdminPerformanceHomePage() {
               value={searchQuery}
               onChange={event => setSearchQuery(event.target.value)}
               placeholder="Search by name or email…"
-              className="w-full rounded-xl border border-[#2B393F] bg-[#151E23] pl-11 pr-4 py-3 text-sm text-white placeholder-[#7F8C86] focus:border-[#F59E0B]/50 focus:outline-none"
+              className="w-full min-h-12 rounded-xl border border-[#2B393F] bg-[#0D1215] pl-11 pr-4 py-3 text-sm text-white placeholder-[#7F8C86] focus:border-[#F59E0B]/50 focus:outline-none focus:ring-2 focus:ring-[#F59E0B]/15"
             />
           </label>
           <span className="text-[11px] font-mono text-[#7F8C86] whitespace-nowrap">
@@ -79,18 +79,19 @@ export default function AdminPerformanceHomePage() {
         ) : filtered.length === 0 ? (
           <EmptyState title="No matches" hint="Try a different name or email." icon="solar:magnifer-bold" />
         ) : (
-          <div className="max-h-[68vh] overflow-y-auto pr-1 pb-2">
+          <div className="max-h-[calc(100vh-18rem)] min-h-0 overflow-y-auto pr-1 pb-2">
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {filtered.map(investor => (
               <button
                 key={investor.id}
                 onClick={() => router.push(`/admin/performance/${investor.id}`)}
-                className="rounded-2xl border border-[#2B393F] bg-[#151E23] p-5 text-left hover:border-[#F59E0B]/50 hover:bg-[#1A252C] transition-all space-y-3"
+                className="min-h-[156px] rounded-2xl border border-[#2B393F] bg-[#151E23] p-4 sm:p-5 text-left hover:border-[#F59E0B]/50 hover:bg-[#1A252C] focus:outline-none focus:ring-2 focus:ring-[#F59E0B]/40 transition-all space-y-3 touch-manipulation"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-white truncate">{investor.name ?? 'Unnamed investor'}</p>
                     <p className="text-[10px] text-[#7F8C86] truncate mt-0.5">{investor.email ?? investor.id}</p>
+                    <p className="mt-2 text-[10px] text-[#93A09A]">Tap to open ROI entry</p>
                   </div>
                   <span className="inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-mono bg-[#F59E0B]/10 text-[#F59E0B] border border-[#F59E0B]/30">
                     <Icon icon="solar:graph-up-bold" className="w-3 h-3" />

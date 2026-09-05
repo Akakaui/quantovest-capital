@@ -103,12 +103,12 @@ export default function AdminPerformanceDetailPage() {
   return (
     <div className="min-h-screen bg-[#0D1215] text-[#E8EFEB] flex flex-col md:flex-row font-sans">
       <AdminSidebar />
-      <main className="flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
-        <div className="border-b border-[#2B393F] pb-6 space-y-1">
+      <main className="flex-1 min-w-0 p-3 sm:p-8 space-y-6 sm:space-y-8 overflow-y-auto pb-24 md:pb-8">
+        <div className="border-b border-[#2B393F] pb-5 sm:pb-6 space-y-2">
           <div className="flex items-center gap-2 text-xs text-[#F59E0B] font-mono"><span className="w-2 h-2 rounded-full bg-[#F59E0B]" /> EVALUATE CREDIT OPERATIONS</div>
           <div className="flex items-center justify-between gap-2">
-            <h1 className="text-2xl font-normal">Daily ROI Entry</h1>
-            <Link href="/admin/performance" className="flex items-center gap-1 text-xs text-[#93A09A] hover:text-white transition-colors">
+            <h1 className="text-xl sm:text-2xl font-normal">Daily ROI Entry</h1>
+            <Link href="/admin/performance" className="min-h-10 inline-flex items-center gap-1 rounded-full border border-[#2B393F] px-3 text-xs text-[#93A09A] hover:text-white transition-colors touch-manipulation">
               <Icon icon="solar:arrow-left-bold" className="w-3.5 h-3.5" /> All investors
             </Link>
           </div>
@@ -125,13 +125,13 @@ export default function AdminPerformanceDetailPage() {
           </div>
         ) : (
           <>
-            <section className="rounded-2xl border border-[#2B393F] bg-[#151E23] p-5 sm:p-6">
+            <section className="rounded-2xl border border-[#2B393F] bg-[#151E23] p-4 sm:p-6">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-lg font-semibold text-white">{selected.name ?? 'Unnamed investor'}</p>
                   <p className="text-xs text-[#93A09A] mt-1">{selected.email ?? 'No email on file'}</p>
                 </div>
-                <button onClick={() => router.push(`/admin/investors/${selected.id}`)} className="self-start sm:self-auto text-[11px] font-mono px-3 py-1.5 rounded-lg bg-[#3B82F6]/10 text-[#3B82F6] border border-[#3B82F6]/30 hover:bg-[#3B82F6]/20 transition-colors">View investor profile</button>
+                <button onClick={() => router.push(`/admin/investors/${selected.id}`)} className="self-start sm:self-auto min-h-10 text-[11px] font-mono px-3 py-2 rounded-lg bg-[#3B82F6]/10 text-[#3B82F6] border border-[#3B82F6]/30 hover:bg-[#3B82F6]/20 transition-colors touch-manipulation">View investor profile</button>
               </div>
               <div className="mt-5 grid grid-cols-2 lg:grid-cols-4 gap-3">
                 {[['Plan', selected.planName ?? 'No plan'], ['Balance', formatCents(selected.balanceCents)], ['Rate', planRoi ? `${planRoi.weekly}%/7d` : 'N/A'], ['Suggested weekly credit', planRoi ? formatCents(Math.round(weeklySuggestion * 100)) : '—']].map(([label, value]) => (
@@ -143,8 +143,8 @@ export default function AdminPerformanceDetailPage() {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-[#F59E0B]/30 bg-[#F59E0B]/5 p-6 sm:p-8 space-y-5">
-              <div className="flex items-center gap-3"><div className="w-12 h-12 rounded-full bg-[#F59E0B]/10 flex items-center justify-center"><Icon icon="solar:graph-up-bold" className="w-7 h-7 text-[#F59E0B]" /></div><div><h3 className="text-xl font-semibold text-white">Apply a credit</h3><p className="text-xs text-[#93A09A]">Enter the exact amount to credit. No weekly limit — apply anytime.</p></div></div>
+            <section className="rounded-2xl border border-[#F59E0B]/30 bg-[#F59E0B]/5 p-4 sm:p-8 space-y-5">
+              <div className="flex items-start gap-3"><div className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full bg-[#F59E0B]/10 flex items-center justify-center"><Icon icon="solar:graph-up-bold" className="w-6 h-6 sm:w-7 sm:h-7 text-[#F59E0B]" /></div><div><h3 className="text-lg sm:text-xl font-semibold text-white">Apply a credit</h3><p className="text-xs leading-relaxed text-[#93A09A]">Enter the exact amount to credit. No weekly limit — apply anytime.</p></div></div>
 
               <label className="block text-xs text-[#93A09A]">
                 Amount (USD)
@@ -155,14 +155,14 @@ export default function AdminPerformanceDetailPage() {
                   value={amount}
                   onChange={event => setAmount(event.target.value)}
                   placeholder="e.g. 225.00"
-                  className="mt-2 w-full rounded-xl border border-[#2B393F] bg-[#0D1215] px-4 py-3 text-sm text-white placeholder-[#7F8C86] font-mono focus:border-[#F59E0B]/50 focus:outline-none"
+                  className="mt-2 w-full min-h-12 rounded-xl border border-[#2B393F] bg-[#0D1215] px-4 py-3 text-base sm:text-sm text-white placeholder-[#7F8C86] font-mono focus:border-[#F59E0B]/50 focus:outline-none focus:ring-2 focus:ring-[#F59E0B]/15"
                 />
                 {planRoi && <span className="mt-1 block text-[10px] text-[#7F8C86]">Tip: the fixed weekly credit at {planRoi.weekly}% is {formatCents(Math.round(weeklySuggestion * 100))}</span>}
               </label>
 
               <label className="block text-xs text-[#93A09A]">
                 Message
-                <select value={messageTemplate} onChange={event => setMessageTemplate(event.target.value)} className="mt-2 w-full rounded-xl border border-[#2B393F] bg-[#0D1215] px-4 py-3 text-sm text-white focus:border-[#F59E0B]/50 focus:outline-none">
+                <select value={messageTemplate} onChange={event => setMessageTemplate(event.target.value)} className="mt-2 w-full min-h-12 rounded-xl border border-[#2B393F] bg-[#0D1215] px-4 py-3 text-base sm:text-sm text-white focus:border-[#F59E0B]/50 focus:outline-none focus:ring-2 focus:ring-[#F59E0B]/15">
                   <option disabled>Select a message...</option>
                   {MESSAGE_TEMPLATES.map(template => <option key={template} value={template}>{template}</option>)}
                   <option value="Custom">Custom message...</option>
@@ -178,7 +178,7 @@ export default function AdminPerformanceDetailPage() {
                     rows={2}
                     maxLength={500}
                     placeholder="Enter the message shown to the investor"
-                    className="mt-2 w-full rounded-xl border border-[#2B393F] bg-[#0D1215] px-4 py-3 text-xs text-white placeholder-[#7F8C86] focus:border-[#F59E0B]/50 focus:outline-none"
+                    className="mt-2 w-full min-h-24 rounded-xl border border-[#2B393F] bg-[#0D1215] px-4 py-3 text-sm text-white placeholder-[#7F8C86] focus:border-[#F59E0B]/50 focus:outline-none focus:ring-2 focus:ring-[#F59E0B]/15"
                   />
                 </label>
               )}
@@ -186,7 +186,7 @@ export default function AdminPerformanceDetailPage() {
               <button
                 onClick={() => void sendCredit()}
                 disabled={submitting || !amount || Number(amount) <= 0 || !effectiveMessage}
-                className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#F59E0B] text-[#0A0D0C] font-semibold text-sm hover:bg-[#D97706] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full sm:w-auto min-h-12 px-8 py-3.5 rounded-full bg-[#F59E0B] text-[#0A0D0C] font-semibold text-sm hover:bg-[#D97706] transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
               >
                 {submitting ? 'Applying…' : 'Apply ROI / Profit'}
               </button>
@@ -200,7 +200,23 @@ export default function AdminPerformanceDetailPage() {
               {sortedHistory.length === 0 ? (
                 <div className="rounded-xl bg-[#0D1215] border border-[#2B393F] p-6 text-center text-xs text-[#7F8C86]">No credits yet for this investor.</div>
               ) : (
-                <div className="overflow-x-auto">
+                <>
+                <div className="md:hidden space-y-3">
+                  {sortedHistory.map(entry => (
+                    <div key={entry.id} className="rounded-xl border border-[#2B393F] bg-[#0D1215] p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="font-mono font-semibold text-white">{formatCents(entry.profitCents)}</span>
+                        <span className="font-mono text-[#22C55E]">{entry.percentageBps / 100}%</span>
+                      </div>
+                      <p className="text-xs leading-relaxed text-[#93A09A]">{entry.marketNote}</p>
+                      <div className="flex items-center justify-between gap-3 text-[10px] text-[#7F8C86] font-mono">
+                        <span>{formatDate(entry.entryDate)}</span>
+                        <span className="truncate">{entry.publishedBy}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full min-w-[640px] text-left text-xs">
                     <thead className="text-[10px] uppercase font-mono text-[#7F8C86] border-b border-[#2B393F]">
                       <tr><th className="py-3 pr-4">Credit</th><th className="py-3 pr-4">Rate</th><th className="py-3 pr-4">Message</th><th className="py-3 pr-4">Date</th><th className="py-3">Admin</th></tr>
@@ -218,6 +234,7 @@ export default function AdminPerformanceDetailPage() {
                     </tbody>
                   </table>
                 </div>
+                </>
               )}
             </section>
           </>

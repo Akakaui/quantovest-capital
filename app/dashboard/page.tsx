@@ -274,14 +274,14 @@ export default function InvestorDashboard() {
         onOpenWithdraw={() => {}}
       />
 
-      <main className="dashboard-main flex-1 p-4 sm:p-8 space-y-8 overflow-y-auto pb-24 md:pb-8">
+      <main className="dashboard-main flex-1 min-w-0 p-3 sm:p-8 space-y-6 sm:space-y-8 overflow-y-auto pb-24 md:pb-8">
         {/* Top Header Bar */}
-        <div className="dashboard-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#263437] pb-6">
+        <div className="dashboard-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#263437] pb-5 sm:pb-6">
           <div className="flex items-center gap-3 min-w-0">
             <img src={profile.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile.name}`} alt={profile.name} className="w-10 h-10 sm:w-12 sm:h-12 rounded-full border-2 border-[#22C55E]/40 object-cover shadow-md shrink-0" />
             <div className="min-w-0">
               <h1 className="text-lg sm:text-2xl font-normal text-[#F3F7F4] truncate">Hello, {profile.name}</h1>
-              <p className="text-xs text-[#93A09A] flex items-center gap-2">
+              <p className="text-xs text-[#93A09A] flex flex-wrap items-center gap-x-2 gap-y-1">
                 {profile.plan && (
                   <>
                     Plan: <span className="text-[#22C55E] font-semibold font-mono">{profile.plan}</span>
@@ -300,11 +300,11 @@ export default function InvestorDashboard() {
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:items-center">
             {kycStatus !== 'approved' && (
               <button
                 onClick={() => setIsKycOpen(true)}
-                className="px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-medium hover:bg-amber-500/20 transition-colors flex items-center gap-1.5"
+                className="min-h-11 w-full justify-center px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-medium hover:bg-amber-500/20 transition-colors flex items-center gap-1.5"
               >
                 <Icon icon="solar:shield-warning-bold" className="w-4 h-4" />
                 <span>Complete Verification</span>
@@ -312,7 +312,7 @@ export default function InvestorDashboard() {
             )}
             <button
               onClick={() => setIsUpgradeOpen(true)}
-              className="px-4 py-2 rounded-full bg-[#22C55E]/10 border border-[#22C55E]/30 text-[#22C55E] text-xs font-medium hover:bg-[#22C55E]/20 transition-colors flex items-center gap-1.5"
+              className="min-h-11 w-full justify-center px-4 py-2 rounded-full bg-[#22C55E]/10 border border-[#22C55E]/30 text-[#22C55E] text-xs font-medium hover:bg-[#22C55E]/20 transition-colors flex items-center gap-1.5"
             >
               <Icon icon="solar:arrow-up-line-bold" className="w-4 h-4" />
               <span>Upgrade Plan</span>
@@ -339,17 +339,18 @@ export default function InvestorDashboard() {
         )}
 
         {/* Physical Metallic Balance Card */}
-        <div className="dashboard-balance-card relative overflow-hidden p-6 sm:p-8 rounded-2xl bg-[#141C1F] border border-[#263437] shadow-2xl space-y-6">
+        <div className="dashboard-balance-card relative overflow-hidden p-4 sm:p-8 rounded-2xl bg-[#141C1F] border border-[#263437] shadow-2xl space-y-5 sm:space-y-6">
           <div className="flex justify-between items-start">
             <div>
               <p className="text-xs uppercase font-mono tracking-wider text-[#93A09A]">Total Portfolio Balance</p>
               <div className="flex items-center gap-3 mt-1">
-                <h2 className="text-3xl sm:text-5xl font-mono font-semibold text-[#F3F7F4]">
+                <h2 className="text-2xl sm:text-5xl font-mono font-semibold text-[#F3F7F4] break-all">
                   {isMasked ? '••••••••' : `$${profile.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
                 </h2>
                 <button
                   onClick={() => setIsMasked(!isMasked)}
-                  className="p-2 text-[#93A09A] hover:text-[#F3F7F4] transition-colors"
+                  aria-label={isMasked ? 'Show portfolio balance' : 'Hide portfolio balance'}
+                  className="min-h-11 min-w-11 p-2 text-[#93A09A] hover:text-[#F3F7F4] transition-colors touch-manipulation"
                 >
                   <Icon icon={isMasked ? 'solar:eye-bold' : 'solar:eye-closed-bold'} className="w-5 h-5" />
                 </button>
@@ -388,7 +389,7 @@ export default function InvestorDashboard() {
         </div>
 
         {/* Interactive Performance & Calculator Graph */}
-        <div className="dashboard-chart-card p-6 rounded-2xl bg-[#141C1F] border border-[#263437] space-y-4">
+        <div className="dashboard-chart-card p-4 sm:p-6 rounded-2xl bg-[#141C1F] border border-[#263437] space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
               <h3 className="text-base font-normal text-[#F3F7F4] flex items-center gap-2">
@@ -411,7 +412,7 @@ export default function InvestorDashboard() {
         <DynamicAllocationRingChart plan={profile.plan} />
 
         {/* Daily Strategy Activity Log */}
-        <div className="dashboard-activity-card p-6 rounded-2xl bg-[#141C1F] border border-[#263437] space-y-4">
+        <div className="dashboard-activity-card p-4 sm:p-6 rounded-2xl bg-[#141C1F] border border-[#263437] space-y-4">
           <h3 className="text-base font-normal text-[#F3F7F4]">Strategy Performance Activity</h3>
           <div className="space-y-3">
             {dailyLogs.length === 0 ? (
@@ -421,13 +422,13 @@ export default function InvestorDashboard() {
               </div>
             ) : (
               dailyLogs.map((log) => (
-                <div key={log.id} className="p-4 bg-[#0A0F11] border border-[#263437] rounded-xl flex items-center justify-between">
+                <div key={log.id} className="p-4 bg-[#0A0F11] border border-[#263437] rounded-xl flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center ${log.percentage >= 0 ? 'bg-[#22C55E]/10 text-[#22C55E]' : 'bg-[#CF202F]/10 text-[#CF202F]'}`}>
                       <Icon icon={log.percentage >= 0 ? 'solar:graph-up-bold' : 'solar:graph-down-bold'} className="w-5 h-5" />
                     </div>
-                    <div>
-                      <p className="text-xs font-semibold text-[#F3F7F4]">{log.marketNote}</p>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-[#F3F7F4] leading-relaxed break-words">{log.marketNote}</p>
                       <p className="text-[10px] text-[#93A09A] font-mono">{log.date}</p>
                     </div>
                   </div>
