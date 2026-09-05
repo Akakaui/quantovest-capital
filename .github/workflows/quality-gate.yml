@@ -88,7 +88,9 @@ jobs:
   exploratory-plan:
     name: LLM exploratory test plan
     runs-on: ubuntu-latest
-    if: ${{ secrets.OPENAI_API_KEY != '' }}
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -96,11 +98,11 @@ jobs:
           python-version: '3.12'
       - run: pip install requests
       - run: python tests/exploratory_plan.py
+        if: ${{ env.OPENAI_API_KEY != '' }}
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
           OPENAI_MODEL: gpt-5-mini
       - uses: actions/upload-artifact@v4
+        if: ${{ env.OPENAI_API_KEY != '' }}
         with:
           name: exploratory-test-plan
           path: artifacts/exploratory-test-plan.md
