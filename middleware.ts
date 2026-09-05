@@ -12,7 +12,8 @@ function isPublicRoute(pathname: string): boolean {
     pathname === '/faq' ||
     pathname === '/contact' ||
     pathname === '/login' ||
-    pathname === '/signup'
+    pathname === '/signup' ||
+    pathname === '/admin/login'
   ) {
     return true;
   }
@@ -94,7 +95,7 @@ export async function middleware(request: NextRequest) {
   }
 
   if (isPublicRoute(pathname)) {
-    if (isAuthenticated && (pathname === '/login' || pathname === '/signup')) {
+    if (isAuthenticated && (pathname === '/login' || pathname === '/signup' || pathname === '/admin/login')) {
       return NextResponse.redirect(new URL(isAdmin ? '/admin' : '/dashboard', request.url));
     }
     return response;

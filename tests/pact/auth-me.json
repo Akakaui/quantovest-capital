@@ -1,0 +1,22 @@
+{
+  "consumer": { "name": "QuantovestAdmin" },
+  "provider": { "name": "QuantovestAuth" },
+  "interactions": [
+    {
+      "description": "unauthenticated identity request",
+      "request": {
+        "method": "GET",
+        "path": "/api/auth/me",
+        "headers": { "Accept": "application/json" }
+      },
+      "response": {
+        "status": 401,
+        "headers": { "Content-Type": "application/json" },
+        "body": { "error": "Not authenticated" }
+      }
+    }
+  ],
+  "metadata": {
+    "pactSpecification": { "version": "4.0" }
+  }
+}

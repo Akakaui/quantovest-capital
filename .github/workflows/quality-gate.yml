@@ -1,0 +1,124 @@
+name: Quality Gate
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Next.js build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+  pytest:
+    name: pytest workflows and contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r tests/requirements.txt
+      - run: pytest -q tests/test_auth_and_api.py tests/test_pact_contract.py
+
+  schemathesis:
+    name: Schemathesis API edge cases
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm run build
+      - run: npm start -- -p 3000 > /tmp/quantovest.log 2>&1 &
+      - run: sleep 8
+      - run: pip install -r tests/requirements.txt
+      - run: schemathesis run tests/openapi.yaml --base-url http://127.0.0.1:3000 --checks all --max-examples 20
+
+  pact:
+    name: Pact contract validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r tests/requirements.txt
+      - run: pytest -q tests/test_pact_contract.py
+
+  zap:
+    name: OWASP ZAP baseline scan
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm start -- -p 3000 > /tmp/quantovest-zap.log 2>&1 &
+      - run: sleep 8
+      - name: Run ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: http://host.docker.internal:3000
+          allow_issue_writing: false
+          fail_action: true
+          cmd_options: '-a'
+
+  exploratory-plan:
+    name: LLM exploratory test plan
+    runs-on: ubuntu-latest
+    if: ${{ secrets.OPENAI_API_KEY != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install requests
+      - run: python tests/exploratory_plan.py
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          OPENAI_MODEL: gpt-5-mini
+      - uses: actions/upload-artifact@v4
+        with:
+          name: exploratory-test-plan
+          path: artifacts/exploratory-test-plan.md
+
+  deployment-gate:
+    name: Deployment gate
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [build, pytest, schemathesis, pact, zap, exploratory-plan]
+    steps:
+      - name: Block deployment on required test failure
+        run: |
+          required='${{ needs.build.result }} ${{ needs.pytest.result }} ${{ needs.schemathesis.result }} ${{ needs.pact.result }} ${{ needs.zap.result }}'
+          echo "Required results: $required"
+          for result in $required; do
+            if [ "$result" != "success" ]; then
+              echo "A required quality gate failed or was skipped."
+              exit 1
+            fi
+          done
+          echo "All required quality gates passed."

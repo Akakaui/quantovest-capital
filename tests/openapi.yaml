@@ -1,0 +1,56 @@
+openapi: 3.0.3
+info:
+  title: Quantovest Capital API
+  version: 1.0.0
+  description: Public and unauthenticated boundary contracts used by CI.
+servers:
+  - url: http://127.0.0.1:3000
+paths:
+  /api/auth/me:
+    get:
+      operationId: getCurrentIdentity
+      responses:
+        '200':
+          description: Authenticated identity
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, email, role]
+                properties:
+                  id: { type: string }
+                  email: { type: string, format: email }
+                  role: { type: string }
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [error]
+                properties:
+                  error: { type: string }
+        '500':
+          description: Server configuration failure
+  /api/plans:
+    get:
+      operationId: listActivePlans
+      responses:
+        '200':
+          description: Active investment plans; an empty list is valid when none are configured.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  additionalProperties: true
+        '500':
+          description: Server configuration failure
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security: []
