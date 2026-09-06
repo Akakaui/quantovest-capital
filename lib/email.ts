@@ -13,6 +13,10 @@
 
 const APP_URL = process.env.APP_PUBLIC_URL || 'http://localhost:3000';
 
+if (!process.env.APP_PUBLIC_URL) {
+  console.warn('[EMAIL] APP_PUBLIC_URL is not set — email template links will fall back to http://localhost:3000.');
+}
+
 function esc(value: string | null | undefined): string {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -349,9 +353,12 @@ async function sendViaZoho(
         if (!/^2\d\d/.test(rcpt)) { socket.end(); return resolve({ ok: false, message: 'Recipient rejected: ' + rcpt.trim() }); }
         await smtpCommand(socket, 'DATA');
         const msg = [
-          `From: ${from}`,
+          `From: ${EMAIL_FROM}`,
           `To: <${to}>`,
           `Subject: ${subject.replace(/\r?\n/g, ' ')}`,
+          `Date: ${new Date().toUTCString()}`,
+          `Message-ID: <${crypto.randomUUID()}@${(from.match(/@([^>]+)$/) || [])[1] || 'quantovests.com'}>`,
+          `Return-Path: <${from}>`,
           'MIME-Version: 1.0',
           'Content-Type: multipart/alternative; boundary="qvb"',
           '',
@@ -368,9 +375,9 @@ async function sendViaZoho(
           html,
           '',
           '--qvb--',
-          '.',
-        ].join('\r\n');
-        const dataRes = await smtpCommand(socket, msg);
+        ];
+        const bodyData = msg.map(line => line.startsWith('.') ? `.${line}` : line).join('\r\n');
+        const dataRes = await smtpCommand(socket, `${bodyData}\r\n.`);
         socket.end();
         if (/^2\d\d/.test(dataRes)) return resolve({ ok: true, message: 'Sent' });
         return resolve({ ok: false, message: 'Data rejected: ' + dataRes.trim() });
@@ -396,7 +403,7 @@ export async function sendEmail(
   const password = process.env.ZOHO_SMTP_PASS;
 
   // Without credentials, log to console (development mode)
-  if (!user || !password || /<FILL_/.test(user) || /<FILL_/.test(password)) {
+  if (!user || !password || /<FILL_|replace-with/i.test(user) || /<FILL_|replace-with/i.test(password)) {
     console.log(`[EMAIL DEV] To: ${to} | Subject: ${template.subject}`);
     console.log(`[EMAIL DEV] Text: ${template.text.substring(0, 200)}...`);
     return { sent: true };
