@@ -88,6 +88,7 @@ export default function AdminNotificationsPage() {
         title: title.trim(),
         body: message.trim(),
         audience,
+        sendEmail,
       };
       if (audience === 'plan') body.plans = selectedPlans;
       if (audience === 'selected') body.userIds = selectedUsers;

@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, inArray } from 'drizzle-orm';
 import { getDb } from '@/lib/db';
 import { notifications, users } from '@/db/schema';
 import { sendEmail } from '@/lib/email';
@@ -86,18 +86,38 @@ export async function notifyUser(userId: string, type: string, title: string, bo
   } catch (error) { console.error('[notifications email]', error); }
 }
 
-export async function notifyAdmins(type: string, title: string, body: string) {
+export async function notifyAdmins(type: string, title: string, body: string, options?: { sendEmail?: boolean }) {
   const db = getDb();
   if (!db) return;
-  const admins = await db.select({ id: users.id }).from(users).where(eq(users.role, 'admin'));
+  const admins = await db.select({ id: users.id, email: users.email, name: users.name, notificationPrefs: users.notificationPrefs })
+    .from(users)
+    .where(eq(users.role, 'admin'));
   if (admins.length) await db.insert(notifications).values(admins.map(admin => ({ userId: admin.id, type, title, body, isRead: 0 })));
+  if (admins.length && options?.sendEmail !== false) {
+    for (const admin of admins) {
+      void maybeEmailUser(admin, type, title, body).catch(error => console.error('[notifyAdmins email]', error));
+    }
+  }
 }
 
-export async function broadcastNotification(type: string, title: string, body: string, recipientIds?: string[]) {
+export async function broadcastNotification(type: string, title: string, body: string, recipientIds?: string[], options?: { sendEmail?: boolean }): Promise<number> {
   const db = getDb();
   if (!db) return 0;
   const recipients = recipientIds?.length ? recipientIds.map(id => ({ id })) : await db.select({ id: users.id }).from(users);
   if (recipients.length) await db.insert(notifications).values(recipients.map(recipient => ({ userId: recipient.id, type, title, body, isRead: 0 })));
+  if (options?.sendEmail && recipients.length) {
+    try {
+      const ids = recipients.map(r => r.id);
+      const fullUsers = await db.select({ id: users.id, email: users.email, name: users.name, notificationPrefs: users.notificationPrefs })
+        .from(users)
+        .where(inArray(users.id, ids));
+      for (const row of fullUsers) {
+        void maybeEmailUser(row, type, title, body).catch(error => console.error('[broadcast email]', error));
+      }
+    } catch (error) {
+      console.error('[broadcast email lookup]', error instanceof Error ? error.message : error);
+    }
+  }
   return recipients.length;
 }
 
