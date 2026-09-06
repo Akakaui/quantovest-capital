@@ -61,6 +61,7 @@ export default function SettingsPage() {
   const [notifyDailyRoi, setNotifyDailyRoi] = useState(true);
   const [notifyStrategyAlerts, setNotifyStrategyAlerts] = useState(true);
   const [notifyMsg, setNotifyMsg] = useState('');
+  const [savingNotifications, setSavingNotifications] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -195,22 +196,34 @@ export default function SettingsPage() {
 
   async function handleSavePayout() {
     setSavingPayout(true); setPayoutMsg('');
-    await fetch('/api/profile', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ payoutDetails: { cryptoAddress, cryptoNetwork, bankName, bankAccountName, bankAccountNumber } }),
-    });
-    setPayoutMsg('Payout details saved.');
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payoutDetails: { cryptoAddress, cryptoNetwork, bankName, bankAccountName, bankAccountNumber } }),
+      });
+      const data = await res.json().catch(() => ({}));
+      setPayoutMsg(res.ok ? 'Payout details saved.' : data.error ?? 'Failed to save payout details. Please try again.');
+    } catch {
+      setPayoutMsg('Network error. Please check your connection and try again.');
+    }
     setSavingPayout(false);
   }
 
   async function handleSaveNotifications() {
-    await fetch('/api/profile', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notificationPrefs: { notifyDailyRoi, notifyStrategyAlerts } }),
-    });
-    setNotifyMsg('Notification preferences saved.');
+    setSavingNotifications(true); setNotifyMsg('');
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationPrefs: { notifyDailyRoi, notifyStrategyAlerts } }),
+      });
+      const data = await res.json().catch(() => ({}));
+      setNotifyMsg(res.ok ? 'Notification preferences saved.' : data.error ?? 'Failed to save notification preferences. Please try again.');
+    } catch {
+      setNotifyMsg('Network error. Please check your connection and try again.');
+    }
+    setSavingNotifications(false);
   }
 
   function copyRecoveryCodes() {

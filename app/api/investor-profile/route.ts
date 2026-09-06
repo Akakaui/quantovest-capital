@@ -24,6 +24,10 @@ const fallbackProfile = (actor: Actor) => ({
   kycStatus: 'unverified',
   onboardingCompleted: false,
   tourCompleted: false,
+  payoutDetails: null,
+  notificationPrefs: null,
+  twoFactorEnabled: false,
+  twoFactorSecret: null,
 });
 
 async function readSupabaseProfile(actor: Actor) {
@@ -70,6 +74,10 @@ async function readSupabaseProfile(actor: Actor) {
     kycStatus: kycResult.data?.status ?? 'unverified',
     onboardingCompleted: userRow?.onboardingCompleted ?? false,
     tourCompleted: Boolean(answers && typeof answers === 'object' && (answers as Record<string, unknown>).tourCompleted === true),
+    payoutDetails: userRow?.payoutDetails ?? null,
+    notificationPrefs: userRow?.notificationPrefs ?? null,
+    twoFactorEnabled: userRow?.twoFactorEnabled ?? false,
+    twoFactorSecret: userRow?.twoFactorSecret ?? null,
   };
 }
 
@@ -159,6 +167,10 @@ export async function GET() {
         kycStatus: latestKyc?.status ?? 'unverified',
         onboardingCompleted: userRow.onboardingCompleted ?? false,
         tourCompleted: Boolean(userRow.onboardingAnswers && typeof userRow.onboardingAnswers === 'object' && (userRow.onboardingAnswers as Record<string, unknown>).tourCompleted === true),
+        payoutDetails: userRow.payoutDetails ?? null,
+        notificationPrefs: userRow.notificationPrefs ?? null,
+        twoFactorEnabled: userRow.twoFactorEnabled ?? false,
+        twoFactorSecret: userRow.twoFactorSecret ?? null,
       });
     } catch (dbErr) {
       console.error('[investor-profile] Drizzle read failed; using Supabase fallback', dbErr);

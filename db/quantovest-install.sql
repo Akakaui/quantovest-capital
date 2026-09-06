@@ -432,7 +432,8 @@ ALTER TABLE public.users
   ADD COLUMN IF NOT EXISTS "onboardingAnswers" json,
   ADD COLUMN IF NOT EXISTS "twoFactorEnabled" boolean DEFAULT false NOT NULL,
   ADD COLUMN IF NOT EXISTS "twoFactorSecret" text,
-  ADD COLUMN IF NOT EXISTS "payoutDetails" json;
+  ADD COLUMN IF NOT EXISTS "payoutDetails" json,
+  ADD COLUMN IF NOT EXISTS "notificationPrefs" json;
 
 -- Investors are only placed on a plan once their total deposit meets a plan
 -- minimum; planId is NULL (no plan) until then.
